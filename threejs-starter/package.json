@@ -1,0 +1,23 @@
+{
+  "name": "fairway-and-folly-3d",
+  "version": "0.17.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test src/game.test.js"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "0.187.0",
+    "@react-three/fiber": "9.8.2",
+    "@react-three/drei": "10.7.9",
+    "@react-three/rapier": "2.2.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.5"
+  }
+}

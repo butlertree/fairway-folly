@@ -1,0 +1,15 @@
+// Every low obstacle drawn in the signature gardens uses these same collision shapes.
+export const gardenObstacles={
+  1:[{x:-4,z:-5,r:1},{x:4,z:5,r:1},{x:-1.6,z:-.5,r:.55},{x:1.6,z:-.5,r:.55}],
+  2:[{x:-4.8,z:8.2,r:1.15},{x:5.4,z:-6.5,r:1.05}],
+  3:[]
+};
+export const gardenBanks={
+  1:[{ax:-6.7,az:5,bx:-6.7,bz:1,r:.38},{ax:-6.7,az:1,bx:-5.8,bz:-1.2,r:.38}],
+  2:[{ax:6.5,az:8.3,bx:7.4,bz:5.6,r:.35},{ax:-6.7,az:-5.5,bx:-5.2,bz:-7.3,r:.35}],
+  3:[{ax:-2.9,az:-3.2,bx:-2.9,bz:.2,r:1.1},{ax:2.9,az:-3.2,bx:2.9,bz:.2,r:1.1}]
+};
+export const grottoPool={x:6.6,z:-1.7,rx:1.7,rz:2.4};
+export const grotto={z:-1.5,halfGap:1.8,roof:3.6,depth:5.6};
+export function segmentContact(x,z,s,radius=.3){const dx=s.bx-s.ax,dz=s.bz-s.az,t=Math.max(0,Math.min(1,((x-s.ax)*dx+(z-s.az)*dz)/(dx*dx+dz*dz||1))),px=s.ax+t*dx,pz=s.az+t*dz,rx=x-px,rz=z-pz,d=Math.hypot(rx,rz),limit=s.r+radius;if(d>=limit)return null;const nx=d>1e-8?rx/d:1,nz=d>1e-8?rz/d:0;return {x:px+nx*(limit+.001),z:pz+nz*(limit+.001),nx,nz}}
+export function greenSafeStart(hole,x,z){for(let i=0;i<4;i++){for(const o of gardenObstacles[hole]??[]){const dx=x-o.x,dz=z-o.z,d=Math.hypot(dx,dz),limit=o.r+.45;if(d<limit){const a=d>.001?Math.atan2(dz,dx):0;x=o.x+Math.cos(a)*limit;z=o.z+Math.sin(a)*limit}}for(const s of gardenBanks[hole]??[]){const hit=segmentContact(x,z,s,.45);if(hit){x=hit.x;z=hit.z}}}return {x,z}}
