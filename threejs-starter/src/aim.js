@@ -1,3 +1,4 @@
+import {boundaryEdges} from './mini-boundary.js';
 import {pinFor} from './cups.js';
 import {course,clubs,height,lie,carryYards,puttInfo,getCourse} from './game.js';
 export function aimPoint(game){
@@ -10,7 +11,7 @@ export function aimPoint(game){
 }
 export function isAimClick(start,end){return Math.hypot(end.x-start.x,end.y-start.y)<=6}
 
-export function puttingAim(g){const b=g.ball;let dx=g.pull?.x??Math.sin(g.angle),dz=g.pull?.z??-Math.cos(g.angle);const n=Math.hypot(dx,dz)||1;dx/=n;dz/=n;const wallX=Math.abs(dx)>.0001?((dx>0?8.6:-8.6)-b.x)/dx:Infinity,wallZ=Math.abs(dz)>.0001?((dz>0?14.6:-14.6)-b.z)/dz:Infinity,roll=puttInfo(g.pull?.percent??g.puttPower).distance,len=Math.max(0,Math.min(roll,wallX,wallZ));return {x:b.x+dx*len,y:.35,z:b.z+dz*len,distance:len,bank:roll>len+.05}}
+export function puttingAim(g){const b=g.ball;let dx=g.pull?.x??Math.sin(g.angle),dz=g.pull?.z??-Math.cos(g.angle);const n=Math.hypot(dx,dz)||1;dx/=n;dz/=n;let wall=Infinity;for(const e of boundaryEdges(g.hole)){const v=dx*e.nx+dz*e.nz;if(v< -1e-7)wall=Math.min(wall,(.3-((b.x-e.x)*e.nx+(b.z-e.z)*e.nz))/v)}const roll=puttInfo(g.pull?.percent??g.puttPower).distance,len=Math.max(0,Math.min(roll,wall));return {x:b.x+dx*len,y:.35,z:b.z+dz*len,distance:len,bank:roll>len+.05}}
 
 export function selectTarget(g,p){if(g.mini||g.mode!=='ready')return false;g.target={x:p.x,z:p.z};g.angle=Math.atan2(p.x-g.ball.x,g.ball.z-p.z);return true}
 export function selectedTarget(g){if(!g.target)return null;const {x,z}=g.target,distance=Math.hypot(x-g.ball.x,z-g.ball.z);return {x,z,y:height(x,z,g.hole)+.2,distance,yards:Math.round(distance/.9144),out:lie(x,z,g.hole)==='OB'}}

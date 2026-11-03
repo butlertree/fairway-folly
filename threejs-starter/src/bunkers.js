@@ -5,8 +5,8 @@ export const bunkersByHole={
 1:[bunker('fairway',15.6,-108.28,5.2,9.5,.85,-.2,.7),bunker('left-drive',-12,25,4.6,8.5,.75,.35,1.8),bunker('green-pot',-19,-146,3.5,4.6,1.8,-.3,2.3,true)],
 2:[bunker('green',23,-195,6.3,7.5,.95,.25,.4),bunker('shelf-pot',-87,105,4.2,6.2,1.9,-.2,1.1,true),bunker('approach',-86,-100,4.2,7,.8,.4,2.4)],
 3:[bunker('cove',-22,-66,2.2,3,1.1,0,.8),bunker('back-pot',13,-93,2.2,3,1.9,0,.8,true)],
-4:[bunker('corner',-12,-30,8.5,15,.9,-.28,.9),bunker('bluff-pot',-48,-165,4.8,7,2.1,.25,2,true),bunker('right-green',-2,-156,4,6.5,.9,-.4,1.4)],
-5:[bunker('drive',-18,26,8.8,14.5,.85,-.35,1.2),bunker('green',49,-220,5.5,10,1,.3,.4),bunker('left-pot',-4,-237,4,5.2,2.15,-.15,1.8,true),bunker('bold-shelf',24,-48,3.5,5.5,1.5,.25,2.6,true)],
+4:[bunker('corner',-12,-30,8.5,15,.9,-.28,.9),bunker('bluff-pot',40,-202,4.8,7,2.1,.25,2,true),bunker('right-green',96,-179,4,6.5,.9,-.4,1.4),bunker('landing-left',-58,-10,5.5,11,.9,.2,2.7),bunker('green-front',58,-163,5.5,7.8,1,-.3,3.1)],
+5:[bunker('drive',-18,26,8.8,14.5,.85,-.35,1.2),bunker('green',-20,-248,5.5,10,1,.3,.4),bunker('left-pot',-4,-237,4,5.2,2.15,-.15,1.8,true),bunker('bold-shelf',24,-48,3.5,5.5,1.5,.25,2.6,true),bunker('layup-pinch',-48,-90,7.2,14,.95,.25,3.2)],
 6:[bunker('back',-13,-76,6,4,.9,-.3,.8),bunker('right-pot',40,-64,3.8,5.2,2.1,.2,2.1,true),bunker('short-left',-19,-36,4,5.2,.8,.4,1.5)]
 };
 export function bunkerProfile(angle,p){return 1+.055*Math.sin(angle*3+p.seed)+.035*Math.cos(angle*2-p.seed)}
