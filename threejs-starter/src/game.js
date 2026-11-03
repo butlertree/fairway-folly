@@ -18,7 +18,7 @@ export const clubs=Object.fromEntries(Object.entries({Driver:{yards:245,loft:.55
 export const mini={feetPerUnit:1,friction:2.2,maxRollFeet:60,halfX:9,halfZ:15,radius:.3,cup:{x:0,z:-12},rotor:{x:0,y:3.3,z:.9,radius:3.2,width:.18,depth:.18,speed:.65}};
 export function puttInfo(percent){const distance=mini.maxRollFeet*(Math.max(0,Math.min(100,percent))/100)**1.6;return {distance,speed:Math.sqrt(2*mini.friction*distance)}}
 export function puttPowerForDistance(feet){return 100*(Math.max(0,Math.min(mini.maxRollFeet,feet))/mini.maxRollFeet)**(1/1.6)}
-export function lieFactor(g){return g.lie==='Sand'?(clubs[g.club].bunker?.92:.7):g.lie==='Rough'?(clubs[g.club].bunker?.94:.88):1}
+export function lieFactor(g){return g.lie==='Sand'?(clubs[g.club].bunker?.94:.7):g.lie==='Rough'?(clubs[g.club].bunker?.94:.88):1}
 export function carryYards(g,power=1){return clubs[g.club].yards*Math.max(0,Math.min(1,power))*lieFactor(g)**2}
 export function emitSound(g,type,strength=1){g.soundEvents??=[];g.soundSeq=(g.soundSeq??0)+1;g.soundEvents.push({id:g.soundSeq,type,strength});if(g.soundEvents.length>24)g.soundEvents.shift()}
 function contactSound(g,strength){if(strength>.3&&g.time-(g.lastContactSound??-1)>.15){emitSound(g,'bank',Math.min(1,strength/10));g.lastContactSound=g.time}}

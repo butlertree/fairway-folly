@@ -10,6 +10,7 @@ A six-hole fantasy golf playtest with signature mini-golf greens.
 - Hole 4: 390-yard par 4 Amberlight Bluff and the Tideglass Garden.
 - Hole 5: 535-yard par 5 Willowspire Reach and the Clockwork Orchard.
 - Hole 6: 142-yard par 3 Starfall Sanctuary and the Starlight Labyrinth.
+- Eighteen sculpted bunkers with groomed sand, clean grass lips and deeper pot hazards.
 - Calm, Windy and Stormy; four fixed cup layouts that rotate between rounds.
 - Choose a club, aim, then press Start swing → Set power → Strike near center. Pull back from the ball and release to putt. Drag elsewhere to move the camera.
 - Play Course lets you choose 1–6 holes, playing from hole 1 through your chosen length. The complete course is par 24 and 2,112 yards. Match round length, weather and cup layout for comparison. Existing three-hole scorecards remain available. The leaderboard is saved on each device; share/import scorecard links to exchange results. This playtest does not automatically synchronize scores or other players’ shots.

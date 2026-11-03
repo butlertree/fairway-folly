@@ -1,3 +1,4 @@
+import {bunkerAt,bunkerHeight} from './bunkers.js';
 import {newHoles,heightNew,lieNew} from './new-holes.js';
 import {holeThree,heightThree,lieThree} from './hole-three.js';
 import {edgeShape} from './landscape.js';
@@ -14,13 +15,17 @@ function baseHeight(x,z){x/=course.sx;z/=course.sz;return 60+4*Math.exp(-(x*x/28
 export const waterLevel=baseHeight(ponds.course.x,ponds.course.z)-.1;
 const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
 export function getCourse(hole=1){return newHoles[hole]??(hole===3?holeThree:hole===2?holeTwo:course)}
-export function height(x,z,hole=1){if(hole>=4)return heightNew(x,z,hole);if(hole===3)return heightThree(x,z);if(hole===2)return heightTwo(x,z);let y=baseHeight(x,z);const greenR=Math.hypot(x/course.green.rx,(z-course.pin.z)/course.green.rz),teeR=Math.max(Math.abs(x)/4.8,Math.abs(z-course.tee.z)/6);y+=(baseHeight(0,course.pin.z)+8-y)*(1-smooth((greenR-1)/1.3));y+=(baseHeight(0,course.tee.z)+6-y)*(1-smooth((teeR-1)/2));const r=pondFraction(x,z,ponds.course);if(r<1.15)y=waterLevel-.8+(y-waterLevel+.8)*smooth((r-.94)/.21);const nz=z/course.sz,nx=x/course.sx,w=riverWidth(nz);if(w>0)y-=.7*(1-smooth((Math.abs(nx-riverCenter(nz))/w-.75)/.45));return y}
+export function terrainHeight(x,z,hole=1){if(hole>=4)return heightNew(x,z,hole);if(hole===3)return heightThree(x,z);if(hole===2)return heightTwo(x,z);let y=baseHeight(x,z);const greenR=Math.hypot(x/course.green.rx,(z-course.pin.z)/course.green.rz),teeR=Math.max(Math.abs(x)/4.8,Math.abs(z-course.tee.z)/6);y+=(baseHeight(0,course.pin.z)+8-y)*(1-smooth((greenR-1)/1.3));y+=(baseHeight(0,course.tee.z)+6-y)*(1-smooth((teeR-1)/2));const r=pondFraction(x,z,ponds.course);if(r<1.15)y=waterLevel-.8+(y-waterLevel+.8)*smooth((r-.94)/.21);const nz=z/course.sz,nx=x/course.sx,w=riverWidth(nz);if(w>0)y-=.7*(1-smooth((Math.abs(nx-riverCenter(nz))/w-.75)/.45));return y}
 export function riverCenter(z){if(z<=30)return -23+3.2*Math.sin((z+10)/13);const t=smooth((z-30)/24);return (-23+3.2*Math.sin(40/13))*(1-t)-8*t}
 export function riverWidth(z){return z< -32||z>riverOutlet.nz+.3?0:1.9*Math.min(1,(z+32)/3)}
-export function lie(x,z,hole=1){if(hole>=4)return lieNew(x,z,hole);if(hole===3)return lieThree(x,z);if(hole===2)return lieTwo(x,z);if((x/course.bounds.rx)**2+(z/course.bounds.rz)**2>1)return 'OB';if(inPond(x,z,ponds.course))return 'Water';const nx=x/course.sx,nz=z/course.sz;if(Math.abs(nx-riverCenter(nz))<riverWidth(nz))return 'Water';if(((x-12*course.sx)/5.2)**2+((z+25*course.sz)/9.5)**2<1)return 'Sand';if((x/course.green.rx)**2+((z-course.pin.z)/course.green.rz)**2<1)return 'Green';if(Math.abs(x)<4&&Math.abs(z-course.tee.z)<5)return 'Tee box';return nz<32&&Math.abs(nx-3*Math.sin(nz/12))<9.3+2.1*Math.sin(nz/10)?'Fairway':'Rough'}
+export function terrainLie(x,z,hole=1){if(hole>=4)return lieNew(x,z,hole);if(hole===3)return lieThree(x,z);if(hole===2)return lieTwo(x,z);if((x/course.bounds.rx)**2+(z/course.bounds.rz)**2>1)return 'OB';if(inPond(x,z,ponds.course))return 'Water';const nx=x/course.sx,nz=z/course.sz;if(Math.abs(nx-riverCenter(nz))<riverWidth(nz))return 'Water';if((x/course.green.rx)**2+((z-course.pin.z)/course.green.rz)**2<1)return 'Green';if(Math.abs(x)<4&&Math.abs(z-course.tee.z)<5)return 'Tee box';return nz<32&&Math.abs(nx-3*Math.sin(nz/12))<9.3+2.1*Math.sin(nz/10)?'Fairway':'Rough'}
 export function yardsToPin(ball,hole=1,pin){const c=getCourse(hole);pin??=c.pin;return Math.hypot(ball.x-pin.x,ball.z-pin.z)/METRES_PER_YARD}
 
 export const riverOutlet=(()=>{let lo=32,hi=60;for(let i=0;i<40;i++){const nz=(lo+hi)/2,x=riverCenter(nz)*course.sx,z=nz*course.sz,a=Math.atan2(z/(51*course.sz),x/(40*course.sx)),r=Math.hypot(x/(40*course.sx),z/(51*course.sz));if(r<edgeShape(a))lo=nz;else hi=nz}const nz=(lo+hi)/2,x=riverCenter(nz)*course.sx,z=nz*course.sz;return {x,z,nz,width:riverWidthSafe(nz)*course.sx*2}})();
 function riverWidthSafe(z){return 1.9*Math.min(1,(z+32)/3)}
 export const sceneryRocks=[{x:24*course.sx,z:30*course.sz,r:1.5},{x:25*course.sx,z:25*course.sz,r:2.2},{x:-20*course.sx,z:24*course.sz,r:1.5},{x:-24*course.sx,z:-27*course.sz,r:2.2}];
 export function rockBaseY(rock){let y=Infinity;for(let i=0;i<12;i++){const a=i/12*Math.PI*2;y=Math.min(y,height(rock.x+Math.cos(a)*rock.r,rock.z+Math.sin(a)*rock.r))}return y+rock.r*.34}
+
+const bunkerBases=Array.from({length:7},(_,hole)=>(x,z)=>terrainHeight(x,z,hole));
+export function height(x,z,hole=1){return bunkerHeight(x,z,hole,bunkerBases[hole]??bunkerBases[1])}
+export function lie(x,z,hole=1){const surface=terrainLie(x,z,hole);return !['OB','Water','Green','Tee box'].includes(surface)&&bunkerAt(x,z,hole)?'Sand':surface}
