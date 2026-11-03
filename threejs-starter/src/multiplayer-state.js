@@ -1,0 +1,14 @@
+import {createGame,alignToPin} from './game.js';
+import {cupFor} from './cups.js';
+import {courseWind} from './wind.js';
+import {holePars} from './rounds.js';
+const fields=['hole','mode','mini','ball','strokes','putts','angle','time','club','puttPower','power','accuracy','message','history','lie','settle','drop','origin','approachLanding','finish'];
+export function turnSnapshot(game){if(!['ready','holed'].includes(game.mode))return null;const result={v:1};for(const k of fields)if(game[k]!==undefined)result[k]=structuredClone(game[k]);result.history=result.history?.slice(-150)??[];return result}
+export function validSnapshot(s,hole){return s?.v===1&&s.hole===hole&&['ready','holed'].includes(s.mode)&&Number.isInteger(s.strokes)&&s.strokes>=0&&s.strokes<=99&&s.ball&&['x','y','z','vx','vy','vz'].every(k=>Number.isFinite(s.ball[k]))&&Math.abs(s.ball.x)<2000&&Math.abs(s.ball.z)<2000&&typeof s.mini==='boolean'}
+export function matchGame(match,user){const prior=match.scores.filter(s=>s.player===user&&s.hole<match.hole).sort((a,b)=>a.hole-b.hole).map(s=>({hole:s.hole,par:holePars[s.hole-1],strokes:s.strokes}));const g=createGame(match.hole,prior);if(validSnapshot(match.snapshot,match.hole))for(const k of fields)if(match.snapshot[k]!==undefined)g[k]=structuredClone(match.snapshot[k]);g.weather=match.weather;g.wind=courseWind(g.hole,match.weather);g.layout=match.layout;g.cup=cupFor(g.hole,g.layout);if(!validSnapshot(match.snapshot,match.hole))alignToPin(g);g.inputLocked=false;g.pull=null;g.freeCamera=false;return g}
+export function myTurn(match,user){return match?.status==='playing'&&match.player===user}
+export function matchTotals(match,user){const scores=match.scores.filter(s=>s.player===user);return {strokes:scores.reduce((n,s)=>n+s.strokes,0),over:scores.reduce((n,s)=>n+s.strokes-holePars[s.hole-1],0),holes:scores.length}}
+export function invitationUrl(match,invite,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:match.id,invite}).toString();return url.href}
+export function matchUrl(id,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:id}).toString();return url.href}
+export function matchLink(base=location.href){const url=new URL(base),params=new URLSearchParams(url.hash.slice(1));return {id:params.get('match'),invite:params.get('invite')}}
+export function matchOutcome(match){if(match.status!=='complete')return '';const a=matchTotals(match,match.host).strokes,b=matchTotals(match,match.guest).strokes;return a===b?`All square · ${a} strokes each`:`${a<b?match.host_name:match.guest_name} wins by ${Math.abs(a-b)} ${Math.abs(a-b)===1?'stroke':'strokes'}`}

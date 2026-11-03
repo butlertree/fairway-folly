@@ -1,6 +1,6 @@
 {
   "name": "fairway-and-folly-3d",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,12 +10,13 @@
     "test": "node --test src/game.test.js"
   },
   "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "@react-three/rapier": "2.2.0",
+    "@supabase/supabase-js": "^2.118.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "three": "0.187.0",
-    "@react-three/fiber": "9.8.2",
-    "@react-three/drei": "10.7.9",
-    "@react-three/rapier": "2.2.0"
+    "three": "0.187.0"
   },
   "devDependencies": {
     "vite": "8.3.5"
