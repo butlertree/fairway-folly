@@ -27,6 +27,7 @@ export function puttingCameraPose(game){
   let position=[b.x-dx*back,4.5+back*.15,b.z-dz*back];
   if(game.hole===2){const y=bridgeHeight(b.x,b.z);position[1]+=y;return {position,target:[b.x+dx*ahead,y,b.z+dz*ahead]}};
   if(game.hole===3){const eye=grottoAddressHeight(b.x,b.z);if(eye!==null)position[1]=eye;return {position,target:[b.x+dx*ahead,.3,b.z+dz*ahead]}}
+  if(game.hole>=4)return {position,target:[b.x+dx*ahead,.3,b.z+dz*ahead]};
   const tower={x:0,z:-.5},nearTower=Math.hypot(b.x,b.z-tower.z)<2.2;
   if(nearTower)position[1]=1.8; // Look through the arch instead of down through its roof.
   else {
