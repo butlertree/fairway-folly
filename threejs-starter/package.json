@@ -1,11 +1,11 @@
 {
   "name": "fairway-and-folly-3d",
-  "version": "0.22.0",
+  "version": "0.22.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-release-gates.mjs",
     "preview": "vite preview",
     "test": "node --test src/game.test.js"
   },
