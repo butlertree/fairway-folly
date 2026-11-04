@@ -10,7 +10,7 @@ export const bunkersByHole={
 6:[bunker('back',7,-83,7,4.5,.9,-.3,.8),bunker('right-pot',39,-61,4.5,7,2.1,.2,2.1,true),bunker('short-left',-7,-44,5,7,.8,.4,1.5)],
 7:[bunker('front-left',-40,-67,6,10,1.2,-.25,1.1),bunker('right-shoulder',13,-86,5,11,1,.1,2),bunker('back-pot',-17,-117,6,5,1.9,0,3,true)],
 8:[bunker('inside-corner',5,-16,8,17,1.2,-.3,1),bunker('drive-right',45,0,7,14,.9,.2,2),bunker('green-left',-111,-179,5,11,1.4,-.2,3),bunker('green-front',-77,-174,6,7,1,.3,4),bunker('back-pot',-86,-220,5,5,2,0,5,true)],
-9:[bunker('drive-right',-9,50,8,17,1,.2,1),bunker('drive-left',-49,72,6,13,1.3,-.2,2),bunker('layup-right',-12,-143,7,14,1.1,.3,3),bunker('green-left',-2,-281,5,10,1.7,-.2,4,true),bunker('green-right',52,-275,5,11,1,.2,5)]
+9:[bunker('drive-right',9,51,8,17,1,.1,1),bunker('drive-left',-41,80,6,15,1.2,-.15,2),bunker('corner',15,9,7,14,1.1,-.5,3),bunker('green-left',208,-160,5,10,1.5,-.2,4,true),bunker('green-right',264,-151,5,11,1,.2,5)]
 };
 export function bunkerProfile(angle,p){return 1+.055*Math.sin(angle*3+p.seed)+.035*Math.cos(angle*2-p.seed)}
 export function bunkerLocal(x,z,p){const dx=x-p.x,dz=z-p.z,c=Math.cos(p.rotation),s=Math.sin(p.rotation);return {x:(dx*c+dz*s)/p.rx,z:(-dx*s+dz*c)/p.rz}}

@@ -252,3 +252,11 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Sand wedge automatically selects on a settled sand lie. For steep nearby lips, its launch opens into a higher, shorter escape arc using the same gravity/contact simulation. Lip sampling is cached so power/accuracy animation does not repeatedly rebuild the terrain profile. Carry estimates reflect the selected escape trajectory. Sand distance penalties remain.
 - Moved two hole-2 island bunkers slightly inward to leave practical dry recovery space while continuing to guard their landing zones.
 - Narrowed perfect accuracy windows for every club: Driver 2.5%, Hybrid 3.2%, 7 iron 4%, Wedge 4.8%, Sand wedge 5.5% of meter width. Sharp green-zone edges match the actual straight-strike interval.
+
+## 0.26.0 — November 4, 2026
+
+- Rebuilt hole 9 as Azalea Hollow: one continuous right dogleg through an irregular forested valley. A broad hilltop shoulder supports the tee. Tall physical trees prevent direct corner cutting; both a three-shot route and a demanding two-driver route with a right-curving second shot are playable.
+- Added closer, irregular woodland and sculpted rough/green surrounds on holes 2–8. Shared tree crowns/trunks drive instanced rendering and swept ball collision. Unified grass colors, including hole 8.
+- Reduced initial push/pull and made sidespin progressively curve the ball through flight, preserving horizontal speed in calm air.
+- Replaced hole 9’s generic putting obstacles with open flowering spiral banks, a timed petal gate, and an outside water feature. Good approaches retain a clear central putting area.
+- 153 regression checks and production build pass, including nine-hole integration, bunker recovery, mini-green connectivity/escape and curved two-shot routing. Desktop browser landscapes inspected; physical phone testing pending.
