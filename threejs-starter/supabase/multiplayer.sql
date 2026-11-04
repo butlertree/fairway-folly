@@ -5,13 +5,13 @@ revoke all on schema ff_private from public, anon, authenticated;
 create table if not exists ff_private.matches (
  id uuid primary key default gen_random_uuid(), host uuid not null, guest uuid,
  host_name text not null check(length(host_name) between 1 and 24), guest_name text,
- invite_hash bytea not null, holes int not null check(holes between 1 and 6),
+ invite_hash bytea not null, holes int not null check(holes between 1 and 9),
  weather text not null check(weather in ('calm','windy','stormy')), layout int not null check(layout between 0 and 3),
  hole int not null default 1, player uuid not null, status text not null default 'waiting' check(status in ('waiting','playing','complete')),
  revision int not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 create table if not exists ff_private.turns (
- match_id uuid references ff_private.matches(id) on delete cascade, player uuid not null, hole int not null check(hole between 1 and 6),
+ match_id uuid references ff_private.matches(id) on delete cascade, player uuid not null, hole int not null check(hole between 1 and 9),
  snapshot jsonb, strokes int check(strokes between 0 and 99), submission uuid, finished boolean not null default false,
  primary key(match_id,player,hole)
 );
@@ -32,7 +32,7 @@ create or replace function public.ff_create_match(p_name text,p_holes int,p_weat
 declare mid uuid;
 begin
  if auth.uid() is null then raise exception 'Please reconnect before creating a match.'; end if;
- if length(trim(p_name)) not between 1 and 24 or p_name is null or p_holes not between 1 and 6 or p_holes is null or p_layout not between 0 and 3 or p_layout is null or p_weather not in ('calm','windy','stormy') or p_weather is null or length(p_invite)<>64 or p_invite is null then raise exception 'Check the match settings.'; end if;
+ if length(trim(p_name)) not between 1 and 24 or p_name is null or p_holes not between 1 and 9 or p_holes is null or p_layout not between 0 and 3 or p_layout is null or p_weather not in ('calm','windy','stormy') or p_weather is null or length(p_invite)<>64 or p_invite is null then raise exception 'Check the match settings.'; end if;
  if (select count(*) from ff_private.matches where host=auth.uid() and created_at>now()-interval '1 hour')>=10 then raise exception 'You have created several matches. Please try again later.'; end if;
  insert into ff_private.matches(host,host_name,invite_hash,holes,weather,layout,player) values(auth.uid(),trim(p_name),sha256(convert_to(p_invite,'UTF8')),p_holes,p_weather,p_layout,auth.uid()) returning id into mid;
  return ff_private.state(mid);

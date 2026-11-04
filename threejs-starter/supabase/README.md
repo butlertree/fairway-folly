@@ -12,7 +12,7 @@ The frontend remains on GitHub Pages. This Supabase project stores private two-p
 
 ## Player experience
 
-Choose **Play with a friend** on the start screen or **Private multiplayer** in Menu. Create a match, choose 1–6 holes, conditions and a pin set, then send the invitation. The first guest to join takes the second seat. Invitations put their random 256-bit secret in the URL fragment, not the query string, and only its SHA-256 hash is stored in the database.
+Choose **Play with a friend** on the start screen or **Private multiplayer** in Menu. Create a match, choose 1–9 holes, conditions and a pin set, then send the invitation. The first guest to join takes the second seat. Invitations put their random 256-bit secret in the URL fragment, not the query string, and only its SHA-256 hash is stored in the database.
 
 The host plays hole 1, then the guest plays hole 1. The guest starts hole 2, then the host plays hole 2. The first player alternates on every hole. This means the second player on one hole also starts the next hole. Results appear in both scorecards. Lowest total strokes wins. Ties remain ties.
 
@@ -33,3 +33,5 @@ Guest signup uses Supabase's existing auth rate limits. Before wider release, ad
 `npm test` covers game regressions and serialization. `node supabase/smoke.mjs` creates three QA guests and a clearly labelled two-hole QA match; it tests the actual API and leaves the completed QA record for audit. It does not modify real players' matches and never prints session tokens. This network test should be run intentionally, not on every production build.
 
 Local DEV-only `testplayer=host` / `testplayer=guest` uses separate auth storage keys to simulate two devices in browser tabs. DEV-only `preview=match-putt` starts a new unsaved turn near the cup so actual putt completion and handoff can be checked quickly. These overrides are removed from production builds.
+
+Existing installations: apply `nine-holes.sql` once to extend match lengths without deleting scores or changing access rules. `FF_QA_HOLES=9 node supabase/smoke.mjs` checks a full labeled nine-hole protocol match.

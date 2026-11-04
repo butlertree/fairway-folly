@@ -227,3 +227,12 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Amberlight Bluff is now a 445-yard right dogleg, 55 yards longer, with additional landing and greenside bunkers. Its lighthouse is 50% larger and embedded in the terrain.
 - Willowspire Reach creek now crosses at the foot of the green hill; removed the separate right landing pad and added a fairway bunker. Course total is 2,167 yards, par 24.
 - 127 tests pass, including six-hole playthrough, reachable putting regions and edge-rest escape audits.
+
+## 0.24.0 — November 3, 2026
+
+- Reviewed bunkers across all six holes against drive, layup and approach landing zones; moved/resized hazards into play while retaining clear safe routes. Added a bunker to Cascade Reach's risky island.
+- Strengthened club-specific sand distance penalties and display the reduced carry on each club button. All deep pots retain lofted sand-wedge exits.
+- Club-specific straight accuracy windows now grow progressively from driver to sand wedge, with matching visual feedback and actual shot response.
+- Added Seabell Headland (202-yard par 3), Copperpine Bend (460-yard left-dogleg par 4), and Azalea Crown (602-yard par 5), with three original mini gardens and four pin placements each. Nine holes total par 36, 3,431 yards, 35 bunkers.
+- Solo rounds, scorecards and private matches support 1–9 holes. Applied the compatible match-length migration; existing match data and security rules preserved.
+- Removed overlapping stream/lake water surfaces and excluded decorative landmark trees from water and cliff-edge positions.

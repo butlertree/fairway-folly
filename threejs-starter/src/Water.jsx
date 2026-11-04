@@ -4,14 +4,14 @@ import * as THREE from 'three';
 import {pondOutline,height,waterLevel} from './game';
 
 // An animated, depth-coloured surface. The shoreline is shared with hazard tests.
-export function WaterMaterial({pond={x:0,z:0,rx:200,rz:200}}){
+export function WaterMaterial({pond={x:0,z:0,rx:200,rz:200},excludePonds=[]}){
  const ref=useRef();
- const uniforms=useMemo(()=>({uTime:{value:0},uPond:{value:new THREE.Vector4(pond.x,pond.z,pond.rx,pond.rz)}}),[pond.x,pond.z,pond.rx,pond.rz]);
+ const uniforms=useMemo(()=>({uExclude:{value:Array.from({length:3},(_,i)=>{const p=excludePonds[i];return new THREE.Vector4(p?.x??0,p?.z??0,p?.rx??1,p?.rz??1)})},uExcludeCount:{value:excludePonds.length},uTime:{value:0},uPond:{value:new THREE.Vector4(pond.x,pond.z,pond.rx,pond.rz)}}),[pond.x,pond.z,pond.rx,pond.rz,excludePonds]);
  useFrame((_,dt)=>{if(ref.current)ref.current.uniforms.uTime.value+=dt});
  return <shaderMaterial ref={ref} uniforms={uniforms} side={THREE.DoubleSide}
  vertexShader={`varying vec3 vWorld;void main(){vWorld=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(vWorld,1.);}`}
- fragmentShader={`uniform float uTime;uniform vec4 uPond;varying vec3 vWorld;
- void main(){vec2 p=vWorld.xz;float edge=length((p-uPond.xy)/uPond.zw);float shallow=smoothstep(.15,1.08,edge);
+ fragmentShader={`uniform float uTime;uniform vec4 uPond;uniform vec4 uExclude[3];uniform int uExcludeCount;varying vec3 vWorld;
+ void main(){vec2 p=vWorld.xz;for(int i=0;i<3;i++){if(i>=uExcludeCount)break;vec2 q=(p-uExclude[i].xy)/uExclude[i].zw;float a=atan(q.y,q.x);if(length(q)<1.+.12*sin(a*3.+.8)+.06*cos(a*5.))discard;}float edge=length((p-uPond.xy)/uPond.zw);float shallow=smoothstep(.15,1.08,edge);
  vec3 colour=mix(vec3(.055,.34,.43),vec3(.36,.76,.76),shallow);
  float ripples=sin(p.x*3.+sin(p.y*1.8+uTime)*.6+uTime*1.4)*sin(p.y*3.7-uTime*.8);
  float glint=smoothstep(.84,.99,ripples);colour+=glint*.19;colour+=sin(p.x*.5+p.y*.8+uTime*.5)*.018;
