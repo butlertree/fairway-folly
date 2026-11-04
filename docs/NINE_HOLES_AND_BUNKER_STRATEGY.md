@@ -10,8 +10,8 @@ Original Fairway & Folly designs; no copied hole layouts, artwork or course asse
 | 4 | Pinch the dogleg landing shelf from both sides and guard the raised green's front, left and right. A well-powered second shot must carry the front trap. |
 | 5 | Drive trap now bites farther into the landing width; two layup-depth traps tighten the approach; both greenside hazards sit beside the green rather than remote rough. |
 | 6 | Bring the back and front-left bunkers to approach misses and the right pot to the green shoulder. |
-| 7 — Seabell Headland | 202-yard par 3; a long hybrid across an inlet, broad right shoulder, three greenside traps, shoreline spillway and stone bell landmark. Seabell Court is a sheared lens with diagonal bank fins and a side pool. |
-| 8 — Copperpine Bend | 460-yard par 4, dogleg left; drive to the right shelf then turn left toward a crowned green. Inside-corner and right-side drive sand force placement; three green guards. Warm sandhill turf, stone pines, and Pinecone Terrace's bank/planter caroms. |
+| 8 — Seabell Headland | 202-yard par 3; a long hybrid across an inlet, broad right shoulder, three greenside traps, shoreline spillway and stone bell landmark. Seabell Court is a sheared lens with diagonal bank fins and a side pool. |
+| 7 — Copperpine Bend | 460-yard par 4, dogleg left; drive to the right shelf then turn left toward a crowned green. Inside-corner and right-side drive sand force placement; three green guards. Unified green turf, woodland, and Pinecone Terrace's bank/planter caroms. |
 | 9 — Azalea Crown | 602-yard par 5; a three-shot flowering-creek finale. Paired drive traps, a layup trap, two green guards, raised final green and waterfall. Petal Conservatory has a moving gate plus open outside bank routes. |
 
 35 groomed bunkers total, 22 on holes 1–6 and 13 on the new holes. Rendering, sand lies and depressed floors use the same outlines. All sampled collars clear green, water, tee and bounds. Reachable shot dispersions include sand finishes on every original hole. This is a strategic sampling check rather than a measured real-player hit probability.

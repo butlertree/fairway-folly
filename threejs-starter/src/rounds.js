@@ -1,5 +1,5 @@
-export const holePars=[4,5,3,4,5,3,3,4,5];
-export const holeYards=[360,520,165,445,535,142,202,460,602];
+export const holePars=[4,5,3,4,5,3,4,3,5];
+export const holeYards=[360,520,165,445,535,142,460,202,602];
 export const roundPar=count=>holePars.slice(0,count).reduce((a,b)=>a+b,0);
 export const roundYards=count=>holeYards.slice(0,count).reduce((a,b)=>a+b,0);
 export const ROUND_PAR=36;

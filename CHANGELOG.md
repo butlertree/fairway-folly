@@ -260,3 +260,14 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Reduced initial push/pull and made sidespin progressively curve the ball through flight, preserving horizontal speed in calm air.
 - Replaced hole 9’s generic putting obstacles with open flowering spiral banks, a timed petal gate, and an outside water feature. Good approaches retain a clear central putting area.
 - 153 regression checks and production build pass, including nine-hole integration, bunker recovery, mini-green connectivity/escape and curved two-shot routing. Desktop browser landscapes inspected; physical phone testing pending.
+
+## 0.27.0 — November 4, 2026
+
+- Swapped complete holes 7 and 8: Copperpine Bend is now the seventh (par 4), Seabell Headland the eighth (par 3). Yardages, hazards, mini-greens, pin layouts and scorecard pars follow their designs.
+- Removed course and mini-green cart paths.
+- Added distinct playable slopes to greens 3–9 and subtle outer slopes on green 2, preserving its central terrace and a flat close-approach reward. Turf, ball roll, putter and cup use the same height field. Obstacles sit on the contoured turf.
+- Spread hole 5’s planters, banks and moving gates across the green.
+- Enlarged the first green’s physical windmill blades from 3.2 to 3.75 feet half-span and .18 to .34 feet half-width. Added 105 instanced, colliding woodland trees to the first full-size hole.
+- 159 checks and production build pass, including real sideways break, full nine-hole scoring, 875 bunker recoveries and connected/escapable putting layouts.
+
+- Added 100 irregular trees beside/behind full-size greens 1–5 and 7–9, with broad oaks, slender birches/cypress shapes and willows. Five larger named specimen trees give individual holes landmarks. Hole 6 receives no additional trees; approaches, sand recovery and real island soil constrain placement.
