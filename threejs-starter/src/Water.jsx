@@ -3,8 +3,9 @@ import {useFrame} from '@react-three/fiber';
 import * as THREE from 'three';
 import {pondOutline,height,waterLevel} from './game';
 
+const NO_EXCLUSIONS=[];
 // An animated, depth-coloured surface. The shoreline is shared with hazard tests.
-export function WaterMaterial({pond={x:0,z:0,rx:200,rz:200},excludePonds=[]}){
+export function WaterMaterial({pond={x:0,z:0,rx:200,rz:200},excludePonds=NO_EXCLUSIONS}){
  const ref=useRef();
  const uniforms=useMemo(()=>({uExclude:{value:Array.from({length:3},(_,i)=>{const p=excludePonds[i];return new THREE.Vector4(p?.x??0,p?.z??0,p?.rx??1,p?.rz??1)})},uExcludeCount:{value:excludePonds.length},uTime:{value:0},uPond:{value:new THREE.Vector4(pond.x,pond.z,pond.rx,pond.rz)}}),[pond.x,pond.z,pond.rx,pond.rz,excludePonds]);
  useFrame((_,dt)=>{if(ref.current)ref.current.uniforms.uTime.value+=dt});
