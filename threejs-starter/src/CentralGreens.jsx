@@ -1,0 +1,3 @@
+import React,{useMemo} from 'react';import * as THREE from 'three';
+import {crossing,crossingX,miniHeight} from './mini-surfaces';
+export function CascadeCrossing(){const rails=useMemo(()=>[-1,1].map(side=>new THREE.CatmullRomCurve3(Array.from({length:65},(_,i)=>{const z=4+i/64*6;return new THREE.Vector3(crossingX(z)+side*crossing.halfWidth,miniHeight(3,crossingX(z),z)+.16,z)}))),[]);return <>{Array.from({length:48},(_,i)=>{const z=4.05+i/47*5.9,x=crossingX(z),y=miniHeight(3,x,z);return <mesh key={i} position={[x,y-.045,z]} receiveShadow><boxGeometry args={[3.8,.09,.17]}/><meshStandardMaterial color={i%2?'#c0a272':'#ae8c58'}/></mesh>})}{rails.map((c,i)=><mesh key={i} castShadow><tubeGeometry args={[c,100,.1,8,false]}/><meshStandardMaterial color="#b29365"/></mesh>)}</>}

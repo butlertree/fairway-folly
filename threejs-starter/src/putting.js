@@ -1,5 +1,5 @@
 import {miniCup} from './cups.js';
-import {bridgeHeight} from './hole-two.js';
+import {miniHeight} from './mini-surfaces.js';
 import {putt,mini} from './game.js';
 
 export function pullback(start,end,angle){
@@ -24,9 +24,9 @@ export function puttingCameraPose(game){
   const b=((game.pull||game.mode==='rolling')?game.puttCameraAnchor:null)??{x:game.ball.x,z:game.ball.z,angle:game.angle};
   const distance=Math.hypot(b.x-miniCup(game).x,b.z-miniCup(game).z),back=Math.max(5,Math.min(12,distance*.55)),ahead=Math.min(3,distance*.4),dx=Math.sin(b.angle),dz=-Math.cos(b.angle);
   let position=[b.x-dx*back,4.5+back*.15,b.z-dz*back];
-  if(game.hole===2){const y=bridgeHeight(b.x,b.z);position[1]+=y;return {position,target:[b.x+dx*ahead,y,b.z+dz*ahead]}};
-  if(game.hole>=3)return {position,target:[b.x+dx*ahead,.3,b.z+dz*ahead]};
-  const tower={x:0,z:-.5},nearTower=Math.hypot(b.x,b.z-tower.z)<2.2;
+  const y=miniHeight(game.hole,b.x,b.z);position[1]+=y;
+  if(game.hole!==1)return {position,target:[b.x+dx*ahead,y+.3,b.z+dz*ahead]};
+  const tower={x:0,z:6.5},nearTower=Math.hypot(b.x,b.z-tower.z)<2.2;
   if(nearTower)position[1]=1.8; // Look through the arch instead of down through its roof.
   else {
     const blocked=p=>{const vx=b.x-p[0],vz=b.z-p[2],t=Math.max(0,Math.min(1,((tower.x-p[0])*vx+(tower.z-p[2])*vz)/(vx*vx+vz*vz)));return Math.hypot(p[0]+t*vx-tower.x,p[2]+t*vz-tower.z)<2.15};
@@ -37,4 +37,4 @@ export function puttingCameraPose(game){
 }
 
 // Model's grooved striking face is local -Z; it must face the ball at every aim angle.
-export function putterPose(game){const b=game.ball;let dx=game.pull?.x??Math.sin(game.angle),dz=game.pull?.z??-Math.cos(game.angle),n=Math.hypot(dx,dz);if(n<.001){dx=Math.sin(game.angle);dz=-Math.cos(game.angle);n=1}dx/=n;dz/=n;const back=.48+(game.pull?.percent??0)/100*1.4;return {position:[b.x-dx*back,(game.hole===2?bridgeHeight(b.x,b.z):0)+.16,b.z-dz*back],rotation:-Math.atan2(dx,-dz)}}
+export function putterPose(game){const b=game.ball;let dx=game.pull?.x??Math.sin(game.angle),dz=game.pull?.z??-Math.cos(game.angle),n=Math.hypot(dx,dz);if(n<.001){dx=Math.sin(game.angle);dz=-Math.cos(game.angle);n=1}dx/=n;dz/=n;const back=.48+(game.pull?.percent??0)/100*1.4;return {position:[b.x-dx*back,miniHeight(game.hole,b.x,b.z)+.16,b.z-dz*back],rotation:-Math.atan2(dx,-dz)}}

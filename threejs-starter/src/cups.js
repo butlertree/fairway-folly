@@ -1,4 +1,8 @@
-export const cupLayouts={7:[{x:0,z:-12},{x:-3,z:-10},{x:3,z:-10},{x:0,z:-8}],8:[{x:0,z:-12},{x:-4,z:-10},{x:4,z:-10},{x:0,z:-8}],9:[{x:0,z:-12},{x:-4,z:-10},{x:4,z:-10},{x:0,z:-8}],4:[{x:0,z:-12},{x:-4.7,z:-10.5},{x:4.5,z:-11},{x:0,z:-8.2}],5:[{x:0,z:-12},{x:-4,z:-11.5},{x:4.3,z:-10.8},{x:0,z:-8.5}],6:[{x:0,z:-12},{x:-4.3,z:-10.5},{x:4.5,z:-11.7},{x:-1,z:-8.2}],1:[{x:0,z:-12},{x:-5,z:-10.5},{x:3,z:-11.8},{x:-6.7,z:-8}],2:[{x:0,z:-12},{x:-4,z:-10.7},{x:4.3,z:-11.8},{x:-7,z:-9}],3:[{x:0,z:-12},{x:-5.8,z:-9},{x:5.1,z:-9.8},{x:0,z:-6.3}]};
-export function cupFor(hole=1,layout=0){return {...(cupLayouts[hole]??cupLayouts[1])[((layout%4)+4)%4]}}
-export function miniCup(game){return game.cup??cupLayouts[game.hole??1]?.[0]??cupLayouts[1][0]}
-export function pinFor(game,course){const cup=miniCup(game);return {x:course.pin.x+cup.x/9*course.green.rx*.65,z:course.pin.z+(cup.z+12)/9*course.green.rz*.65}}
+const fullPinLayouts={7:[{x:0,z:-12},{x:-3,z:-10},{x:3,z:-10},{x:0,z:-8}],8:[{x:0,z:-12},{x:-4,z:-10},{x:4,z:-10},{x:0,z:-8}],9:[{x:0,z:-12},{x:-4,z:-10},{x:4,z:-10},{x:0,z:-8}],4:[{x:0,z:-12},{x:-4.7,z:-10.5},{x:4.5,z:-11},{x:0,z:-8.2}],5:[{x:0,z:-12},{x:-4,z:-11.5},{x:4.3,z:-10.8},{x:0,z:-8.5}],6:[{x:0,z:-12},{x:-4.3,z:-10.5},{x:4.5,z:-11.7},{x:-1,z:-8.2}],1:[{x:0,z:-12},{x:-5,z:-10.5},{x:3,z:-11.8},{x:-6.7,z:-8}],2:[{x:0,z:-12},{x:-4,z:-10.7},{x:4.3,z:-11.8},{x:-7,z:-9}],3:[{x:0,z:-12},{x:-5.8,z:-9},{x:5.1,z:-9.8},{x:0,z:-6.3}]};
+// Cup stays central in mini golf; four full-size flag placements remain independent.
+export const cupLayouts=Object.fromEntries(Object.keys(fullPinLayouts).map(h=>[h,[0,1,2,3].map(layout=>({x:0,z:0,layout}))]));
+export function cupFor(hole=1,layout=0){return {...cupLayouts[hole][((layout%4)+4)%4]}}
+export function miniCup(game){return {x:0,z:0}}
+export function pinFor(game,course){const layout=((game.layout??game.cup?.layout??0)%4+4)%4,cup=fullPinLayouts[game.hole??1][layout];return {x:course.pin.x+cup.x/9*course.green.rx*.65,z:course.pin.z+(cup.z+12)/9*course.green.rz*.65}}
+
+export function legacyMiniCup(hole,layout=0){return fullPinLayouts[hole][layout]}

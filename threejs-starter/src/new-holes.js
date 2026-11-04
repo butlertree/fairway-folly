@@ -22,4 +22,4 @@ export function lieNew(x,z,hole){const c=newHoles[hole];if((x/c.bounds.rx)**2+(z
 // Each creek reaches the actual sculpted edge, so the fall begins at the lip.
 export function newOutlet(hole){const c=newHoles[hole];if(hole===8)return null;if(hole===4){const z=-29;let x=50;while(Math.hypot(x/c.landRadius.rx,z/c.landRadius.rz)<edgeShape(Math.atan2(z/c.landRadius.rz,x/c.landRadius.rx)))x+=.1;return {x,z,width:5}}let x=0;while(true){const z=creekCenter(x,hole),a=Math.atan2(z/c.landRadius.rz,x/c.landRadius.rx);if(Math.hypot(x/c.landRadius.rx,z/c.landRadius.rz)>=edgeShape(a))return {x,z,width:creekWidth(hole)*2};x+=.1}}
 export const HOLE_COUNT=9;
-export const greenNames=['','The Mill Garden','The Moon Garden','Kingfisher Cascades',...Object.values(newHoles).map(c=>c.greenName)];
+export const greenNames=['','Waterwheel Run','The Two-Tier Garden','Cascade Crossing',...Object.values(newHoles).map(c=>c.greenName)];

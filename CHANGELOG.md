@@ -236,3 +236,12 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Added Seabell Headland (202-yard par 3), Copperpine Bend (460-yard left-dogleg par 4), and Azalea Crown (602-yard par 5), with three original mini gardens and four pin placements each. Nine holes total par 36, 3,431 yards, 35 bunkers.
 - Solo rounds, scorecards and private matches support 1–9 holes. Applied the compatible match-length migration; existing match data and security rules preserved.
 - Removed overlapping stream/lake water surfaces and excluded decorative landmark trees from water and cliff-edge positions.
+
+## 0.25.0 — November 4, 2026
+
+- Central mini-golf cups on all nine greens, independent of the unchanged four full-size flag placements. Full-size landing direction and proximity now determine the miniature putting lie; removed the old minimum-distance offset, clamping and common repositioning lanes.
+- Close approaches retain short putts; a one-yard approach leaves a three-foot putt on the same side of the cup. Longer distances compress smoothly to fit each green, with local safe placement around hazards instead of a shared starting spot.
+- Waterwheel Run: west curved bank route and relocated timed mill gate. Two-Tier Garden: raised central terrace with shared rendered/simulated slope and uphill pace control. Cascade Crossing: broad curved bridge, real stream hazard and dry outside route.
+- Repositioned other garden banks, moving gates and planters to retain a clear central finishing area and connected access from all sides.
+- Surface-aware putter, ball, cup, drop animation and camera heights. Initial approach lies remain still until played; slopes affect moving putts. Tap-in requires a clear line and accounts for elevation.
+- Existing private-match putting snapshots migrate without removing strokes or history; unplayed approaches remap from the original full-size landing when available.
