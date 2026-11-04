@@ -1,0 +1,6 @@
+import {bunkerAt,bunkerFraction} from './bunkers.js';
+import {height} from './course.js';
+const profiles=new Map();
+// A sand wedge opens its face for a steep nearby lip. The ball still follows
+// the normal gravity/contact simulation; no position or score is changed here.
+export function bunkerLaunch(g,horizontal,vertical,angle,power){const p=g.lie==='Sand'&&g.club==='Sand wedge'?bunkerAt(g.ball.x,g.ball.z,g.hole):null;if(!p||power<.2)return {horizontal,vertical,escape:false};const key=[g.hole,g.ball.x,g.ball.y,g.ball.z,angle].join(','),cached=profiles.get(key);let samples=cached?.samples,rise=cached?.rise;if(!cached){const dx=Math.sin(angle),dz=-Math.cos(angle);samples=[];rise=0;for(let d=.05;d<Math.max(p.rx,p.rz)*2.6+2;d+=.05){const x=g.ball.x+dx*d,z=g.ball.z+dz*d,need=height(x,z,g.hole)+.085+Math.min(.15,d*.12)-g.ball.y;samples.push({d,need});rise=Math.max(rise,need);if(bunkerFraction(x,z,p)>1.18)break}profiles.set(key,{samples,rise});if(profiles.size>128)profiles.delete(profiles.keys().next().value)}const vy=Math.max(vertical,Math.sqrt(2*9.81*(rise+.6)));let vx=horizontal;for(const {d,need}of samples){if(need<=0)continue;const t=(vy-Math.sqrt(Math.max(0,vy*vy-2*9.81*need)))/9.81;if(t>0)vx=Math.min(vx,d/t*.85)}return {horizontal:vx,vertical:vy,escape:vx<horizontal*.97||vy>vertical*1.03}}

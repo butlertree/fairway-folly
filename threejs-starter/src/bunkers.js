@@ -3,7 +3,7 @@ const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
 const bunker=(id,x,z,rx,rz,depth=.8,rotation=0,seed=0,pot=false)=>({id,x,z,rx,rz,depth,rotation,seed,pot});
 export const bunkersByHole={
 1:[bunker('fairway',18,-142,5.8,10,.85,-.2,.7),bunker('left-drive',-11,-62,6,13,.8,.25,1.8),bunker('green-pot',-20,-157,3.8,6,1.8,-.3,2.3,true)],
-2:[bunker('green',24,-214,5.8,9,.95,.25,.4),bunker('shelf-pot',-45,94,5,10,1.9,-.2,1.1,true),bunker('approach',-49,-75,5.5,12,.8,.4,2.4),bunker('island-carry',36,-6,4.2,8,.9,.2,2.7)],
+2:[bunker('green',24,-214,5.8,9,.95,.25,.4),bunker('shelf-pot',-45,94,5,10,1.9,-.2,1.1,true),bunker('approach',-55,-70,5.5,12,.8,.4,2.4),bunker('island-carry',32,15,4.2,8,.9,.2,2.7)],
 3:[bunker('cove',-22,-66,2.2,3,1.1,0,.8),bunker('back-pot',13,-93,2.2,3,1.9,0,.8,true)],
 4:[bunker('corner',-16,-30,8.5,16,.9,-.28,.9),bunker('bluff-pot',44,-204,5.2,7,2.1,.25,2,true),bunker('right-green',98,-181,5.3,8,.9,-.4,1.4),bunker('landing-left',-51,-10,6,13,.9,.2,2.7),bunker('green-front',58,-163,5.5,8.5,1,-.3,3.1)],
 5:[bunker('drive',-17,24,10,17,.85,-.35,1.2),bunker('green',48,-233,6,10,1,.3,.4),bunker('left-pot',-4,-247,4.8,7,2.15,-.15,1.8,true),bunker('bold-shelf',-16,-137,6,11,1.1,.25,2.6),bunker('layup-pinch',-49,-94,7.5,15,.95,.25,3.2)],

@@ -245,3 +245,10 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Repositioned other garden banks, moving gates and planters to retain a clear central finishing area and connected access from all sides.
 - Surface-aware putter, ball, cup, drop animation and camera heights. Initial approach lies remain still until played; slopes affect moving putts. Tap-in requires a clear line and accounts for elevation.
 - Existing private-match putting snapshots migrate without removing strokes or history; unplayed approaches remap from the original full-size landing when available.
+
+## 0.25.1 — November 4, 2026
+
+- Moved the hole-2 mini-green bank fully clear of its pond; rendering and collision share the corrected endpoints. Added an edge-clearance regression check.
+- Sand wedge automatically selects on a settled sand lie. For steep nearby lips, its launch opens into a higher, shorter escape arc using the same gravity/contact simulation. Lip sampling is cached so power/accuracy animation does not repeatedly rebuild the terrain profile. Carry estimates reflect the selected escape trajectory. Sand distance penalties remain.
+- Moved two hole-2 island bunkers slightly inward to leave practical dry recovery space while continuing to guard their landing zones.
+- Narrowed perfect accuracy windows for every club: Driver 2.5%, Hybrid 3.2%, 7 iron 4%, Wedge 4.8%, Sand wedge 5.5% of meter width. Sharp green-zone edges match the actual straight-strike interval.

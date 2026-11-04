@@ -9,7 +9,7 @@ export const gardenObstacles={
 };
 export const gardenBanks={
   1:[{ax:-4.8,az:7,bx:-6, bz:4,r:.38},{ax:-6,az:4,bx:-6.2,bz:1,r:.38},{ax:-6.2,az:1,bx:-5.5,bz:-2,r:.38}],
-  2:[{ax:6.5,az:8.3,bx:7.4,bz:5.6,r:.35},{ax:-6.7,az:-5.5,bx:-5.2,bz:-7.3,r:.35}],
+  2:[{ax:6.5,az:8.3,bx:7.4,bz:5.6,r:.35},{ax:-6.8,az:-10.2,bx:-4.6,bz:-11.4,r:.35}],
   ...expansionBanks,3:[]
 };
 export const grottoPool=cascadePool;

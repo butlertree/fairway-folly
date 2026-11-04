@@ -21,3 +21,5 @@ Every club loses distance from sand. Flat carry at full power is approximately D
 The straight accuracy window is 6.5% of bar width for Driver, 9% Hybrid, 12% 7 iron, 16% Wedge, and 21% Sand wedge. Green-zone hits produce zero hook/slice input; misses ramp continuously toward the existing severe extreme miss. Display, cursor feedback and physics use the same club data. Power timing remains unchanged.
 
 Solo rounds and private multiplayer support 1–9 holes. Nine-hole total: par 36, 3,431 yd. Existing shorter round scorecards and invitations remain supported. The additive Supabase migration updates length constraints and match creation validation without modifying old matches, scores, invitations or access rules.
+
+Revision 0.25.1 (November 4): the current accuracy windows are Driver 2.5%, Hybrid 3.2%, 7 iron 4%, Wedge 4.8%, Sand wedge 5.5%; the wider values above describe the original 0.24 tuning. Steep-lip sand-wedge shots can use a higher, shorter escape arc, reflected in the live carry estimate. Hole-2 approach and risky-island bunkers moved inward to retain a dry recovery shot.
