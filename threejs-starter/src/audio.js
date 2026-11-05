@@ -21,7 +21,6 @@ class GameAudio {
     }
     this.ambience={
       air:ambienceLayer(c,this.master,buffer,{frequency:520,gain:.045}),
-      stream:ambienceLayer(c,this.master,buffer,{frequency:2300,type:'bandpass',pulse:3.7}),
       deck:ambienceLayer(c,this.master,buffer,{frequency:480,type:'bandpass',pulse:24})
     };
   }

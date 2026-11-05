@@ -291,3 +291,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Fade in the bridge stream on arrival and bring it forward as the ball approaches. Give rolling on the deck, tapping the wooden rail, and striking stone distinct audio.
 - Animate the stream toward the waterfall and drive flag, weather, and wind ambience from the same gust used for ball flight.
 - Verified all 170 tests and the production build. Checked the bridge green at desktop and 390 × 844 and played a pullback putt at phone size. Physical phone audio remains to be checked.
+
+- Removed the synthetic stream loop from Kingfisher Cove after playtest feedback.
