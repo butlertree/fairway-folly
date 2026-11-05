@@ -1,11 +1,10 @@
 import {boundaryClearance} from './mini-boundary.js';
-import {expansionPools} from './expansion-greens.js';
 const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
 export const cascadePool={x:1,z:7,rx:6.2,rz:1.65};
 export const crossing={z:7,halfLength:3,halfWidth:1.9,crest:.65};
 export const crossingX=z=>.65*Math.sin((z-crossing.z)/crossing.halfLength*Math.PI);
 export const onCrossing=(x,z)=>Math.abs(z-crossing.z)<crossing.halfLength&&Math.abs(x-crossingX(z))<=crossing.halfWidth;
-export function miniPool(hole){return expansionPools[hole]??(hole===3?cascadePool:hole===2?{x:-6.4,z:-7,rx:1.3,rz:2}:{x:6,z:-7.3,rx:2.25,rz:3})}
+export function miniPool(hole){return hole===3?cascadePool:null}
 // Gentle playable landforms, with a flat three-foot reward area and level outer banks.
 export const greenContours={
  1:[[-3.5,-8,3,5,.7],[4,1,3.2,4,.65]],

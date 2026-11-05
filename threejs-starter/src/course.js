@@ -10,7 +10,7 @@ export const ponds={course:{x:4*course.sx,z:-5*course.sz,rx:10*course.sx,rz:5*co
 export function pondRadius(a){return 1+.12*Math.sin(a*3+.8)+.06*Math.cos(a*5)}
 export function pondOutline(p,n=96){return Array.from({length:n},(_,i)=>{const a=i/n*Math.PI*2,r=pondRadius(a);return [p.x+p.rx*r*Math.cos(a),p.z+p.rz*r*Math.sin(a)]})}
 export function pondFraction(x,z,p){const nx=(x-p.x)/p.rx,nz=(z-p.z)/p.rz;return Math.hypot(nx,nz)/pondRadius(Math.atan2(nz,nx))}
-export function inPond(x,z,p){return pondFraction(x,z,p)<1}
+export function inPond(x,z,p){return !!p&&pondFraction(x,z,p)<1}
 function baseHeight(x,z){x/=course.sx;z/=course.sz;return 60+4*Math.exp(-(x*x/280+(z-12)**2/140))+18*Math.exp(-((x+30)**2/95+(z+22)**2/220))+14*Math.exp(-((x-29)**2/75+(z-13)**2/160))+1.8*(1.45+1.8*Math.exp(-((x+23)**2/430+(z+12)**2/530))+1.7*Math.exp(-((x-22)**2/520+(z-17)**2/700))+.65*Math.exp(-((x+5)**2/900+(z+35)**2/350))+.16*Math.sin(x/6)*Math.cos(z/8))}
 export const waterLevel=baseHeight(ponds.course.x,ponds.course.z)-.1;
 const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};

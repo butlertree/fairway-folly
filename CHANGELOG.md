@@ -276,3 +276,12 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 
 - Added two gentle, physically simulated contours to the first mini-green: a rear-left shoulder and an eastern knoll. The windmill passage, three-foot cup reward area, outer banks and forgiving west bank lane remain level.
 - Confirmed the ninth mini-green’s existing two slopes remain active. Extended relief and real-break tests to include green 1 and verified level windmill clearance. 160 tests and production build pass.
+
+## 0.28.0 — November 4, 2026
+
+- Stronger crest/shoulder turf colors and directional hill shading make existing slopes more legible on phones.
+- Rebuilt all turf openings with a uniform circular inner ring and a flush cut edge; long polygon edges no longer slice across the cup liner.
+- Removed mini-green side puddles, shore depressions and hidden water penalties. Hole 3 keeps its stream, curved bridge and real water hazard. Full-size course water is unchanged.
+- Putting targets stop at the first actual bank, planter, moving gate, windmill blade, bridge rail or exposed stream.
+- Behind-ball putting automatically widens for longer shots and protects ball visibility through rebounds and the return to address. Shot heading stays steady; phone framing reserves room to pull back below the ball.
+- 169 checks and build pass, including 9,804 simulated camera frames, uniform cup edges, first-object aiming, all nine holes, bank escapes and 875 bunker recoveries. Browser checked at 390×844 and desktop sizes; a real iPhone/Safari check is still needed.

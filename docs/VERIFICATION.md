@@ -21,3 +21,15 @@ Green woodland follow-up: 100 rear/side-grove trees across all requested holes; 
 ## 0.27.1 first-green slopes
 
 160/160 tests pass, production build and studio exclusion gate pass. Green 1 is now included in distinct-relief, clear-central-area and real-sideways-break tests. The windmill passage and west bank lane stay level; existing bank escapes, stationary-blade contact, putting-distance fixture, full nine-hole round, 875 bunker recoveries and close-approach rewards pass. Green 9’s existing relief is explicitly checked. Desktop browser inspected the first mini-green. Physical phone/Safari check remains pending.
+
+## 0.28.0 putting clarity and framing
+
+169/169 tests pass, production build and studio exclusion gate pass. Circular turf openings use 192 equally spaced directions on every green; the chord distance stays above .5498 around a .55 capture opening, preventing turf triangles from overhanging the liner. Crest/shoulder luminance contrast is measured across eight greens. Existing height fields and capture rules are unchanged.
+
+Side pools have been removed from rendering, lowered shore geometry, approach placement and penalty checks. Real putts through all eight retired pool locations spend one stroke with no Water penalty. The hole-3 stream, bridge support/curbs, exposed-water penalty and dry bank route remain tested. Drying greens expands the connected-position audit to 16,498 half-foot nodes and 26,981 moving-gate-phase nodes. 504 edge-case rests escaped using 531 physical probes. Full nine-hole scoring and all 875 bunker recoveries pass.
+
+First-contact aiming tests cover planter front faces, capsule banks, moving-gate phases, timed windmill openings, bridge rails and exposed water. It is a directional first-contact guide, not a guaranteed future trajectory through moving obstacles or slopes.
+
+Bank-putt framing tested at 375×667, 390×844 and 1280×720. Every playable bank fits the wide shot pose; phone address views leave 160 pixels of pullback clearance. 9,804 physically simulated rolling/rebound/return frames retain the ball inside the viewport through the same easing and visibility correction used by the app. Long putts retain the original view heading, rather than rotating with each bounce. Aerial play remains available.
+
+Browser viewport override verified at actual 390×844 CSS pixels. Inspected the repaired fifth cup, first-contact marker at the planter, stronger shading and dry fifth green. Manually dragged a 70%-power bank putt: stroke 2→3; ball remained visible, rebounded and settled at 8.9 ft with a usable behind-ball address. Screenshots cup-phone-repaired.jpg, putting-first-contact-phone.jpg, bank-putt-phone-in-motion.jpg and green-shading-phone.jpg. Emulated browser sizing does not replace physical iPhone/Safari or touch-hardware testing.

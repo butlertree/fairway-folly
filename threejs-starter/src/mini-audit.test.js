@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {createGame,enterGreen,putt,step,inPond,ponds} from './game.js';
 import {greenOutline,projectInside,boundaryClearance,insideGreen,greenShapeNames} from './mini-boundary.js';
 import {gardenObstacles,gardenBanks,segmentContact,grottoPool} from './green-features.js';
-import {expansionPools,movingGreenGates} from './expansion-greens.js';
+import {movingGreenGates} from './expansion-greens.js';
 import {miniPool,onCrossing,crossingX} from './mini-surfaces.js';
 import {cupLayouts} from './cups.js';
 const pool=miniPool;
