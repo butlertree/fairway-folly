@@ -208,3 +208,37 @@ test('hole five creek sits below the green hill and the separate right landing p
 // Search real putts without inventing a score or moving the accepted ball. Each accepted
 // trial includes the actual physics history and its counted stroke.
 function finishMini(g){for(let turn=0;turn<5&&g.mode!=='holed';turn++){if(canTapIn(g)){tapIn(g);settle(g);if(g.mode==='holed')return}let best=null;const a=Math.atan2(-g.ball.x,-g.ball.z);for(let i=0;i<32;i++)for(let power=8;power<=72;power+=4){const t=structuredClone(g);putt(t,Math.sin(a+i*Math.PI/16),Math.cos(a+i*Math.PI/16),power);settle(t);if(t.mode==='holed'){Object.assign(g,t);return}const d=Math.hypot(t.ball.x,t.ball.z);if(t.strokes===g.strokes+1&&t.mode==='ready'&&(!best||d<best.d))best={t,d}}assert.ok(best,'A real putting route remains available');Object.assign(g,best.t)}assert.equal(g.mode,'holed')}
+
+test('a paced glancing putt curls in while the same line with extra speed lips out',()=>{
+  for(const [speed,expected] of [[1.8,'in'],[3.7,'out']]){
+    const g=createGame(3);
+    enterGreen(g);
+    g.ball.x=.46;
+    g.ball.z=.6;
+    putt(g,0,-1,puttPowerForDistance(speed*speed/(2*mini.friction)));
+    for(let i=0;i<360&&['rolling','sinking'].includes(g.mode);i++)step(g);
+    assert.equal(g.soundEvents.filter(e=>e.type==='cup-lip').length,1);
+    assert.equal(g.strokes,1);
+    if(expected==='in'){
+      assert.equal(g.mode,'holed');
+      assert.equal(g.finish.lip.type,'lip-in');
+      assert.equal(g.soundEvents.filter(e=>e.type==='cup').length,1);
+    }else{
+      assert.equal(g.mode,'ready');
+      assert.ok(g.ball.x>.55,'the rim deflects the ball away from the cup');
+      assert.equal(g.soundEvents.some(e=>e.type==='cup'),false);
+    }
+  }
+});
+
+test('an edge miss outside the cup rolls past without rim contact',()=>{
+  const g=createGame(3);
+  enterGreen(g);
+  g.ball.x=.56;
+  g.ball.z=.6;
+  putt(g,0,-1,puttPowerForDistance(2));
+  for(let i=0;i<360&&g.mode==='rolling';i++)step(g);
+  assert.equal(g.mode,'ready');
+  assert.equal(g.soundEvents.some(e=>e.type==='cup-lip'),false);
+  assert.ok(Math.abs(g.ball.x-.56)<1e-6);
+});

@@ -61,6 +61,9 @@ class GameAudio {
     case 'sand':this.noise(.14,.12*v,800);break;
     case 'splash':this.noise(.35,.15,700);this.tone(180,.02,.24,.07,'sine',55);break;
     case 'penalty':this.tone(250,0,.15,.045);this.tone(190,.16,.18,.035);break;
+    case 'cup-lip':
+      this.sample('impactGeneric_light_000',{gain:.32*v,rate:1.35,lowpass:2300});
+      break;
     case 'cup':if(!this.sample('cup-drop',{gain:1.25,rate:1,lowpass:10000}))this.sample('impactWood_light_000',{gain:.5,rate:1.2});break;
     case 'eagle':this.birdCall(1.15,.85,1250,.36,true);this.birdCall(2.25,.6,1450,.28,true);break;
     case 'birdie':[1.05,1.22,1.44,1.85,2.03].forEach((d,i)=>this.birdCall(d,.13,i%2?3100:2450,.095));break;

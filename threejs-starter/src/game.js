@@ -1,3 +1,4 @@
+import {puttingCupContact} from './putting-cup.js';
 import {courseWoodland} from './course-woodland.js';
 import {strategicTrees,treeContact} from './hole-nine-trees.js';
 import {heightNew,fairwayFraction} from './new-holes.js';
@@ -38,7 +39,7 @@ export function putt(g,dx,dz,percent){if(!g.mini||g.mode!=='ready'||Math.hypot(d
 function penalty(g,reason){emitSound(g,reason==='Water'?'splash':'penalty');g.ball={...g.origin,vx:0,vy:0,vz:0};g.strokes++;g.mode='ready';g.message=reason+' · +1 penalty, replay from previous lie';g.settle=0;if(!g.mini)alignForPlay(g);if(g.mini){g.puttCameraAnchor=null;g.angle=Math.atan2(miniCup(g).x-g.ball.x,g.ball.z-miniCup(g).z)}}
 export function nextHole(g){if(g.mode!=='holed'||g.hole>=HOLE_COUNT)return null;return createGame(g.hole+1,[...g.scorecard,{hole:g.hole,par:g.par,strokes:g.strokes}])}
 export function enterGreen(g){const b=g.ball,c=getCourse(g.hole),pin=pinFor(g,c),dx=b.x-pin.x,dz=b.z-pin.z;g.approachLanding={x:b.x,z:b.z,distanceYards:Math.hypot(dx,dz)/METRES_PER_YARD};const start=approachStart(g.hole,dx,dz);g.mini=true;Object.assign(b,{x:start.x,z:start.z,y:miniHeight(g.hole,start.x,start.z)+.3,vx:0,vy:0,vz:0});g.approachLanding.puttFeet=start.distanceFeet;g.trail=[];g.puttCameraAnchor=null;g.angle=Math.atan2(miniCup(g).x-b.x,b.z-miniCup(g).z);g.mode='ready';g.lie='Mini green';g.message=newHoles[g.hole]?.miniHint??(g.hole===3?'Cross the curved bridge or bank around the stream. Close approaches leave a short putt to the central cup.':g.hole===2?'Judge the pace up the terrace. The central cup rewards a close approach.':'Drag back from the ball to putt. Time the mill gate, or bank through the flower garden.');}
-export function step(g,dt=DT){if(g.paused)return;g.time+=dt;const b=g.ball;if(g.mode==='holed')return;if(g.mode==='green-arrival'){if(g.time>=g.greenRevealAt)enterGreen(g);return}if(g.mode==='sinking'){const elapsed=g.time-g.finish.started;if(elapsed>.58&&!g.finish.cupSound){emitSound(g,'cup');g.finish.cupSound=true}const t=Math.min(1,elapsed/.5),smooth=t*t*(3-2*t);b.x=g.finish.x+(miniCup(g).x-g.finish.x)*smooth;b.z=g.finish.z+(miniCup(g).z-g.finish.z)*smooth;const drop=Math.max(0,Math.min(1,(elapsed-.35)/.95));b.y=miniHeight(g.hole,miniCup(g).x,miniCup(g).z)+.3-1.25*drop*drop;if(elapsed>=1.5){g.mode='holed';emitSound(g,g.strokes-g.par>=2?'sad-finish':g.strokes>g.par?'bogey-finish':'win');if(g.strokes===g.par-2)emitSound(g,'eagle');else if(g.strokes===g.par-1)emitSound(g,'birdie');g.message='Hole complete!';g.celebrationStarted=g.time}return}if(['flight','rolling'].includes(g.mode)&&g.time-(g.trailTime??0)>.035){g.trail??=[];g.trail.push([b.x,b.y+.03,b.z]);if(g.trail.length>240)g.trail.shift();g.trailTime=g.time}if(g.mini){stepMini(g,dt);return}if(!['flight','rolling'].includes(g.mode))return;
+export function step(g,dt=DT){if(g.paused)return;g.time+=dt;const b=g.ball;if(g.mode==='holed')return;if(g.mode==='green-arrival'){if(g.time>=g.greenRevealAt)enterGreen(g);return}if(g.mode==='sinking'){const elapsed=g.time-g.finish.started;if(elapsed>.58&&!g.finish.cupSound){emitSound(g,'cup');g.finish.cupSound=true}const t=Math.min(1,elapsed/.5),smooth=t*t*(3-2*t);b.x=g.finish.x+(miniCup(g).x-g.finish.x)*smooth;b.z=g.finish.z+(miniCup(g).z-g.finish.z)*smooth;if(g.finish.lip){const curl=.75*t*(1-t);b.x+=g.finish.lip.ux*curl;b.z+=g.finish.lip.uz*curl}const drop=Math.max(0,Math.min(1,(elapsed-.35)/.95));b.y=miniHeight(g.hole,miniCup(g).x,miniCup(g).z)+.3-1.25*drop*drop;if(elapsed>=1.5){g.mode='holed';emitSound(g,g.strokes-g.par>=2?'sad-finish':g.strokes>g.par?'bogey-finish':'win');if(g.strokes===g.par-2)emitSound(g,'eagle');else if(g.strokes===g.par-1)emitSound(g,'birdie');g.message='Hole complete!';g.celebrationStarted=g.time}return}if(['flight','rolling'].includes(g.mode)&&g.time-(g.trailTime??0)>.035){g.trail??=[];g.trail.push([b.x,b.y+.03,b.z]);if(g.trail.length>240)g.trail.shift();g.trailTime=g.time}if(g.mini){stepMini(g,dt);return}if(!['flight','rolling'].includes(g.mode))return;
  const previous={x:b.x,y:b.y,z:b.z};b.x+=b.vx*dt;b.z+=b.vz*dt;b.y+=b.vy*dt;if(lie(b.x,b.z,g.hole)==='OB'){penalty(g,'Out of bounds');return}b.vy-=9.81*dt;if(g.mode==='flight'){const wind=windAcceleration(g.wind,g.time);b.vx+=wind.x*dt;b.vz+=wind.z*dt;const turn=g.spin*.095*dt,vx=b.vx,vz=b.vz;b.vx=vx*Math.cos(turn)-vz*Math.sin(turn);b.vz=vx*Math.sin(turn)+vz*Math.cos(turn);g.spin*=Math.exp(-dt*.045)}
  resolveCourseFlagstick(g,previous,dt);
  if(g.hole>=1){const hit=treeContact(previous,b,g.hole===9?forestNine:courseWoodland(g.hole),course.ballRadius);if(hit){Object.assign(b,{x:hit.point.x+hit.n.x*.02,y:hit.point.y+hit.n.y*.02,z:hit.point.z+hit.n.z*.02});const vn=b.vx*hit.n.x+b.vy*hit.n.y+b.vz*hit.n.z;if(vn<0){b.vx=(b.vx-1.2*vn*hit.n.x)*.6;b.vy=(b.vy-1.2*vn*hit.n.y)*.6;b.vz=(b.vz-1.2*vn*hit.n.z)*.6;g.treeHits=(g.treeHits??0)+1;if(g.time-(g.lastTreeSound??-1)>.2){emitSound(g,'land-rough',.6);g.lastTreeSound=g.time}}}}
@@ -73,7 +74,23 @@ export function stepMini(g,dt){const b=g.ball,r=mini.radius;if(g.mode==='holed')
  // A side pool is a real hazard, with the same boundary used by its visible mesh.
  if(inPond(b.x,b.z,miniPool(g.hole))&&!(g.hole===3&&onCrossing(b.x,b.z))&&g.origin){penalty(g,'Water');return}
  const speed=Math.hypot(b.vx,b.vz),f=Math.max(0,1-mini.friction*dt/Math.max(speed,.001));b.vx*=f;b.vz*=f;
- if(g.putts>0&&g.strokes>0&&Math.hypot(b.x-miniCup(g).x,b.z-miniCup(g).z)<.55&&speed<3){g.mode='sinking';g.finish={x:b.x,z:b.z,started:g.time};g.message='In the cup…';b.vx=b.vz=0;return}
+ const cupContact=g.putts>0&&g.strokes>0?puttingCupContact(address,b,miniCup(g),speed):null;
+ if(cupContact?.type==='lip-out'){
+   const {x,z,vx,vz}=cupContact;
+   Object.assign(b,{x,z,vx,vz,y:miniHeight(g.hole,x,z)+r});
+   emitSound(g,'cup-lip',Math.min(.75,speed/5));
+   g.message='Lip out';
+   return;
+ }
+ if(cupContact){
+   const lip=cupContact.type==='lip-in'?cupContact:null;
+   if(lip)emitSound(g,'cup-lip',.22);
+   g.mode='sinking';
+   g.finish={x:b.x,z:b.z,started:g.time,lip};
+   g.message=lip?'Caught the lip · in the cup':'In the cup…';
+   b.vx=b.vz=0;
+   return;
+ }
  if(speed<.08&&(wasReady||gravity<=mini.friction)){b.vx=b.vz=0;if(g.mode==='rolling'){g.puttCameraAnchor=null;g.angle=Math.atan2(miniCup(g).x-b.x,b.z-miniCup(g).z);g.message='Pull back from the ball, then release to putt.'}g.mode='ready'}else{if(wasReady&&!g.puttCameraAnchor)g.puttCameraAnchor=address;g.mode='rolling'};
 }
 
