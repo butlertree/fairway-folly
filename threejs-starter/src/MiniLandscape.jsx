@@ -1,4 +1,4 @@
-import {windAt} from './wind';
+import {scenicWindAt} from './wind';
 import {cascadePool} from './mini-surfaces';
 import {turfMeshData} from './putting-turf';
 import {useFrame,useThree} from '@react-three/fiber';
@@ -13,7 +13,7 @@ export function MiniLandscape({hole,cup={x:0,z:-12},game}){
  const foliage=useRef([]),reduced=useMemo(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false,[]);
  useFrame(()=>{
    if(reduced||!game)return;
-   const w=windAt(game.wind,game.time);
+   const w=scenicWindAt(game.wind,game.time);
    foliage.current.forEach((tree,i)=>{
      if(!tree)return;
      const pulse=.68+.32*Math.sin(game.time*1.8-i*.6);

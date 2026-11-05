@@ -1,10 +1,10 @@
 import {useFrame} from '@react-three/fiber';
-import {windAt} from './wind';
+import {scenicWindAt} from './wind';
 import {courseWoodland} from './course-woodland';
 import React,{useMemo,useEffect,useRef} from 'react';import * as THREE from 'three';
 import {treeCrowns,treeShape} from './hole-nine-trees';
 export function ValleyForest({hole=9,game}){const trees=useMemo(()=>courseWoodland(hole),[hole]),trunks=useRef(),crowns=useRef([]),sway=useMemo(()=>({value:new THREE.Vector3()}),[]),reduced=useMemo(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false,[]);
-useFrame(()=>{if(!game||reduced)return;const w=windAt(game.wind,game.time);sway.value.set(w.x,w.z,game.time)});
+useFrame(()=>{if(!game||reduced)return;const w=scenicWindAt(game.wind,game.time);sway.value.set(w.x,w.z,game.time)});
 const dress=useMemo(()=>shader=>{
  shader.uniforms.woodlandWind=sway;
  shader.vertexShader='uniform vec3 woodlandWind;\n'+shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {getCourse,height,lie,pondOutline,riverCenter,riverWidth} from './course';
 import {courseWoodland} from './course-woodland';
 import {creekCenter,creekWidth} from './new-holes';
-import {windAt} from './wind';
+import {scenicWindAt} from './wind';
 
 const reducedMotion=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const bladesPerClump=7;
@@ -59,17 +59,18 @@ export function CourseGrass({game}){
    return {x:px,z:pz,y:height(px,pz,hole)-.08,angle:a,size:.55+.75*((i*13+j*19)%23)/23};
  })),[clumps,hole]);
  function draw(wind,time){
+   const direction=Math.atan2(wind.x??0,-(wind.z??-1));
    for(let i=0;i<transforms.length;i++){
      const p=transforms[i],bend=.017+Math.min(.28,wind.mph*.009);
      const wave=.67+.33*Math.sin(time*2.5-p.z*.11+i*.045);
      blade.position.set(p.x,p.y,p.z);
-     blade.rotation.set(Math.cos(game.wind?.angle??.9)*-bend*wave,p.angle,-Math.sin(game.wind?.angle??.9)*bend*wave,'YXZ');
+     blade.rotation.set(Math.cos(direction)*-bend*wave,p.angle,-Math.sin(direction)*bend*wave,'YXZ');
      blade.scale.setScalar(p.size);blade.updateMatrix();mesh.current.setMatrixAt(i,blade.matrix);
    }
    mesh.current.instanceMatrix.needsUpdate=true;
  }
  useEffect(()=>{draw({mph:0},0)},[transforms]);
- useFrame(()=>{if(!calmMotion)draw(windAt(game.wind,game.time),game.time)});
+ useFrame(()=>{if(!calmMotion)draw(scenicWindAt(game.wind,game.time),game.time)});
  return <instancedMesh ref={mesh} args={[geometry,null,transforms.length]} frustumCulled={false}>
    <meshStandardMaterial color="#718a49" side={THREE.DoubleSide} roughness={1}/>
  </instancedMesh>;

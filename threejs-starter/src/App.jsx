@@ -20,7 +20,7 @@ import {CourseSetup,Leaderboard} from './RoundPanels';
 import {addScorecard,validScorecard,decodeScorecard,scoreText,scoreName,roundProgress} from './rounds';
 import {cupFor,miniCup,pinFor} from './cups';
 import {SignatureGreen} from './SignatureGreens';
-import {courseWind,windAt,windLabel} from './wind';
+import {courseWind,scenicWindAt,windLabel} from './wind';
 import {KingfisherTerrain} from './HoleThree';
 import {MiniLandscape,GreenBank,PuttingTurf,roundedGreenShape,CurvedBanks,greenShape} from './MiniLandscape';
 import React, { useEffect, useMemo, useState, useRef } from 'react';
@@ -145,7 +145,7 @@ function Terrain() {
 function Tree({x, z, size = 1, hue = 0,game}) {
   x*=course.sx;z*=course.sz;const y = terrainY(x,z);
   const crown=useRef(),reduced=useMemo(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false,[]);
-  useFrame(()=>{if(reduced)return;const w=windAt(game.wind,game.time),pulse=.68+.32*Math.sin(game.time*1.6-z*.08);crown.current.position.set(w.x*pulse*.021,0,w.z*pulse*.021)});
+  useFrame(()=>{if(reduced)return;const w=scenicWindAt(game.wind,game.time),pulse=.68+.32*Math.sin(game.time*1.6-z*.08);crown.current.position.set(w.x*pulse*.021,0,w.z*pulse*.021)});
   const green = hue ? '#5c9c54' : '#80b869';
   return <group position={[x,y,z]} scale={size*1.5}>
     <mesh castShadow position={[0,2.4,0]}>
@@ -169,9 +169,10 @@ function Decorations({game}) {
 }
 
 function Green({hole=1,wind,game}){const course=getCourse(hole),pin=pinFor(game??{hole},course),flag=useRef(),stick=useRef();useFrame(({clock})=>{if(stick.current){const t=(game?.time??0)-(game?.pinHitAt??-10);stick.current.rotation.z=t>=0&&t<.45?Math.sin(t*55)*.014*(1-t/.45):0}if(flag.current){
- const gust=windAt(game?.wind??wind,game?.time??0).mph;
- flag.current.rotation.y=gust?Math.PI/2-(game?.wind??wind).angle+Math.sin(clock.elapsedTime*5)*(.045+gust*.008):0;
- flag.current.scale.x=gust?.86+Math.min(.2,gust*.013)+Math.sin(clock.elapsedTime*7)*.025:1;
+ const breeze=scenicWindAt(game?.wind??wind,game?.time??0);
+ const angle=Math.atan2(breeze.x,-breeze.z);
+ flag.current.rotation.y=Math.PI/2-angle+Math.sin(clock.elapsedTime*5)*(.045+breeze.mph*.008);
+ flag.current.scale.x=.86+Math.min(.2,breeze.mph*.013)+Math.sin(clock.elapsedTime*7)*.025;
  }});
 
 return <><group position={[pin.x,height(pin.x,pin.z,hole)+flagstick.baseOffset,pin.z]} scale={1.8}><group ref={stick}>

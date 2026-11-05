@@ -303,3 +303,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Recarve the Verdant Isles stream, with downhill flow, wakes around stones and a connected waterfall. Add gust-driven grass and tree crowns from tee to green, plus brief surface-specific landing effects.
 
 - Extend gust-driven foliage, surface-specific landing effects and directional water motion across the nine-hole course. Add sway to mini-green scenery and keep hazard footprints intact.
+
+- Add a gentle visual breeze in Calm conditions for grass, tree crowns, mini-green foliage and flags while preserving zero wind drift for shots.
