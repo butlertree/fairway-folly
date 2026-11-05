@@ -299,3 +299,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Make glancing putts catch or deflect off the cup lip based on line and pace, with a distinct rim sound and visible drop on a lip-in.
 
 - Rebuild Kingfisher Cove with an arched timber bridge and a recessed water channel that meets the cliff waterfall. Safely relocate saved multiplayer lies submerged by the wider channel without adding a stroke.
+
+- Recarve the Verdant Isles stream, with downhill flow, wakes around stones and a connected waterfall. Add gust-driven grass and tree crowns from tee to green, plus brief surface-specific landing effects.

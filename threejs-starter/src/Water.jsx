@@ -34,3 +34,33 @@ export function WaterPond({pond,terrain=false,level=waterLevel,flow=false}){
  }),[pond,terrain,level]);
  return <><mesh geometry={geometries[0]} receiveShadow><meshStandardMaterial color="#c8c894" roughness={1} side={THREE.DoubleSide}/></mesh><mesh geometry={geometries[1]}><WaterMaterial pond={pond} flow={flow}/></mesh></>
 }
+
+// Ribbon UVs run across the channel and downstream in world metres.
+export function RiverMaterial({stones,metresPerUnit}){
+ const uniforms=useMemo(()=>({
+   time:{value:0},
+   stones:{value:stones.map(({nz,u})=>new THREE.Vector2(u,nz*metresPerUnit))}
+ }),[stones,metresPerUnit]);
+ useFrame((_,dt)=>{uniforms.time.value+=dt});
+ return <shaderMaterial uniforms={uniforms} side={THREE.DoubleSide}
+ vertexShader={`varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`}
+ fragmentShader={`uniform float time;uniform vec2 stones[6];varying vec2 v;
+ void main(){
+   float shore=abs(v.x*2.-1.);
+   float downstream=v.y-time*(1.8+1.1*(1.-shore));
+   float bend=sin(v.y*.16+v.x*8.)*.6;
+   float threads=sin(v.x*39.+bend+sin(downstream*.35))*sin(downstream*.67+v.x*4.);
+   float sparkle=smoothstep(.68,.99,threads)*.15;
+   float foam=smoothstep(.7,.96,shore)*smoothstep(.35,.92,sin(downstream*1.27+v.x*20.))*.23;
+   for(int i=0;i<6;i++){
+     vec2 delta=v-stones[i];
+     float wake=smoothstep(-1.,.25,delta.y)*(1.-smoothstep(.8,5.,delta.y));
+     float edge=abs(abs(delta.x)-(.075+max(0.,delta.y)*.025));
+     foam+=wake*(1.-smoothstep(.008,.04,edge))*(.1+.12*sin(delta.y*4.-time*5.));
+   }
+   vec3 water=mix(vec3(.045,.29,.29),vec3(.21,.52,.44),smoothstep(.35,1.,shore));
+   gl_FragColor=vec4(water+sparkle+foam,1.);
+   #include <tonemapping_fragment>
+   #include <colorspace_fragment>
+ }`}/>
+}

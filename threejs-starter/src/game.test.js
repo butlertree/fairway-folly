@@ -95,7 +95,7 @@ test('putter striking face points at ball for forward sideways and backwards aim
 
 test('97–100 percent driver shots get a stronger smash without changing other clubs',()=>{for(const power of [.9699,.97,.985,1]){const g=createGame();swing(g,power,0);assert.equal(g.soundEvents[0].type,power>=.97?'strike-driver-smash':'strike-driver');assert.equal(g.strokes,1)}for(const club of ['Hybrid','7 iron','Wedge']){const g=createGame();g.club=club;swing(g,1,0);assert.notEqual(g.soundEvents[0].type,'strike-driver-smash')}});
 
-import {riverOutlet,riverCenter,riverWidth,sceneryRocks,rockBaseY} from './course.js';
+import {riverOutlet,riverCenter,riverWidth,riverLevel,verdantMesh,sceneryRocks,rockBaseY} from './course.js';
 import {edgeShape} from './landscape.js';
 import {recordedClubs} from './audio-design.js';
 test('river continues past old end and reaches the shared island cliff edge',()=>{assert.ok(riverOutlet.nz>32);assert.ok(riverWidth(38)>1);assert.ok(Math.abs(riverOutlet.x-riverCenter(riverOutlet.nz)*course.sx)<1e-7);const a=Math.atan2(riverOutlet.z/(51*course.sz),riverOutlet.x/(40*course.sx));assert.ok(Math.abs(Math.hypot(riverOutlet.x/(40*course.sx),riverOutlet.z/(51*course.sz))-edgeShape(a))<1e-8)});
@@ -174,7 +174,7 @@ test('bunker bowls are genuinely depressed with level groomed floors and continu
 test('deep pot bunkers retain a stationary ball and allow a lofted sand-wedge escape',()=>{for(const [hole,list] of Object.entries(bunkersByHole))for(const p of list.filter(p=>p.pot)){const g=createGame(+hole);g.ball={x:p.x,y:height(p.x,p.z,+hole)+.085,z:p.z,vx:0,vy:0,vz:0};g.mode='rolling';g.lie='Sand';run(g,120);assert.equal(g.mode,'ready');assert.equal(g.lie,'Sand');assert.ok(Math.hypot(g.ball.x-p.x,g.ball.z-p.z)<.001);g.club='Sand wedge';const c=getCourse(+hole);g.angle=Math.atan2(c.pin.x-g.ball.x,g.ball.z-c.pin.z);swing(g,1,0);let escaped=false;for(let i=0;i<1500&&g.mode!=='ready';i++){step(g);if(bunkerFraction(g.ball.x,g.ball.z,p)>1.15&&g.ball.y>height(g.ball.x,g.ball.z,+hole)+.5)escaped=true}assert.ok(escaped,`${hole} ${p.id} escape`);assert.ok(g.strokes>=1)}});
 
 import {terrainMeshHeight} from './terrain-mesh.js';
-test('detailed bunker collars meet the actual surrounding terrain triangles at their interpolated height',()=>{for(let hole=1;hole<=9;hole++){const c=getCourse(hole),rx=c.landRadius?.rx??(hole===1?40*c.sx:130),rz=c.landRadius?.rz??(hole===1?51*c.sz:335),rings=hole===1?100:hole===2?128:hole===3?120:180,segments=hole===1||hole===3?192:hole===2?256:320;for(const i of [0,17,segments-1]){const vertex=(j,k)=>{const a=k/segments*Math.PI*2,r=j/rings,e=edgeShape(a);return {x:(c.landRadius?.cx??0)+rx*r*e*Math.cos(a),z:rz*r*e*Math.sin(a)}};const j=Math.floor(rings*.6),v=[vertex(j,i),vertex(j+1,i),vertex(j,i+1)],x=v.reduce((n,p)=>n+p.x,0)/3,z=v.reduce((n,p)=>n+p.z,0)/3,y=v.reduce((n,p)=>n+terrainHeight(p.x,p.z,hole),0)/3;assert.ok(Math.abs(terrainMeshHeight(x,z,hole)-y)<1e-7)}}});
+test('detailed bunker collars meet the actual surrounding terrain triangles at their interpolated height',()=>{for(let hole=1;hole<=9;hole++){const c=getCourse(hole),rx=c.landRadius?.rx??(hole===1?40*c.sx:130),rz=c.landRadius?.rz??(hole===1?51*c.sz:335),rings=hole===1?verdantMesh.rings:hole===2?128:hole===3?120:180,segments=hole===1?verdantMesh.segments:hole===3?192:hole===2?256:320;for(const i of [0,17,segments-1]){const vertex=(j,k)=>{const a=k/segments*Math.PI*2,r=j/rings,e=edgeShape(a);return {x:(c.landRadius?.cx??0)+rx*r*e*Math.cos(a),z:rz*r*e*Math.sin(a)}};const j=Math.floor(rings*.6),v=[vertex(j,i),vertex(j+1,i),vertex(j,i+1)],x=v.reduce((n,p)=>n+p.x,0)/3,z=v.reduce((n,p)=>n+p.z,0)/3,y=v.reduce((n,p)=>n+terrainHeight(p.x,p.z,hole),0)/3;assert.ok(Math.abs(terrainMeshHeight(x,z,hole)-y)<1e-7)}}});
 
 import {flagstick,flagstickContact} from './flagstick.js';
 import {resolveCourseFlagstick} from './game.js';
@@ -241,4 +241,16 @@ test('an edge miss outside the cup rolls past without rim contact',()=>{
   assert.equal(g.mode,'ready');
   assert.equal(g.soundEvents.some(e=>e.type==='cup-lip'),false);
   assert.ok(Math.abs(g.ball.x-.56)<1e-6);
+});
+
+test('the Verdant stream has continuous downhill flow over its rendered channel bed',()=>{
+  for(let nz=-29;nz<riverOutlet.nz-2;nz+=.5){
+    const z=nz*course.sz;
+    assert.ok(riverLevel(nz)>riverLevel(nz+.5));
+    for(const side of [-.75,0,.75]){
+      const x=(riverCenter(nz)+side*riverWidth(nz))*course.sx;
+      assert.ok(terrainMeshHeight(x,z,1)<riverLevel(nz),`exposed bed at ${nz}, ${side}`);
+      if((x/course.bounds.rx)**2+(z/course.bounds.rz)**2<=1)assert.equal(lie(x,z,1),'Water');
+    }
+  }
 });

@@ -1,3 +1,4 @@
+import {VerdantGrass,VerdantLanding} from './VerdantLife';
 import {ValleyForest} from './ValleyForest';
 import {PuttingVisibility} from './PuttingVisibility';
 import {projectInside} from './mini-boundary';
@@ -32,14 +33,14 @@ import {createGame as createBaseGame, step, swing, putt, height, mini, clubs, DT
 import {pullback,releasePutt,puttingCameraPose,keepPuttingBallVisible,putterPose} from './putting';
 import {BirdCelebration} from './BirdCelebration';
 import {CourseWaterfall} from './CourseWaterfall';
-import {riverCenter,riverOutlet,sceneryRocks,rockBaseY} from './course';
+import {riverCenter,riverLevel,riverOutlet,sceneryRocks,rockBaseY,verdantMesh} from './course';
 import {PutterModel} from './PutterModel';
 import {AudioCheck} from './AudioCheck';
 import {TeeSign} from './TeeSign';
 import {GolfCup} from './GolfCup';
 import {gameAudio} from './audio';
 import {aimPoint,isAimClick,puttingAim,selectTarget,selectedTarget,courseHit,golfCameraPose} from './aim';
-import {WaterPond,WaterMaterial} from './Water';
+import {WaterPond,RiverMaterial} from './Water';
 
 import {CascadeTerrain} from './HoleTwo';
 import {IslandCliffs,Grove} from './Diorama';
@@ -58,9 +59,9 @@ function terrainY(x,z){return height(x,z)}
 const elevation=terrainY;
 
 function islandGeometry() {
-  const rings = 100, segments = 192;
+  const {rings,segments}=verdantMesh;
   const positions = [], colors = [], indices = [];
-  const c = new THREE.Color(),fairwayColour=new THREE.Color('#a0d576'),greenColour=new THREE.Color('#c6e78c'),sandColour=new THREE.Color('#dec895');
+  const c = new THREE.Color(),fairwayColour=new THREE.Color('#a0d576'),greenColour=new THREE.Color('#c6e78c'),bankColour=new THREE.Color('#7a8463');
   for (let r = 0; r <= rings; r++) {
     const portion = r / rings;
     for (let s = 0; s <= segments; s++) {
@@ -75,7 +76,9 @@ function islandGeometry() {
       else if (y > 30) c.set('#85bb6c');
       else c.set('#65a65d');
       const nx=x/course.sx,nz=z/course.sz,w=9.3+2.1*Math.sin(nz/10);const f=(1-THREE.MathUtils.smoothstep(Math.abs(nx-3*Math.sin(nz/12)),w-.9,w+.9))*(1-THREE.MathUtils.smoothstep(nz,31,33));if(cliff<.2)c.lerp(fairwayColour,f);const gr=Math.hypot(x/course.green.rx,(z-course.pin.z)/course.green.rz),sr=Math.hypot((x-12*course.sx)/5.2,(z+25*course.sz)/9.5);c.lerp(greenColour,1-THREE.MathUtils.smoothstep(gr,.92,1.08));
-      colors.push(c.r, c.g, c.b);
+      const width=riverWidth(nz),edgeDistance=Math.abs(nx-riverCenter(nz))-width;
+      if(width>0)c.lerp(bankColour,.75*(1-THREE.MathUtils.smoothstep(edgeDistance,-.25,1.45)));
+      colors.push(c.r,c.g,c.b);
     }
   }
   for (let r = 0; r < rings; r++) {
@@ -93,52 +96,74 @@ function islandGeometry() {
   return geometry;
 }
 
-function ribbonGeometry({length=86,segments=360,halfWidth=9,center=z=>3*Math.sin(z/12),yOffset=.025,start=43}){
- const positions=[],uvs=[],indices=[],across=32;
- for(let i=0;i<=segments;i++){const nz=start-length*i/segments,z=nz*course.sz,cx=center(nz),w=typeof halfWidth==='function'?halfWidth(nz):halfWidth;
- for(let j=0;j<=across;j++){const x=(cx+(j/across*2-1)*w)*course.sx;positions.push(x,height(x,z)+yOffset,z);uvs.push(j/across,i/segments);
- if(i<segments&&j<across){const a=i*(across+1)+j,b=a+across+1;indices.push(a,b,a+1,a+1,b,b+1)}}}
- const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));g.setIndex(indices);g.computeVertexNormals();return g;
+function riverGeometry(){
+ const positions=[],uvs=[],indices=[],rows=384,across=8;
+ for(let i=0;i<=rows;i++){
+   const nz=-32+(riverOutlet.nz+32)*i/rows,z=nz*course.sz,w=riverWidth(nz);
+   const outletTurn=THREE.MathUtils.smoothstep(z,riverOutlet.z-8,riverOutlet.z)*riverOutlet.angle;
+   for(let j=0;j<=across;j++){
+     const u=j/across,offset=(u*2-1)*(w+.11)*course.sx;
+     const x=riverCenter(nz)*course.sx+offset*Math.cos(outletTurn);
+     positions.push(x,riverLevel(nz),z-offset*Math.sin(outletTurn));uvs.push(u,z);
+     if(i<rows&&j<across){const a=i*(across+1)+j,b=a+across+1;indices.push(a,b,a+1,a+1,b,b+1)}
+   }
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);
+ return geometry;
 }
 
+const riverStones=[
+  {nz:-28,u:.22,r:.75},{nz:-19,u:.76,r:.56},{nz:-5,u:.24,r:.48},
+  {nz:9,u:.71,r:.58},{nz:22,u:.28,r:.61},{nz:33,u:.74,r:.51}
+];
+function RiverStones(){
+ return <>{riverStones.map(({nz,u,r},i)=>{
+   const x=(riverCenter(nz)+(u*2-1)*(riverWidth(nz)+.11))*course.sx;
+   return <mesh key={nz} position={[x,riverLevel(nz)-.13,nz*course.sz]} scale={[r,r*.63,r*1.38]} rotation={[0,i*1.27,0]}>
+     <dodecahedronGeometry args={[1,1]}/><meshStandardMaterial color={i%2?'#77877c':'#8c9583'} roughness={1}/>
+   </mesh>;
+ })}</>;
+}
 function Terrain() {
   const geometry = useMemo(() => islandGeometry(), []);
-  const path = useMemo(() => ribbonGeometry({
-    length:riverOutlet.nz+32,start:riverOutlet.nz,halfWidth:riverWidth,
-    center: riverCenter,
-    yOffset: 0.045,
-  }), []);
+  const path=useMemo(riverGeometry,[]);
   return <>
     <mesh geometry={geometry} receiveShadow>
       <BunkerGroundMaterial hole={1} vertexColors roughness={0.94} side={THREE.DoubleSide}/>
     </mesh>
-    <CourseWaterfall/>
-    <mesh geometry={path} receiveShadow>
-      <WaterMaterial/>
+    <CourseWaterfall level={riverLevel(riverOutlet.nz)} rotation={riverOutlet.angle}/>
+    <mesh geometry={path}>
+      <RiverMaterial stones={riverStones} metresPerUnit={course.sz}/>
     </mesh>
+    <RiverStones/>
   </>;
 }
 
-function Tree({x, z, size = 1, hue = 0}) {
+function Tree({x, z, size = 1, hue = 0,game}) {
   x*=course.sx;z*=course.sz;const y = terrainY(x,z);
+  const crown=useRef(),reduced=useMemo(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false,[]);
+  useFrame(()=>{if(reduced)return;const w=windAt(game.wind,game.time),pulse=.68+.32*Math.sin(game.time*1.6-z*.08);crown.current.position.set(w.x*pulse*.021,0,w.z*pulse*.021)});
   const green = hue ? '#5c9c54' : '#80b869';
   return <group position={[x,y,z]} scale={size*1.5}>
     <mesh castShadow position={[0,2.4,0]}>
       <cylinderGeometry args={[.22,.3,4.8,9]}/>
       <meshStandardMaterial color="#876843" roughness={1}/>
     </mesh>
-    {[[-1,5.3,0], [1.1,5.1,.3], [0,6.3,0], [.2,5.4,-1.1]].map(([cx,cy,cz],i) => <mesh key={i} castShadow position={[cx,cy,cz]}>
+    <group ref={crown}>{[[-1,5.3,0], [1.1,5.1,.3], [0,6.3,0], [.2,5.4,-1.1]].map(([cx,cy,cz],i) => <mesh key={i} castShadow position={[cx,cy,cz]}>
       <icosahedronGeometry args={[i === 2 ? 2 : 1.75, 2]}/>
       <meshStandardMaterial color={i % 2 ? green : '#96c77a'} roughness={1} flatShading={false}/>
-    </mesh>)}
+    </mesh>)}</group>
   </group>;
 }
 
-function Decorations() {
+function Decorations({game}) {
   const positions = [[-25,-32,1.08,0],[-34,-20,.85,1],[-29,2,1.25,0],[-32,20,.8,1],[-20,34,.78,0],
     [26,-33,1.25,1],[31,-21,.8,0],[26,-8,1.1,0],[29,8,1.15,1],[25,27,.86,0],
     [16,-3,.74,1],[-19,-13,.66,0]];
-  return <>{positions.map(([x,z,size,hue],i) => <Tree key={i} x={x} z={z} size={size} hue={hue}/>)}
+  return <>{positions.map(([x,z,size,hue],i) => <Tree key={i} x={x} z={z} size={size} hue={hue} game={game}/>)}
     {sceneryRocks.map((r,i)=><mesh key={i} position={[r.x,rockBaseY(r),r.z]} scale={[1,.72,1]} castShadow><dodecahedronGeometry args={[r.r,1]}/><meshStandardMaterial color="#8b9480" roughness={1}/></mesh>)}
   </>;
 }
@@ -239,7 +264,7 @@ function TargetDisc({point,miniature=false}){const r=miniature?.38:2.4;return <g
 function GolfAim({game}){return <><TargetDisc point={selectedTarget(game)??aimPoint(game)}/><DirectionCue game={game}/></>}
 function ShotTrail({game}){if(!['flight','rolling','green-arrival'].includes(game.mode))return null;return game.trail?.length>1?<Line points={[...game.trail]} color="#fff2ba" renderOrder={102} lineWidth={game.mini?2:4} transparent opacity={game.mode==='ready'?.45:.95} depthTest={false}/>:null}
 function bridgeHeightFor(game,x,z){return miniHeight(game.hole,x,z)}
-const FullCourseScenery=React.memo(function FullCourseScenery({game}){const course=getCourse(game.hole);return <>{game.hole>=4?<NewTerrain hole={game.hole}/>:game.hole===3?<KingfisherTerrain/>:game.hole===2?<CascadeTerrain/>:<Terrain/>}<CourseBunkers hole={game.hole}/><IslandCliffs hole={game.hole}/>{game.hole!==9&&<ValleyForest hole={game.hole}/>}<Line points={Array.from({length:129},(_,i)=>{const a=i/128*Math.PI*2,x=(course.bounds.cx??0)+course.bounds.rx*Math.cos(a),z=course.bounds.rz*Math.sin(a);return [x,height(x,z,game.hole)+.03,z]})} color="#efdfb0" lineWidth={1}/>{game.hole===1&&<><WaterPond pond={ponds.course} terrain/><Decorations/></>}<Green hole={game.hole} wind={game.wind} game={game}/><TeeBox hole={game.hole}/></>});
+const FullCourseScenery=React.memo(function FullCourseScenery({game}){const course=getCourse(game.hole);return <>{game.hole>=4?<NewTerrain hole={game.hole}/>:game.hole===3?<KingfisherTerrain/>:game.hole===2?<CascadeTerrain/>:<Terrain/>}<CourseBunkers hole={game.hole}/><IslandCliffs hole={game.hole}/>{game.hole!==9&&<ValleyForest hole={game.hole} game={game}/>}<Line points={Array.from({length:129},(_,i)=>{const a=i/128*Math.PI*2,x=(course.bounds.cx??0)+course.bounds.rx*Math.cos(a),z=course.bounds.rz*Math.sin(a);return [x,height(x,z,game.hole)+.03,z]})} color="#efdfb0" lineWidth={1}/>{game.hole===1&&<><WaterPond pond={ponds.course} terrain/><Decorations game={game}/><VerdantGrass game={game}/><VerdantLanding game={game}/></>}<Green hole={game.hole} wind={game.wind} game={game}/><TeeBox hole={game.hole}/></>});
 export function World({game,view,refresh,showControls,atmosphere=null,children}){const course=getCourse(game.hole),initialPose=useMemo(()=>game.mini?puttingCameraPose(game):golfCameraPose(game),[game]);
  return <Canvas shadows dpr={[1,1.7]} camera={{position:initialPose.position,fov:45,near:.5,far:3500}}>
  <color attach="background" args={[atmosphere?.sky??(game.weather==='stormy'?'#8caaa7':'#c3d9b4')]}/><fog attach="fog" args={[atmosphere?.sky??(game.weather==='stormy'?'#8caaa7':'#c3d9b4'),1800,3500]}/>
