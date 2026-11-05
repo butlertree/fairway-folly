@@ -271,3 +271,8 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - 159 checks and production build pass, including real sideways break, full nine-hole scoring, 875 bunker recoveries and connected/escapable putting layouts.
 
 - Added 100 irregular trees beside/behind full-size greens 1–5 and 7–9, with broad oaks, slender birches/cypress shapes and willows. Five larger named specimen trees give individual holes landmarks. Hole 6 receives no additional trees; approaches, sand recovery and real island soil constrain placement.
+
+## 0.27.1 — November 4, 2026
+
+- Added two gentle, physically simulated contours to the first mini-green: a rear-left shoulder and an eastern knoll. The windmill passage, three-foot cup reward area, outer banks and forgiving west bank lane remain level.
+- Confirmed the ninth mini-green’s existing two slopes remain active. Extended relief and real-break tests to include green 1 and verified level windmill clearance. 160 tests and production build pass.

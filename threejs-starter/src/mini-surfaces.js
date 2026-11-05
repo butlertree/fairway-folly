@@ -8,6 +8,7 @@ export const onCrossing=(x,z)=>Math.abs(z-crossing.z)<crossing.halfLength&&Math.
 export function miniPool(hole){return expansionPools[hole]??(hole===3?cascadePool:hole===2?{x:-6.4,z:-7,rx:1.3,rz:2}:{x:6,z:-7.3,rx:2.25,rz:3})}
 // Gentle playable landforms, with a flat three-foot reward area and level outer banks.
 export const greenContours={
+ 1:[[-3.5,-8,3,5,.7],[4,1,3.2,4,.65]],
  2:[[-4,9,3,4,.35],[5,-9,3,4,.3]],
  3:[[-4,-7,3.2,5,.65],[4,-7,3.2,5,.65]],
  4:[[-3,3,3.5,7,.95],[5,-8,3.5,4,.55]],
@@ -17,7 +18,7 @@ export const greenContours={
  8:[[-3,-6,3.7,6,.95],[4,6,3.5,5,.7]],
  9:[[-5,-7,3,5,.65],[5,7,3,5,.65]]
 };
-function contours(hole,x,z){const r=Math.hypot(x,z),edge=boundaryClearance(hole,x,z);let h=0;for(const [cx,cz,rx,rz,amplitude] of greenContours[hole]??[])h+=amplitude*Math.exp(-(((x-cx)/rx)**2+((z-cz)/rz)**2));let envelope=smooth((r-3.1)/2)*smooth(edge/2);if(hole===3)envelope*=smooth((Math.abs(z-crossing.z)-crossing.halfLength)/1.2);return h*envelope}
+function contours(hole,x,z){const r=Math.hypot(x,z),edge=boundaryClearance(hole,x,z);let h=0;for(const [cx,cz,rx,rz,amplitude] of greenContours[hole]??[])h+=amplitude*Math.exp(-(((x-cx)/rx)**2+((z-cz)/rz)**2));let envelope=smooth((r-3.1)/2)*smooth(edge/2);if(hole===1)envelope*=smooth((x+7)/1.5)*smooth((Math.hypot(x,z-7)-3)/2);if(hole===3)envelope*=smooth((Math.abs(z-crossing.z)-crossing.halfLength)/1.2);return h*envelope}
 export function miniHeight(hole,x,z){let h=contours(hole,x,z);if(hole===2){const r=Math.hypot(x,z);h+=.85*(1-smooth((r-4)/3.8))}if(hole===3&&onCrossing(x,z))return crossing.crest*Math.cos((z-crossing.z)/crossing.halfLength*Math.PI/2);return h}
 export function miniSlope(hole,x,z){const e=.015;if(hole===3&&onCrossing(x,z))return {x:0,z:-crossing.crest*Math.PI/(2*crossing.halfLength)*Math.sin((z-crossing.z)/crossing.halfLength*Math.PI/2)};return {x:(miniHeight(hole,x+e,z)-miniHeight(hole,x-e,z))/(2*e),z:(miniHeight(hole,x,z+e)-miniHeight(hole,x,z-e))/(2*e)}}
 // Low visible bridge curbs rebound from either side, without snapping an outside ball onto the deck.
