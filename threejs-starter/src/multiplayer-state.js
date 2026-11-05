@@ -1,13 +1,22 @@
 import {createGame,alignForPlay,enterGreen} from './game.js';
 import {approachStart} from './approach-start.js';
-import {miniHeight} from './mini-surfaces.js';
+import {inPond} from './course.js';
+import {cascadePool,miniHeight,onCrossing} from './mini-surfaces.js';
 import {cupFor,legacyMiniCup} from './cups.js';
 import {courseWind} from './wind.js';
 import {holePars} from './rounds.js';
 const fields=['greenRevision','hole','mode','mini','ball','strokes','putts','angle','time','club','puttPower','power','accuracy','message','history','lie','settle','drop','origin','approachLanding','finish'];
 export function turnSnapshot(game){if(!['ready','holed'].includes(game.mode))return null;const result={v:1};for(const k of fields)if(game[k]!==undefined)result[k]=structuredClone(game[k]);result.history=result.history?.slice(-150)??[];return result}
 export function validSnapshot(s,hole){return s?.v===1&&s.hole===hole&&['ready','holed'].includes(s.mode)&&Number.isInteger(s.strokes)&&s.strokes>=0&&s.strokes<=99&&s.ball&&['x','y','z','vx','vy','vz'].every(k=>Number.isFinite(s.ball[k]))&&Math.abs(s.ball.x)<2000&&Math.abs(s.ball.z)<2000&&typeof s.mini==='boolean'}
-export function matchGame(match,user){const prior=match.scores.filter(s=>s.player===user&&s.hole<match.hole).sort((a,b)=>a.hole-b.hole).map(s=>({hole:s.hole,par:holePars[s.hole-1],strokes:s.strokes}));const g=createGame(match.hole,prior);if(validSnapshot(match.snapshot,match.hole))for(const k of fields)if(match.snapshot[k]!==undefined)g[k]=structuredClone(match.snapshot[k]);g.weather=match.weather;g.wind=courseWind(g.hole,match.weather);g.layout=match.layout;g.cup=cupFor(g.hole,g.layout);if(g.mini&&validSnapshot(match.snapshot,match.hole)&&match.snapshot.greenRevision!==2){if(g.mode==='holed'){g.ball.x=g.ball.z=0;g.ball.y=miniHeight(g.hole,0,0)-.95}else if(!g.putts&&g.approachLanding){g.ball.x=g.approachLanding.x;g.ball.z=g.approachLanding.z;enterGreen(g)}else{const oldCup=legacyMiniCup(g.hole,g.layout),p=approachStart(g.hole,(g.ball.x-oldCup.x)*.3048,(g.ball.z-oldCup.z)*.3048);Object.assign(g.ball,{x:p.x,z:p.z,y:miniHeight(g.hole,p.x,p.z)+.3,vx:0,vy:0,vz:0});g.angle=Math.atan2(-p.x,p.z)}g.greenRevision=2;}if(!validSnapshot(match.snapshot,match.hole))alignForPlay(g);g.inputLocked=false;g.pull=null;g.freeCamera=false;return g}
+export function matchGame(match,user){const prior=match.scores.filter(s=>s.player===user&&s.hole<match.hole).sort((a,b)=>a.hole-b.hole).map(s=>({hole:s.hole,par:holePars[s.hole-1],strokes:s.strokes}));const g=createGame(match.hole,prior);if(validSnapshot(match.snapshot,match.hole))for(const k of fields)if(match.snapshot[k]!==undefined)g[k]=structuredClone(match.snapshot[k]);g.weather=match.weather;g.wind=courseWind(g.hole,match.weather);g.layout=match.layout;g.cup=cupFor(g.hole,g.layout);if(g.mini&&validSnapshot(match.snapshot,match.hole)&&match.snapshot.greenRevision!==2){if(g.mode==='holed'){g.ball.x=g.ball.z=0;g.ball.y=miniHeight(g.hole,0,0)-.95}else if(!g.putts&&g.approachLanding){g.ball.x=g.approachLanding.x;g.ball.z=g.approachLanding.z;enterGreen(g)}else{const oldCup=legacyMiniCup(g.hole,g.layout),p=approachStart(g.hole,(g.ball.x-oldCup.x)*.3048,(g.ball.z-oldCup.z)*.3048);Object.assign(g.ball,{x:p.x,z:p.z,y:miniHeight(g.hole,p.x,p.z)+.3,vx:0,vy:0,vz:0});g.angle=Math.atan2(-p.x,p.z)}g.greenRevision=2;}restoreChannelLie(g);if(!validSnapshot(match.snapshot,match.hole))alignForPlay(g);g.inputLocked=false;g.pull=null;g.freeCamera=false;return g}
+// Saved turns from before the channel widened can lie in the new water.
+function restoreChannelLie(game){
+  const {x,z}=game.ball;
+  if(game.hole!==3||!game.mini||game.mode!=='ready'||!inPond(x,z,cascadePool)||onCrossing(x,z))return;
+  const dry=approachStart(3,x*.3048,z*.3048);
+  Object.assign(game.ball,{x:dry.x,z:dry.z,y:miniHeight(3,dry.x,dry.z)+.3,vx:0,vy:0,vz:0});
+  alignForPlay(game);
+}
 export function myTurn(match,user){return match?.status==='playing'&&match.player===user}
 export function matchTotals(match,user){const scores=match.scores.filter(s=>s.player===user);return {strokes:scores.reduce((n,s)=>n+s.strokes,0),over:scores.reduce((n,s)=>n+s.strokes-holePars[s.hole-1],0),holes:scores.length}}
 export function invitationUrl(match,invite,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:match.id,invite}).toString();return url.href}

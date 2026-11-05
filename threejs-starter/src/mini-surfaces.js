@@ -1,6 +1,8 @@
 import {boundaryClearance} from './mini-boundary.js';
 const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
-export const cascadePool={x:1,z:7,rx:6.2,rz:1.65};
+export const cascadePool={x:4.6,z:7,rx:9.1,rz:1.9};
+export const cascadeOutletX=13.42;
+export const cascadeWaterLevel=-.23;
 export const crossing={z:7,halfLength:3,halfWidth:1.9,crest:.65};
 export const crossingX=z=>.65*Math.sin((z-crossing.z)/crossing.halfLength*Math.PI);
 export const onCrossing=(x,z)=>Math.abs(z-crossing.z)<crossing.halfLength&&Math.abs(x-crossingX(z))<=crossing.halfWidth;

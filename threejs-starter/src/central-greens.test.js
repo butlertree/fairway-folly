@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {createGame,getCourse,enterGreen,step,tapIn,canTapIn,putt,puttPowerForDistance,lie} from './game.js';
+import {createGame,getCourse,enterGreen,step,tapIn,canTapIn,putt,puttPowerForDistance,lie,inPond} from './game.js';
 import {cupFor,miniCup,pinFor} from './cups.js';
 import {approachStart,clearApproachStart} from './approach-start.js';
-import {miniHeight,miniSlope,miniPool,onCrossing,crossingX} from './mini-surfaces.js';
+import {miniHeight,miniSlope,miniPool,onCrossing,crossingX,cascadeOutletX} from './mini-surfaces.js';
 import {gardenBanks,gardenObstacles,segmentContact} from './green-features.js';
 import {movingGreenGates} from './expansion-greens.js';
 const settle=g=>{for(let i=0;i<10000&&!['ready','holed'].includes(g.mode);i++)step(g);assert.ok(['ready','holed'].includes(g.mode))};
@@ -17,3 +17,18 @@ import {matchGame,turnSnapshot} from './multiplayer-state.js';
 test('old saved matches migrate to the central cup without losing strokes or putting history',()=>{const g=createGame(1);g.mini=true;g.strokes=4;g.putts=1;g.ball={x:2,y:.3,z:-10,vx:0,vy:0,vz:0};g.history=[{type:'shot'},{type:'shot'},{type:'shot'},{type:'putt'}];const snapshot=turnSnapshot(g);delete snapshot.greenRevision;const restored=matchGame({hole:1,layout:0,weather:'calm',snapshot,scores:[]},'a');assert.equal(restored.strokes,4);assert.deepEqual(restored.history,g.history);assert.equal(restored.greenRevision,2);assert.ok(restored.ball.x>0&&restored.ball.z>0);assert.ok(Math.hypot(restored.ball.x,restored.ball.z)<3);assert.ok(clearApproachStart(1,restored.ball.x,restored.ball.z));assert.equal(restored.mode,'ready')});
 test('tap-in is withheld when the mini-green hazard blocks the direct line',()=>{const g=createGame(3);enterGreen(g);g.ball={x:5,y:.3,z:6,vx:0,vy:0,vz:0};assert.ok(Math.hypot(g.ball.x,g.ball.z)<8);assert.equal(canTapIn(g),false);assert.equal(tapIn(g),false);assert.equal(g.strokes,0)});
 test('an unplayed ball at the new central cup cannot award a hole',()=>{for(let h=1;h<=9;h++){const g=createGame(h);enterGreen(g);g.ball={x:0,y:miniHeight(h,0,0)+.3,z:0,vx:0,vy:0,vz:0};for(let i=0;i<90;i++)step(g);assert.notEqual(g.mode,'holed');assert.equal(g.strokes,0)}});
+
+test('the connected channel reaches the cliff and old wet lies restore without a stroke',()=>{
+  const pool=miniPool(3);
+  assert.ok(inPond(cascadeOutletX,7,pool));
+  const g=createGame(3);
+  enterGreen(g);
+  g.strokes=4;
+  g.putts=1;
+  Object.assign(g.ball,{x:8,z:7});
+  assert.ok(inPond(g.ball.x,g.ball.z,pool));
+  const restored=matchGame({hole:3,layout:0,weather:'calm',snapshot:turnSnapshot(g),scores:[]},'a');
+  assert.equal(restored.strokes,4);
+  assert.equal(restored.putts,1);
+  assert.ok(clearApproachStart(3,restored.ball.x,restored.ball.z));
+});

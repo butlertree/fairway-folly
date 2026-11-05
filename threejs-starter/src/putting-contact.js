@@ -1,3 +1,4 @@
+import {inPond} from './course.js';
 import {boundaryEdges} from './mini-boundary.js';
 import {gardenBanks,gardenObstacles} from './green-features.js';
 import {movingGreenGates} from './expansion-greens.js';
@@ -9,5 +10,5 @@ function bladeContact(g,d,blade,max,r){const co=Math.cos(blade.angle),si=Math.si
 // The first sphere contact with the same solids used by the actual putting simulation.
 export function firstPuttContact(g,d,max,r=.3,blades=[]){let result={distance:max,type:null};const offer=(distance,type)=>{if(distance>=0&&distance<result.distance)result={distance,type}};for(const e of boundaryEdges(g.hole)){const v=d.x*e.nx+d.z*e.nz;if(v< -1e-9)offer((r-((g.ball.x-e.x)*e.nx+(g.ball.z-e.z)*e.nz))/v,'wall')}
  for(const o of gardenObstacles[g.hole]??[])offer(circle(g.ball,d,o,o.r+r),'bumper');for(const s of gardenBanks[g.hole]??[])offer(capsule(g.ball,d,s,r),'bank');for(const s of movingGreenGates(g.hole,g.time))offer(capsule(g.ball,d,s,r),'gate');if(g.hole===1)for(const blade of blades)offer(bladeContact(g,d,blade,result.distance,r),'windmill');if(g.hole===3){for(const side of [-1,1])for(let i=0;i<40;i++){const az=crossing.z-crossing.halfLength+.35+i/40*(crossing.halfLength*2-.7),bz=az+(crossing.halfLength*2-.7)/40;offer(capsule(g.ball,d,{ax:crossingX(az)+side*crossing.halfWidth,az,bx:crossingX(bz)+side*crossing.halfWidth,bz,r:0},r),'bridge')}
- const p=miniPool(3),wet=t=>{const x=g.ball.x+d.x*t,z=g.ball.z+d.z*t,nx=(x-p.x)/p.rx,nz=(z-p.z)/p.rz,a=Math.atan2(nz,nx);return Math.hypot(nx,nz)<1+.12*Math.sin(a*3+.8)+.06*Math.cos(a*5)&&!onCrossing(x,z)};for(let t=0;t<=result.distance;t+=.05)if(wet(t)){let a=Math.max(0,t-.05),b=t;for(let j=0;j<10;j++){const m=(a+b)/2;if(wet(m))b=m;else a=m}offer(b,'water');break}}
+ const p=miniPool(3),wet=t=>{const x=g.ball.x+d.x*t,z=g.ball.z+d.z*t;return inPond(x,z,p)&&!onCrossing(x,z)};for(let t=0;t<=result.distance;t+=.05)if(wet(t)){let a=Math.max(0,t-.05),b=t;for(let j=0;j<10;j++){const m=(a+b)/2;if(wet(m))b=m;else a=m}offer(b,'water');break}}
  return result}

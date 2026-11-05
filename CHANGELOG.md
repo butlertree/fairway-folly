@@ -297,3 +297,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Widen the behind-ball putting camera during pullback to frame the ball and first-contact or roll target. Keep the gesture mapped to the original camera so the widening does not change the shot.
 
 - Make glancing putts catch or deflect off the cup lip based on line and pace, with a distinct rim sound and visible drop on a lip-in.
+
+- Rebuild Kingfisher Cove with an arched timber bridge and a recessed water channel that meets the cliff waterfall. Safely relocate saved multiplayer lies submerged by the wider channel without adding a stroke.
