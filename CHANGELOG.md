@@ -285,3 +285,9 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Putting targets stop at the first actual bank, planter, moving gate, windmill blade, bridge rail or exposed stream.
 - Behind-ball putting automatically widens for longer shots and protects ball visibility through rebounds and the return to address. Shot heading stays steady; phone framing reserves room to pull back below the ball.
 - 169 checks and build pass, including 9,804 simulated camera frames, uniform cup edges, first-object aiming, all nine holes, bank escapes and 875 bunker recoveries. Browser checked at 390×844 and desktop sizes; a real iPhone/Safari check is still needed.
+
+## Kingfisher Cove immersion pilot
+
+- Fade in the bridge stream on arrival and bring it forward as the ball approaches. Give rolling on the deck, tapping the wooden rail, and striking stone distinct audio.
+- Animate the stream toward the waterfall and drive flag, weather, and wind ambience from the same gust used for ball flight.
+- Verified all 170 tests and the production build. Checked the bridge green at desktop and 390 × 844 and played a pullback putt at phone size. Physical phone audio remains to be checked.

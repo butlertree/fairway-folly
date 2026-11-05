@@ -19,7 +19,7 @@ import {CourseSetup,Leaderboard} from './RoundPanels';
 import {addScorecard,validScorecard,decodeScorecard,scoreText,scoreName,roundProgress} from './rounds';
 import {cupFor,miniCup,pinFor} from './cups';
 import {SignatureGreen} from './SignatureGreens';
-import {courseWind,windLabel} from './wind';
+import {courseWind,windAt,windLabel} from './wind';
 import {KingfisherTerrain} from './HoleThree';
 import {MiniLandscape,GreenBank,PuttingTurf,roundedGreenShape,CurvedBanks,greenShape} from './MiniLandscape';
 import React, { useEffect, useMemo, useState, useRef } from 'react';
@@ -143,7 +143,12 @@ function Decorations() {
   </>;
 }
 
-function Green({hole=1,wind,game}){const course=getCourse(hole),pin=pinFor(game??{hole},course),flag=useRef(),stick=useRef();useFrame(({clock})=>{if(stick.current){const t=(game?.time??0)-(game?.pinHitAt??-10);stick.current.rotation.z=t>=0&&t<.45?Math.sin(t*55)*.014*(1-t/.45):0}if(flag.current){flag.current.rotation.y=wind?.mph?Math.PI/2-wind.angle+Math.sin(clock.elapsedTime*(3+(wind?.mph??0)*.12))*(.08+(wind?.mph??0)*.008):0;flag.current.scale.x=wind?.mph?1+Math.sin(clock.elapsedTime*5)*.035:1}});
+function Green({hole=1,wind,game}){const course=getCourse(hole),pin=pinFor(game??{hole},course),flag=useRef(),stick=useRef();useFrame(({clock})=>{if(stick.current){const t=(game?.time??0)-(game?.pinHitAt??-10);stick.current.rotation.z=t>=0&&t<.45?Math.sin(t*55)*.014*(1-t/.45):0}if(flag.current){
+ const gust=windAt(game?.wind??wind,game?.time??0).mph;
+ flag.current.rotation.y=gust?Math.PI/2-(game?.wind??wind).angle+Math.sin(clock.elapsedTime*5)*(.045+gust*.008):0;
+ flag.current.scale.x=gust?.86+Math.min(.2,gust*.013)+Math.sin(clock.elapsedTime*7)*.025:1;
+ }});
+
 return <><group position={[pin.x,height(pin.x,pin.z,hole)+flagstick.baseOffset,pin.z]} scale={1.8}><group ref={stick}>
  {Array.from({length:6},(_,i)=><mesh key={i} position={[0,.25+i*.5,0]} castShadow><cylinderGeometry args={[flagstick.radius/1.8,flagstick.radius/1.8,flagstick.height/10.8,12]}/><meshStandardMaterial color={i%2?'#244c40':'#fff9ec'}/></mesh>)}
  <group ref={flag} position={[0,2.65,0]}><group position={[.52,0,0]}><mesh><planeGeometry args={[1.04,.68]}/><meshBasicMaterial color="#fff7e8" side={THREE.DoubleSide}/></mesh>{[-1,1].map(sign=><group key={sign}><mesh position={[0,0,sign*.008]}><planeGeometry args={[.92,.56]}/><meshBasicMaterial color="#d34f43" side={THREE.DoubleSide}/></mesh><mesh position={[0,-.12,sign*.014]}><planeGeometry args={[.92,.055]}/><meshBasicMaterial color="#fff7e8" side={THREE.DoubleSide}/></mesh></group>)}</group></group>
@@ -186,7 +191,7 @@ const MiniCourse=React.memo(function MiniCourse({game}) {
 });
 function Dynamics({game,view,refresh}){
  const ball=useRef(),acc=useRef(0),ticker=useRef(0),previousBall=useRef({...game.ball}),priorGame=useRef(game),wasMoving=useRef(false);const {camera,controls,size}=useThree();if(priorGame.current!==game){priorGame.current=game;previousBall.current={...game.ball};acc.current=0;wasMoving.current=false;}
- useFrame((_,delta)=>{acc.current+=Math.min(delta,.1)*playbackRate(game);while(acc.current>=DT){previousBall.current={...game.ball};step(game);acc.current-=DT}gameAudio.consume(game);
+ useFrame((_,delta)=>{acc.current+=Math.min(delta,.1)*playbackRate(game);while(acc.current>=DT){previousBall.current={...game.ball};step(game);acc.current-=DT}gameAudio.consume(game);gameAudio.updateAmbience(game);
  const movingMini=game.mini&&game.mode==='rolling',movingFull=!game.mini&&['flight','rolling','green-arrival'].includes(game.mode);if(controls){controls.enabled=game.mode==='ready'&&!game.pull&&!game.paused;if((movingFull||movingMini)&&!wasMoving.current){const position=camera.position.clone(),target=controls.target.clone();controls.enableDamping=false;controls.update();camera.position.copy(position);controls.target.copy(target);controls.update();controls.enableDamping=true;}}wasMoving.current=movingFull||movingMini;const course=getCourse(game.hole),b=['flight','rolling','sinking'].includes(game.mode)?renderBallBetween(previousBall.current,game.ball,acc.current/DT):game.ball;ball.current.position.set(b.x,b.y,b.z);const physical=game.mini?.3:course.ballRadius,perPixel=2*camera.position.distanceTo(new THREE.Vector3(b.x,b.y,b.z))*Math.tan(camera.fov*Math.PI/360)/size.height;ball.current.scale.setScalar(Math.max(physical,(view==='aerial'||!game.mini||movingMini)?perPixel*(game.mini&&view!=='aerial'?4:5):physical)/.3);
 
  if(['sinking','holed'].includes(game.mode)){camera.clearViewOffset();const holeCup=miniCup(game),surface=miniHeight(game.hole,holeCup.x,holeCup.z),cup=new THREE.Vector3(holeCup.x,surface-.1,holeCup.z);camera.position.lerp(new THREE.Vector3(holeCup.x+3.6,surface+4.5,holeCup.z+5.5),1-Math.exp(-delta*4));if(controls){controls.target.lerp(cup,1-Math.exp(-delta*5));controls.update()}}else if(view!=='aerial'&&(!game.freeCamera||(['flight','rolling','green-arrival'].includes(game.mode)))){

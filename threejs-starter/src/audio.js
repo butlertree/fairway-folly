@@ -1,3 +1,4 @@
+import {ambienceLayer,bridgeMix} from './bridge-soundscape.js';
 import {clubImpacts,recordedClubs} from './audio-design.js';
 // Local CC0 foley layers plus original synthesis. See public/audio/CREDITS.md.
 class GameAudio {
@@ -9,7 +10,32 @@ class GameAudio {
   setEnabled(enabled){this.enabled=enabled;if(this.master){const t=this.context.currentTime;this.master.gain.cancelScheduledValues(t);this.master.gain.setTargetAtTime(enabled?.32:0,t,.025)}if(enabled&&this.context)this.unlock()}
   loadSamples(){if(this.loading)return this.loading;const golf=new Set([...Object.values(recordedClubs).flat(),'cup-drop']),names=['impactSoft_heavy_000','impactSoft_heavy_001','impactSoft_heavy_002','footstep_grass_000','footstep_grass_001','impactGeneric_light_000','impactWood_light_000','impactMetal_light_000','impactTin_medium_000','footstep_snow_000',...golf];this.sampleCount=names.length;this.loading=Promise.allSettled(names.map(async n=>{const r=await fetch(`${import.meta.env.BASE_URL}audio/${golf.has(n)?'golf':'foley'}/${n}.wav`);if(!r.ok)throw new Error('Audio '+r.status);this.buffers.set(n,await this.context.decodeAudioData(await r.arrayBuffer()))}));return this.loading}
   sample(name,{gain=.8,rate=1,lowpass=8000,delay=0}={}){const buffer=this.buffers.get(name);if(!buffer)return false;const c=this.context,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=buffer;s.playbackRate.value=rate;f.type='lowpass';f.frequency.value=lowpass;g.gain.value=gain;s.connect(f);f.connect(g);g.connect(this.master);s.start(c.currentTime+delay);return true}
-  startAmbience(){const c=this.context,buffer=c.createBuffer(1,c.sampleRate*4,c.sampleRate),d=buffer.getChannelData(0);let brown=0;for(let i=0;i<d.length;i++){brown=(brown+(Math.random()*2-1)*.018)/1.018;d[i]=brown*(.6+.4*Math.sin(Math.PI*i/d.length)**2)}const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=buffer;s.loop=true;f.type='lowpass';f.frequency.value=650;g.gain.value=.09;s.connect(f);f.connect(g);g.connect(this.master);s.start();this.ambience=g}
+  startAmbience(){
+    const c=this.context,buffer=c.createBuffer(1,c.sampleRate*4,c.sampleRate),data=buffer.getChannelData(0);
+    let brown=0;
+    for(let i=0;i<data.length;i++){
+      const noise=Math.random()*2-1;
+      brown=(brown+noise*.09)/1.09;
+      const envelope=.8+.2*Math.sin(Math.PI*i/data.length)**2;
+      data[i]=(brown+noise*.16)*envelope;
+    }
+    this.ambience={
+      air:ambienceLayer(c,this.master,buffer,{frequency:520,gain:.045}),
+      stream:ambienceLayer(c,this.master,buffer,{frequency:2300,type:'bandpass',pulse:3.7}),
+      deck:ambienceLayer(c,this.master,buffer,{frequency:480,type:'bandpass',pulse:24})
+    };
+  }
+  updateAmbience(game){
+    if(!this.enabled||this.context?.state!=='running'||document.hidden)return;
+    const now=this.context.currentTime;
+    if(now<(this.nextMixAt??0))return;
+    this.nextMixAt=now+.05;
+    const mix=bridgeMix(game);
+    for(const layer of Object.keys(mix)){
+      const gain=this.ambience[layer];
+      gain.setTargetAtTime(mix[layer],now,layer==='deck'?.06:.28);
+    }
+  }
   landing(surface,strength){const v=Math.max(.06,Math.min(1,strength)),i=this.variant++%3,r=.94+Math.random()*.1,soft=`impactSoft_heavy_00${i}`;const loaded=this.sample(soft,{gain:(surface==='green'?.75:1.15)*Math.sqrt(v),rate:r*(surface==='rough'?.83:1.05),lowpass:surface==='rough'?750:1600});if(surface==='rough'||surface==='fairway')this.sample(`footstep_grass_00${i%2}`,{gain:.22*v,rate:1.35,lowpass:2200});if(surface==='sand')this.sample('footstep_snow_000',{gain:.65*v,rate:.8,lowpass:1700});if(!loaded)this.noise(.10,.28*v,500);this.tone(surface==='green'?150:105,0,.12,.19*v,'sine',48)}
   tone(freq,delay=0,duration=.1,gain=.1,type='sine',end=freq){const c=this.context,t=c.currentTime+delay,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,end),t+duration);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(this.master);o.start(t);o.stop(t+duration+.02)}
   noise(duration,gain,frequency=1200,delay=0,filterType='lowpass'){const c=this.context,t=c.currentTime+delay,buffer=c.createBuffer(1,Math.ceil(c.sampleRate*duration),c.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*(1-i/data.length);const source=c.createBufferSource(),filter=c.createBiquadFilter(),g=c.createGain();source.buffer=buffer;filter.type=filterType;filter.frequency.value=frequency;g.gain.value=gain;source.connect(filter);filter.connect(g);g.connect(this.master);source.start(t);source.stop(t+duration)}
@@ -24,6 +50,13 @@ class GameAudio {
     case 'strike-wedge':this.strike('wedge',v);break;
     case 'putt':this.strike('putter',v);break;
     case 'flagstick':if(this.sample('impactWood_light_000',{gain:.35*v,rate:1.6,lowpass:3500}))break;this.noise(.035,.08*v,900);break;
+    case 'bridge-rail':
+      if(!this.sample('impactWood_light_000',{gain:.85*v,rate:.83+Math.random()*.1,lowpass:3100}))this.noise(.055,.12*v,1600);
+      this.tone(240,0,.08,.075*v,'sine',96);
+      break;
+    case 'stone-bank':
+      if(!this.sample('impactGeneric_light_000',{gain:.64*v,rate:1.2,lowpass:4700}))this.noise(.032,.10*v,3400);
+      break;
     case 'bank':if(this.sample('impactWood_light_000',{gain:.7*v,rate:1.1+Math.random()*.12}))break;
     case 'bounce':this.tone(type==='bank'?520:220,0,.07,.1*v,'triangle',100);break;
     case 'sand':this.noise(.14,.12*v,800);break;

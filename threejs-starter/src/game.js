@@ -30,7 +30,7 @@ export function puttPowerForDistance(feet){return 100*(Math.max(0,Math.min(mini.
 export function lieFactor(g){return g.lie==='Sand'?clubs[g.club].sand:g.lie==='Rough'?(clubs[g.club].bunker?.94:.88):1}
 export function carryYards(g,power=1){if(g.lie==='Sand'&&g.club==='Sand wedge'){const c=clubs[g.club],v=Math.sqrt(c.carry*9.81/Math.sin(2*c.loft))*Math.sqrt(Math.max(0,Math.min(1,power)))*lieFactor(g),plan=bunkerLaunch(g,v*Math.cos(c.loft),v*Math.sin(c.loft),g.angle??0,power);return 2*plan.horizontal*plan.vertical/9.81/METRES_PER_YARD}return clubs[g.club].yards*Math.max(0,Math.min(1,power))*lieFactor(g)**2}
 export function emitSound(g,type,strength=1){g.soundEvents??=[];g.soundSeq=(g.soundSeq??0)+1;g.soundEvents.push({id:g.soundSeq,type,strength});if(g.soundEvents.length>24)g.soundEvents.shift()}
-function contactSound(g,strength){if(strength>.3&&g.time-(g.lastContactSound??-1)>.15){emitSound(g,'bank',Math.min(1,strength/10));g.lastContactSound=g.time}}
+function contactSound(g,strength,type='bank'){if(strength>.3&&g.time-(g.lastContactSound??-1)>.15){emitSound(g,type,Math.min(1,strength/10));g.lastContactSound=g.time}}
 export function bladeTransforms(time){return [0,Math.PI/2].map(offset=>({...mini.rotor,angle:time*mini.rotor.speed+offset}))}
 export function createGame(hole=1,scorecard=[]){const c=getCourse(hole);return {hole,par:c.par,scorecard,greenRevision:2,mode:'ready',mini:false,ball:{x:0,y:height(0,c.tee.z,hole)+.18+c.ballRadius,z:c.tee.z,vx:0,vy:0,vz:0},strokes:0,putts:0,angle:0,time:0,club:c.par===3?(c.yards>=185?'Hybrid':'7 iron'):'Driver',puttPower:50,power:0,accuracy:0,message:newHoles[hole]?.hint??(hole===3?'Kingfisher Cove · a 165-yard carry to the island. Take enough club; water guards the front and sides.':hole===2?'Lay up left for three safe shots, or carry the lake to the narrow island for a risky two-shot route.':'Carry the pond or lay up left. Choose a club, aim, then start your swing.'),history:[],lie:'Tee box',settle:0,drop:0,trail:[],soundEvents:[],soundSeq:0}}
 export function swing(g,power,accuracy){if(g.mode!=='ready'||g.mini)return;power=Math.max(0,Math.min(1,power));accuracy=Math.max(-1,Math.min(1,accuracy));const rawAccuracy=accuracy;accuracy=strikeAccuracy(g.club,accuracy);g.freeCamera=false;g.cameraGesture=false;g.origin={...g.ball};g.strokes++;g.history.push({type:'shot',origin:{...g.ball},power,accuracy:rawAccuracy,club:g.club});const c=clubs[g.club],loft=c.loft,speed=Math.sqrt(c.carry*9.81/Math.sin(2*loft))*Math.sqrt(Math.max(0,power))*lieFactor(g),a=g.angle+accuracy*.06,launch=bunkerLaunch(g,speed*Math.cos(loft),speed*Math.sin(loft),a,power);Object.assign(g.ball,{vx:Math.sin(a)*launch.horizontal,vy:launch.vertical,vz:-Math.cos(a)*launch.horizontal});g.spin=accuracy*Math.abs(accuracy)*2;g.trail=[[g.ball.x,g.ball.y,g.ball.z]];g.trailTime=g.time;emitSound(g,clubSound(g.club,power),Math.max(.25,Math.sqrt(power)));g.mode='flight';g.rollStarted=null;g.settle=0;g.message='Ball in flight'}
@@ -46,8 +46,8 @@ export function step(g,dt=DT){if(g.paused)return;g.time+=dt;const b=g.ball;if(g.
 }
 export function stepMini(g,dt){const b=g.ball,r=mini.radius;if(g.mode==='holed')return;const wasReady=g.mode==='ready',address={x:b.x,z:b.z,angle:g.angle};b.x+=b.vx*dt;b.z+=b.vz*dt;
  const bankImpact=bankBall(g.hole,b,r);if(bankImpact>.3)contactSound(g,bankImpact);
- for(const o of (gardenObstacles[g.hole]??[])){const dx=b.x-o.x,dz=b.z-o.z,d=Math.hypot(dx,dz),rr=o.r+r;if(d<rr){const nx=d>1e-8?dx/d:Math.cos(Math.atan2(-b.vz,-b.vx)),nz=d>1e-8?dz/d:Math.sin(Math.atan2(-b.vz,-b.vx));b.x=o.x+nx*rr;b.z=o.z+nz*rr;const vn=b.vx*nx+b.vz*nz;if(vn<0){contactSound(g,-vn);b.vx-=1.8*vn*nx;b.vz-=1.8*vn*nz}}}
- for(const s of gardenBanks[g.hole]??[]){const hit=segmentContact(b.x,b.z,s,r);if(hit){b.x=hit.x;b.z=hit.z;const vn=b.vx*hit.nx+b.vz*hit.nz;if(vn<0){contactSound(g,-vn);b.vx-=1.8*vn*hit.nx;b.vz-=1.8*vn*hit.nz}}}
+ for(const o of (gardenObstacles[g.hole]??[])){const dx=b.x-o.x,dz=b.z-o.z,d=Math.hypot(dx,dz),rr=o.r+r;if(d<rr){const nx=d>1e-8?dx/d:Math.cos(Math.atan2(-b.vz,-b.vx)),nz=d>1e-8?dz/d:Math.sin(Math.atan2(-b.vz,-b.vx));b.x=o.x+nx*rr;b.z=o.z+nz*rr;const vn=b.vx*nx+b.vz*nz;if(vn<0){contactSound(g,-vn,'stone-bank');b.vx-=1.8*vn*nx;b.vz-=1.8*vn*nz}}}
+ for(const s of gardenBanks[g.hole]??[]){const hit=segmentContact(b.x,b.z,s,r);if(hit){b.x=hit.x;b.z=hit.z;const vn=b.vx*hit.nx+b.vz*hit.nz;if(vn<0){contactSound(g,-vn,'stone-bank');b.vx-=1.8*vn*hit.nx;b.vz-=1.8*vn*hit.nz}}}
  // Low turning gates use the same endpoints and angular velocity as their rendered models.
  for(const gate of movingGreenGates(g.hole,g.time)){const hit=segmentContact(b.x,b.z,gate,r);if(hit){b.x=hit.x;b.z=hit.z;const ux=-gate.speed*(b.z-gate.z),uz=gate.speed*(b.x-gate.x),vn=(b.vx-ux)*hit.nx+(b.vz-uz)*hit.nz;if(vn<0){contactSound(g,-vn);b.vx-=1.65*vn*hit.nx;b.vz-=1.65*vn*hit.nz}}}
  // Sphere against the same rotating vertical blade boxes drawn by the windmill.
@@ -65,7 +65,7 @@ export function stepMini(g,dt){const b=g.ball,r=mini.radius;if(g.mode==='holed')
    g.mode='rolling';
   }
  }
- if(g.hole===3){const impact=crossingContact(b,address,r);if(impact>.3)contactSound(g,impact)}
+ if(g.hole===3){const impact=crossingContact(b,address,r);if(impact>.3)contactSound(g,impact,'bridge-rail')}
  const slope=miniSlope(g.hole,b.x,b.z),gravity=Math.hypot(slope.x,slope.z)*32.2;
  if(Math.hypot(b.vx,b.vz)>.08||!wasReady){b.vx-=slope.x*32.2*dt;b.vz-=slope.z*32.2*dt}
  b.y=miniHeight(g.hole,b.x,b.z)+r;
