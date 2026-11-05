@@ -254,3 +254,16 @@ test('the Verdant stream has continuous downhill flow over its rendered channel 
     }
   }
 });
+
+test('full-size landings expose their contact point on every hole',()=>{
+  for(let hole=1;hole<=9;hole++){
+    const game=createGame(hole);
+    const {x,z}=game.ball;
+    const ground=height(x,z,hole)+getCourse(hole).ballRadius;
+    Object.assign(game.ball,{y:ground+.01,vy:-4});
+    game.mode='flight';
+    step(game);
+    const landing=game.soundEvents.find(event=>event.type.startsWith('land-'));
+    assert.deepEqual(landing?.position,{x,y:ground,z},`hole ${hole}`);
+  }
+});

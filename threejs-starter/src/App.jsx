@@ -1,4 +1,4 @@
-import {VerdantGrass,VerdantLanding} from './VerdantLife';
+import {CourseGrass,CourseLanding} from './CourseLife';
 import {ValleyForest} from './ValleyForest';
 import {PuttingVisibility} from './PuttingVisibility';
 import {projectInside} from './mini-boundary';
@@ -206,7 +206,7 @@ function Windmill({game}){
 const MiniCourse=React.memo(function MiniCourse({game}) {
  const cup=miniCup(game);const floor=useMemo(()=>{const s=greenShape(game.hole);const hole=new THREE.Path();hole.absarc(cup.x,cup.z,.55,0,Math.PI*2,true);s.holes.push(hole);return s},[game.hole,cup.x,cup.z]);
  return <group>
- <MiniLandscape hole={game.hole} cup={cup}/><PuttingTurf floor={floor} hole={game.hole}/><SignatureGreen hole={game.hole} game={game}/>
+ <MiniLandscape hole={game.hole} cup={cup} game={game}/><PuttingTurf floor={floor} hole={game.hole}/><SignatureGreen hole={game.hole} game={game}/>
  <CurvedBanks hole={game.hole} game={game}/><PuttingVisibility game={game}/>
  {game.hole===3&&<CascadeCrossing/>}
 
@@ -264,7 +264,7 @@ function TargetDisc({point,miniature=false}){const r=miniature?.38:2.4;return <g
 function GolfAim({game}){return <><TargetDisc point={selectedTarget(game)??aimPoint(game)}/><DirectionCue game={game}/></>}
 function ShotTrail({game}){if(!['flight','rolling','green-arrival'].includes(game.mode))return null;return game.trail?.length>1?<Line points={[...game.trail]} color="#fff2ba" renderOrder={102} lineWidth={game.mini?2:4} transparent opacity={game.mode==='ready'?.45:.95} depthTest={false}/>:null}
 function bridgeHeightFor(game,x,z){return miniHeight(game.hole,x,z)}
-const FullCourseScenery=React.memo(function FullCourseScenery({game}){const course=getCourse(game.hole);return <>{game.hole>=4?<NewTerrain hole={game.hole}/>:game.hole===3?<KingfisherTerrain/>:game.hole===2?<CascadeTerrain/>:<Terrain/>}<CourseBunkers hole={game.hole}/><IslandCliffs hole={game.hole}/>{game.hole!==9&&<ValleyForest hole={game.hole} game={game}/>}<Line points={Array.from({length:129},(_,i)=>{const a=i/128*Math.PI*2,x=(course.bounds.cx??0)+course.bounds.rx*Math.cos(a),z=course.bounds.rz*Math.sin(a);return [x,height(x,z,game.hole)+.03,z]})} color="#efdfb0" lineWidth={1}/>{game.hole===1&&<><WaterPond pond={ponds.course} terrain/><Decorations game={game}/><VerdantGrass game={game}/><VerdantLanding game={game}/></>}<Green hole={game.hole} wind={game.wind} game={game}/><TeeBox hole={game.hole}/></>});
+const FullCourseScenery=React.memo(function FullCourseScenery({game}){const course=getCourse(game.hole);return <>{game.hole>=4?<NewTerrain hole={game.hole} game={game}/>:game.hole===3?<KingfisherTerrain/>:game.hole===2?<CascadeTerrain/>:<Terrain/>}<CourseBunkers hole={game.hole}/><IslandCliffs hole={game.hole}/>{game.hole!==9&&<ValleyForest hole={game.hole} game={game}/>}<Line points={Array.from({length:129},(_,i)=>{const a=i/128*Math.PI*2,x=(course.bounds.cx??0)+course.bounds.rx*Math.cos(a),z=course.bounds.rz*Math.sin(a);return [x,height(x,z,game.hole)+.03,z]})} color="#efdfb0" lineWidth={1}/>{game.hole===1&&<><WaterPond pond={ponds.course} terrain flow={.25}/><Decorations game={game}/></>}<CourseGrass game={game}/><CourseLanding game={game}/><Green hole={game.hole} wind={game.wind} game={game}/><TeeBox hole={game.hole}/></>});
 export function World({game,view,refresh,showControls,atmosphere=null,children}){const course=getCourse(game.hole),initialPose=useMemo(()=>game.mini?puttingCameraPose(game):golfCameraPose(game),[game]);
  return <Canvas shadows dpr={[1,1.7]} camera={{position:initialPose.position,fov:45,near:.5,far:3500}}>
  <color attach="background" args={[atmosphere?.sky??(game.weather==='stormy'?'#8caaa7':'#c3d9b4')]}/><fog attach="fog" args={[atmosphere?.sky??(game.weather==='stormy'?'#8caaa7':'#c3d9b4'),1800,3500]}/>

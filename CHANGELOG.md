@@ -301,3 +301,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Rebuild Kingfisher Cove with an arched timber bridge and a recessed water channel that meets the cliff waterfall. Safely relocate saved multiplayer lies submerged by the wider channel without adding a stroke.
 
 - Recarve the Verdant Isles stream, with downhill flow, wakes around stones and a connected waterfall. Add gust-driven grass and tree crowns from tee to green, plus brief surface-specific landing effects.
+
+- Extend gust-driven foliage, surface-specific landing effects and directional water motion across the nine-hole course. Add sway to mini-green scenery and keep hazard footprints intact.

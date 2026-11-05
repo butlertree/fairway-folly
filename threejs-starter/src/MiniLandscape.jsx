@@ -1,3 +1,4 @@
+import {windAt} from './wind';
 import {cascadePool} from './mini-surfaces';
 import {turfMeshData} from './putting-turf';
 import {useFrame,useThree} from '@react-three/fiber';
@@ -8,9 +9,20 @@ import * as THREE from 'three';
 
 // Decoration surrounds the existing playable rectangle; its inner bank faces still match physics.
 export function turfTexture(){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;const c=canvas.getContext('2d');c.fillStyle='#e6e8d7';c.fillRect(0,0,256,256);c.fillStyle='rgba(235,242,175,.07)';c.fillRect(0,0,256,128);let seed=17;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};for(let i=0;i<14000;i++){const n=random(),x=random()*256,y=random()*256;c.fillStyle=n>.5?'rgba(235,242,175,.12)':'rgba(39,88,39,.09)';c.fillRect(x,y,1,2)}const t=new THREE.CanvasTexture(canvas);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(.12,.12);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return t}
-export function MiniLandscape({hole,cup={x:0,z:-12}}){const shape=useMemo(()=>{const s=new THREE.Shape();for(let i=0;i<=128;i++){const a=i/128*Math.PI*2,r=1+.04*Math.sin(a*5);const x=Math.sign(Math.cos(a))*Math.abs(Math.cos(a))**.45*13*r,z=Math.sign(Math.sin(a))*Math.abs(Math.sin(a))**.6*19*r;i?s.lineTo(x,z):s.moveTo(x,z)}s.closePath();const cutout=new THREE.Path();cutout.absarc(cup.x,cup.z,1.0,0,Math.PI*2,true);s.holes.push(cutout);return s},[cup.x,cup.z]);return <>
+export function MiniLandscape({hole,cup={x:0,z:-12},game}){
+ const foliage=useRef([]),reduced=useMemo(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false,[]);
+ useFrame(()=>{
+   if(reduced||!game)return;
+   const w=windAt(game.wind,game.time);
+   foliage.current.forEach((tree,i)=>{
+     if(!tree)return;
+     const pulse=.68+.32*Math.sin(game.time*1.8-i*.6);
+     tree.rotation.set(w.z*.009*pulse,0,-w.x*.009*pulse);
+   });
+ });
+ const shape=useMemo(()=>{const s=new THREE.Shape();for(let i=0;i<=128;i++){const a=i/128*Math.PI*2,r=1+.04*Math.sin(a*5);const x=Math.sign(Math.cos(a))*Math.abs(Math.cos(a))**.45*13*r,z=Math.sign(Math.sin(a))*Math.abs(Math.sin(a))**.6*19*r;i?s.lineTo(x,z):s.moveTo(x,z)}s.closePath();const cutout=new THREE.Path();cutout.absarc(cup.x,cup.z,1.0,0,Math.PI*2,true);s.holes.push(cutout);return s},[cup.x,cup.z]);return <>
  {[{y:-.65,depth:1,color:'#6a984d',scale:1},{y:-1.5,depth:1.3,color:'#426b3b',scale:.99},{y:-2.7,depth:1.5,color:'#294e36',scale:.94}].map((l,i)=><mesh key={i} position={[0,l.y,0]} rotation={[Math.PI/2,0,0]} scale={[l.scale,l.scale,1]} castShadow receiveShadow><extrudeGeometry args={[shape,{depth:l.depth,bevelEnabled:true,bevelSize:.3,bevelThickness:.22,bevelSegments:3,steps:1}]}/><meshStandardMaterial color={l.color} roughness={1}/></mesh>)}
- {[-1,1].flatMap(s=>[-12,-5,4,12].map((z,i)=><group userData={{miniFoliage:true}} key={s+':'+i} position={[s*(11.1+(i%2)*.6),-.25,z]}><mesh scale={[1.5,.55,1.8]} receiveShadow><sphereGeometry args={[1,20,12]}/><meshStandardMaterial color={i%2?'#79a453':'#8bb461'}/></mesh>{i%2===0&&<><mesh position={[0,1,0]} castShadow><cylinderGeometry args={[.09,.16,2.5,8]}/><meshStandardMaterial color="#80633f"/></mesh><mesh position={[0,2.5,0]} scale={[1,.7,1]} castShadow><icosahedronGeometry args={[1.15,2]}/><meshStandardMaterial color="#8cb75a"/></mesh></>}</group>))}
+ {[-1,1].flatMap(s=>[-12,-5,4,12].map((z,i)=><group userData={{miniFoliage:true}} key={s+':'+i} position={[s*(11.1+(i%2)*.6),-.25,z]}><mesh scale={[1.5,.55,1.8]} receiveShadow><sphereGeometry args={[1,20,12]}/><meshStandardMaterial color={i%2?'#79a453':'#8bb461'}/></mesh>{i%2===0&&<group ref={tree=>{foliage.current[(s===1?4:0)+i]=tree}}><mesh position={[0,1,0]} castShadow><cylinderGeometry args={[.09,.16,2.5,8]}/><meshStandardMaterial color="#80633f"/></mesh><mesh position={[0,2.5,0]} scale={[1,.7,1]} castShadow><icosahedronGeometry args={[1.15,2]}/><meshStandardMaterial color="#8cb75a"/></mesh></group>}</group>))}
 
  </>}
 export function GreenBank({x,z,w,d}){return <RoundedBox args={[w,.7,d]} radius={.12} smoothness={4} position={[x,.35,z]} castShadow receiveShadow><meshStandardMaterial color="#789451" roughness={.95}/></RoundedBox>}
