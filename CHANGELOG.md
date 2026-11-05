@@ -293,3 +293,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Verified all 170 tests and the production build. Checked the bridge green at desktop and 390 × 844 and played a pullback putt at phone size. Physical phone audio remains to be checked.
 
 - Removed the synthetic stream loop from Kingfisher Cove after playtest feedback.
+
+- Widen the behind-ball putting camera during pullback to frame the ball and first-contact or roll target. Keep the gesture mapped to the original camera so the widening does not change the shot.

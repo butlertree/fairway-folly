@@ -16,3 +16,30 @@ test('putting marker stops on bridge curbs and exposed stream water',()=>{const 
 test('a longer putt frames every playable bank in both phone and desktop views',()=>{for(const [w,h]of [[375,667],[390,844],[1280,720]])for(let hole=1;hole<=9;hole++){const g=green(hole,0,10,Math.PI/2);putt(g,1,0,70);const pose=puttingCameraPose(g,w/h),cam=new PerspectiveCamera(45,w/h,.1,200);cam.position.set(...pose.position);cam.lookAt(new Vector3(...pose.target));cam.updateMatrixWorld();const d=turfMeshData(hole,2),start=d.positions.length-cupCut.segments*3;for(let i=start;i<d.positions.length;i+=3){const p=new Vector3(d.positions[i],d.positions[i+1]+.3,d.positions[i+2]).project(cam);assert.ok(Math.abs(p.x)<.81&&Math.abs(p.y)<.81,`bank ${hole} ${w}`)}}});
 test('phone address framing reserves room below the ball for a full pullback gesture',()=>{for(const [w,h]of [[375,667],[390,844]])for(let hole=1;hole<=9;hole++)for(const angle of [0,Math.PI/2,-Math.PI/2,Math.PI]){const g=green(hole,0,10,angle),pose=puttingCameraPose(g,w/h),cam=new PerspectiveCamera(45,w/h,.1,500);cam.position.set(...pose.position);cam.lookAt(new Vector3(...pose.target));cam.updateMatrixWorld();const p=new Vector3(g.ball.x,g.ball.y,g.ball.z).project(cam),y=(1-p.y)*h/2;assert.ok(y<h-160,`${hole} pullback clearance`);assert.ok(Math.abs(p.x)<.5)}});
 test('smooth camera transition keeps real bank putts in frame throughout rebounds',t=>{let frames=0;for(const [w,h]of [[375,667],[1280,720]])for(const hole of [1,3,4,5,7,8,9])for(const angle of [-1.2,1.2]){const g=green(hole,0,10,angle),initial=puttingCameraPose(g,w/h);let position=new Vector3(...initial.position),target=new Vector3(...initial.target);g.puttCameraAnchor={x:g.ball.x,z:g.ball.z,angle};putt(g,Math.sin(angle),-Math.cos(angle),70);const cam=new PerspectiveCamera(45,w/h,.1,500);let settled=0;for(let i=0;i<1500&&settled<45;i++){step(g);step(g);if(['sinking','holed'].includes(g.mode))break;if(g.mode==='ready')settled++;const pose=puttingCameraPose(g,w/h),blend=cameraBlend(1/60,6.5);position.lerp(new Vector3(...pose.position),blend);target.lerp(new Vector3(...pose.target),blend);position.set(...keepPuttingBallVisible(position.toArray(),target.toArray(),g.ball,w/h));cam.position.copy(position);cam.lookAt(target);cam.updateMatrixWorld();const p=new Vector3(g.ball.x,g.ball.y,g.ball.z).project(cam);assert.ok(Math.abs(p.x)<.75&&Math.abs(p.y)<.75&&p.z<1,`${hole} ${w} frame ${i}`);frames++}assert.ok(['ready','sinking','holed'].includes(g.mode))}t.diagnostic(`${frames} real rolling/rebound frames remained inside the viewport.`)});
+
+test('a sideways pullback widens the address view to include the ball and first contact',()=>{
+  for(const aspect of [390/844,1280/720]){
+    const g=green(3,0,10);
+    const view={position:[0,3,13],target:[0,.3,10]};
+    g.puttCameraAnchor={x:0,z:10,angle:0,view};
+    g.pull={x:1,z:0,percent:1};
+    assert.deepEqual(puttingCameraPose(g,aspect),view);
+    g.pull.percent=100;
+    const aim=puttingAim(g);
+    assert.equal(aim.contact,'wall');
+    const camera=new PerspectiveCamera(45,aspect,.1,500);
+    const project=(pose,point)=>{
+      camera.position.set(...pose.position);
+      camera.lookAt(new Vector3(...pose.target));
+      camera.updateMatrixWorld();
+      return new Vector3(point.x,point.y,point.z).project(camera);
+    };
+    assert.ok(Math.abs(project(view,aim).x)>1);
+    const wider=puttingCameraPose(g,aspect);
+    assert.deepEqual(wider.target,view.target);
+    for(const point of [g.ball,aim]){
+      const p=project(wider,point);
+      assert.ok(Math.abs(p.x)<.8&&Math.abs(p.y)<.8&&p.z<1);
+    }
+  }
+});
