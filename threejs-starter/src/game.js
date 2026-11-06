@@ -18,7 +18,7 @@ export {course,height,lie,ponds,inPond,METRES_PER_YARD,pondOutline,pondRadius,wa
 const forestNine=courseWoodland(9);
 export const DT=1/120;
 export const swingTiming={powerRise:1.05,accuracyHalfSweep:.95};
-export function swingMeter(phase,seconds){return phase==='power'?1-Math.abs((seconds/swingTiming.powerRise)%2-1):-Math.cos(seconds*Math.PI/swingTiming.accuracyHalfSweep)}
+export function swingMeter(phase,seconds){return phase==='power'?1-Math.abs((seconds/swingTiming.powerRise)%2-1):-Math.cos(Math.min(swingTiming.accuracyHalfSweep,Math.max(0,seconds))*Math.PI/swingTiming.accuracyHalfSweep)}
 export function canTapIn(g){const d=Math.hypot(g.ball.x-miniCup(g).x,g.ball.z-miniCup(g).z);return g.mini&&g.mode==='ready'&&d>.05&&d<=8&&Array.from({length:25},(_,i)=>{const t=i/24;const x=g.ball.x*(1-t),z=g.ball.z*(1-t),s=miniSlope(g.hole,x,z),cross=Math.abs(s.x*g.ball.z-s.z*g.ball.x)/d;return clearApproachStart(g.hole,x,z)&&cross<.01}).every(Boolean)}
 export function tapIn(g){if(!canTapIn(g))return false;const dx=miniCup(g).x-g.ball.x,dz=miniCup(g).z-g.ball.z,d=Math.hypot(dx,dz),speed=Math.sqrt(Math.max(0,2*mini.friction*Math.max(0,d-.2)+2*32.2*(miniHeight(g.hole,miniCup(g).x,miniCup(g).z)-miniHeight(g.hole,g.ball.x,g.ball.z))))+.35;const percent=Math.max(1,puttPowerForDistance(speed*speed/(2*mini.friction)));g.puttPower=Math.max(1,Math.round(percent));putt(g,dx,dz,percent);g.message='Tap-in · watch it home';return true}
 

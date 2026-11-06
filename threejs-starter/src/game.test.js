@@ -267,3 +267,10 @@ test('full-size landings expose their contact point on every hole',()=>{
     assert.deepEqual(landing?.position,{x,y:ground,z},`hole ${hole}`);
   }
 });
+
+test('power returns and repeats while accuracy stops at the slice endpoint',()=>{
+  assert.equal(swingMeter('power',2.1),0);
+  assert.ok(swingMeter('power',3.15)>.999);
+  assert.equal(swingMeter('accuracy',1.9),1);
+  assert.equal(swingMeter('accuracy',4),1);
+});

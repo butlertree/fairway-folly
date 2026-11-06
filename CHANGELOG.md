@@ -307,3 +307,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Add a gentle visual breeze in Calm conditions for grass, tree crowns, mini-green foliage and flags while preserving zero wind drift for shots.
 
 - Replace the full shot panel with a compact club picker, optional aim controls, and a slim right-side power and accuracy meter. Animate a glowing backswing and follow-through at the ball.
+
+- Put club selection directly on the course screen, synchronize the glowing swing arc with both meters, and give accuracy a single pass with a slice on timeout.

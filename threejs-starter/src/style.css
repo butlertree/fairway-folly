@@ -73,3 +73,5 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .rail-cursor{position:absolute;bottom:0;left:0;right:0;height:3px;background:#183e35;box-shadow:0 0 0 1px #fff9}
 .swing-rail .primary{width:auto;min-width:76px;min-height:44px;padding:8px;font-size:12px;touch-action:manipulation}
 @media(max-width:650px){.shot-dock{left:10px;bottom:64px}.swing-rail{bottom:64px}.app:has(.swing-rail) .wind-readout{top:56px;bottom:auto}}
+
+.rail-rule{font-size:9px;font-weight:700}
