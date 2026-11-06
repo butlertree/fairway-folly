@@ -35,3 +35,11 @@ Guest signup uses Supabase's existing auth rate limits. Before wider release, ad
 Local DEV-only `testplayer=host` / `testplayer=guest` uses separate auth storage keys to simulate two devices in browser tabs. DEV-only `preview=match-putt` starts a new unsaved turn near the cup so actual putt completion and handoff can be checked quickly. These overrides are removed from production builds.
 
 Existing installations: apply `nine-holes.sql` once to extend match lengths without deleting scores or changing access rules. `FF_QA_HOLES=9 node supabase/smoke.mjs` checks a full labeled nine-hole protocol match.
+
+## Shot-play matches
+
+Apply `group-matches.sql` after `multiplayer.sql` before deploying a frontend that creates shot-play matches. Existing match links keep the original hole-by-hole protocol. New matches admit two to four invited guests including the host. The host starts the lobby. Everyone tees off, then the farthest unfinished lie plays. Low score has honors on the next tee.
+
+Each settled shot saves the new lie and replay input atomically. Other clients poll and replay the shot locally. The latest 16 shots are retained to bridge polling gaps. This is near-live playback after a shot settles. As with the original mode, physics is client-side and intended for trusted private play.
+
+`group-smoke.sql` exercises a four-player match against a disposable PostgreSQL database with an `auth.uid()` test shim. It rolls back its fixtures.

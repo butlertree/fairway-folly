@@ -1,8 +1,8 @@
-import {createGame,alignForPlay,enterGreen} from './game.js';
+import {createGame,alignForPlay,enterGreen,swing,putt,clubs} from './game.js';
 import {approachStart} from './approach-start.js';
-import {inPond} from './course.js';
+import {getCourse,inPond} from './course.js';
 import {cascadePool,miniHeight,onCrossing} from './mini-surfaces.js';
-import {cupFor,legacyMiniCup} from './cups.js';
+import {cupFor,legacyMiniCup,miniCup,pinFor} from './cups.js';
 import {courseWind} from './wind.js';
 import {holePars} from './rounds.js';
 const fields=['greenRevision','hole','mode','mini','ball','strokes','putts','angle','time','club','puttPower','power','accuracy','message','history','lie','settle','drop','origin','approachLanding','finish'];
@@ -19,7 +19,38 @@ function restoreChannelLie(game){
 }
 export function myTurn(match,user){return match?.status==='playing'&&match.player===user}
 export function matchTotals(match,user){const scores=match.scores.filter(s=>s.player===user);return {strokes:scores.reduce((n,s)=>n+s.strokes,0),over:scores.reduce((n,s)=>n+s.strokes-holePars[s.hole-1],0),holes:scores.length}}
-export function invitationUrl(match,invite,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:match.id,invite}).toString();return url.href}
+export function invitationUrl(match,invite,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:match.id,invite,...(match.shot_play?{group:'1'}:{})}).toString();return url.href}
 export function matchUrl(id,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:id}).toString();return url.href}
-export function matchLink(base=location.href){const url=new URL(base),params=new URLSearchParams(url.hash.slice(1));return {id:params.get('match'),invite:params.get('invite')}}
-export function matchOutcome(match){if(match.status!=='complete')return '';const a=matchTotals(match,match.host).strokes,b=matchTotals(match,match.guest).strokes;return a===b?`All square · ${a} strokes each`:`${a<b?match.host_name:match.guest_name} wins by ${Math.abs(a-b)} ${Math.abs(a-b)===1?'stroke':'strokes'}`}
+export function matchLink(base=location.href){const url=new URL(base),params=new URLSearchParams(url.hash.slice(1));return {id:params.get('match'),invite:params.get('invite'),...(params.get('group')==='1'?{group:true}:{})}}
+export function matchPlayers(match){
+ return match.players??[{id:match.host,name:match.host_name},{id:match.guest,name:match.guest_name??'Friend joining…'}];
+}
+export function matchOutcome(match){
+ if(match.status!=='complete')return '';
+ if(!match.shot_play){
+   const a=matchTotals(match,match.host).strokes,b=matchTotals(match,match.guest).strokes;
+   const difference=Math.abs(a-b);
+   return a===b?`All square · ${a} strokes each`:`${a<b?match.host_name:match.guest_name} wins by ${difference} ${difference===1?'stroke':'strokes'}`;
+ }
+ const scores=matchPlayers(match).map(p=>({...p,strokes:matchTotals(match,p.id).strokes}));
+ const low=Math.min(...scores.map(p=>p.strokes));
+ const winners=scores.filter(p=>p.strokes===low);
+ return winners.length>1?`${winners.map(p=>p.name).join(' and ')} tie · ${low} strokes`:`${winners[0].name} wins · ${low} strokes`;
+}
+export function groupAway(game){
+ const pin=game.mini?miniCup(game):pinFor(game,getCourse(game.hole));
+ return Math.hypot(game.ball.x-pin.x,game.ball.z-pin.z)*(game.mini?.3048:1);
+}
+export function groupReplay(match,user){
+ const replay=match.last_shot;
+ if(!replay||!Number.isInteger(replay.hole)||replay.hole<1||replay.hole>9||!validSnapshot(replay.start,replay.hole)||
+    !Object.hasOwn(clubs,replay.start.club)||!Number.isFinite(replay.start.angle)||!Number.isFinite(replay.start.time))return null;
+ const g=matchGame({...match,hole:replay.hole,snapshot:replay.start},user);
+ const input=replay.input;
+ if(input?.type==='shot'&&Number.isFinite(input.power)&&Number.isFinite(input.accuracy))swing(g,input.power,input.accuracy);
+ else if(input?.type==='putt'&&Number.isFinite(input.dx)&&Number.isFinite(input.dz)&&(input.percent===undefined||Number.isFinite(input.percent)))putt(g,input.dx,input.dz,input.percent);
+ else return null;
+ if(!['flight','rolling'].includes(g.mode))return null;
+ g.watchingShot=replay.player;
+ return g;
+}

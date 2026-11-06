@@ -319,3 +319,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Keep the swing action button fixed between phases, allow changing clubs before impact is committed, and give shots at 95% power or more a brighter, wider trail.
 
 - Let fast centered putts hop at the rim and drop when they land over the opening. Show counted full shots, putts and penalties in the finish banner, and clarify when a short pull was not counted.
+
+- Add private shot-play matches for two to four players, with tee honors, farthest-ball turn order, turn glow and shared shot replays. Existing hole-by-hole invitations retain their original format.
