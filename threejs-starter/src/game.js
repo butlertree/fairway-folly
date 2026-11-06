@@ -1,4 +1,4 @@
-import {puttingCupContact} from './putting-cup.js';
+import {puttingCupContact,puttingCupRadius} from './putting-cup.js';
 import {courseWoodland} from './course-woodland.js';
 import {strategicTrees,treeContact} from './hole-nine-trees.js';
 import {heightNew,fairwayFraction} from './new-holes.js';
@@ -67,14 +67,36 @@ export function stepMini(g,dt){const b=g.ball,r=mini.radius;if(g.mode==='holed')
   }
  }
  if(g.hole===3){const impact=crossingContact(b,address,r);if(impact>.3)contactSound(g,impact,'bridge-rail')}
+ const ground=miniHeight(g.hole,b.x,b.z)+r;
+ const wasHopping=b.vy!==0;
+ if(wasHopping){
+   b.y+=b.vy*dt-16.1*dt*dt;
+   b.vy-=32.2*dt;
+   if(b.y>ground)return;
+   b.vy=0;
+ }
  const slope=miniSlope(g.hole,b.x,b.z),gravity=Math.hypot(slope.x,slope.z)*32.2;
  if(Math.hypot(b.vx,b.vz)>.08||!wasReady){b.vx-=slope.x*32.2*dt;b.vz-=slope.z*32.2*dt}
- b.y=miniHeight(g.hole,b.x,b.z)+r;
+ b.y=ground;
  const finalBankImpact=bankBall(g.hole,b,r);if(finalBankImpact>.3)contactSound(g,finalBankImpact);
  // A side pool is a real hazard, with the same boundary used by its visible mesh.
  if(inPond(b.x,b.z,miniPool(g.hole))&&!(g.hole===3&&onCrossing(b.x,b.z))&&g.origin){penalty(g,'Water');return}
  const speed=Math.hypot(b.vx,b.vz),f=Math.max(0,1-mini.friction*dt/Math.max(speed,.001));b.vx*=f;b.vz*=f;
- const cupContact=g.putts>0&&g.strokes>0?puttingCupContact(address,b,miniCup(g),speed):null;
+ const cup=miniCup(g);
+ const cupContact=g.putts>0&&g.strokes>0
+   ?wasHopping
+     ?(Math.hypot(b.x-cup.x,b.z-cup.z)<puttingCupRadius-.07?{type:'drop'}:null)
+     :puttingCupContact(address,b,cup,speed)
+   :null;
+ if(cupContact?.type==='hop'){
+   b.x=cupContact.x;
+   b.z=cupContact.z;
+   b.vx*=.78;
+   b.vz*=.78;
+   b.vy=4.1;
+   emitSound(g,'cup-lip',.42);
+   return;
+ }
  if(cupContact?.type==='lip-out'){
    const {x,z,vx,vz}=cupContact;
    Object.assign(b,{x,z,vx,vz,y:miniHeight(g.hole,x,z)+r});

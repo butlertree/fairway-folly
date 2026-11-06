@@ -12,10 +12,15 @@ export function puttingCupContact(previous,ball,cup,speed){
   const entry=-along-Math.sqrt(puttingCupRadius**2-offset**2);
   if(entry>length)return null;
   const glancing=offset>centerLane;
-  if(!glancing)return speed<3?{type:'drop'}:null;
+  if(!glancing){
+    if(speed<3)return {type:'drop'};
+    if(entry<0)return null;
+    return {type:'hop',x:previous.x+entry*ux,z:previous.z+entry*uz};
+  }
   if(entry<0)return null; // The lip is evaluated once, as the ball crosses inward.
 
-  const edgeFraction=(offset-centerLane)/(puttingCupRadius-centerLane);  if(speed<3-.55*edgeFraction)return {type:'lip-in',ux,uz};
+  const edgeFraction=(offset-centerLane)/(puttingCupRadius-centerLane);
+  if(speed<3-.55*edgeFraction)return {type:'lip-in',ux,uz};
 
   const contactX=previous.x+entry*ux,contactZ=previous.z+entry*uz;
   const nx=(contactX-cup.x)/puttingCupRadius,nz=(contactZ-cup.z)/puttingCupRadius;

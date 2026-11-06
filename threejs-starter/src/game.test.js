@@ -274,3 +274,41 @@ test('power and accuracy return and repeat',()=>{
   assert.equal(swingMeter('accuracy',.95),1);
   assert.equal(swingMeter('accuracy',1.9),-1);
 });
+
+test('centered fast putts hop at the cup and only drop if they come down over it',()=>{
+  for(const [speed,expected] of [[3.6,'holed'],[7.5,'ready']]){
+    const g=createGame(4);
+    enterGreen(g);
+    Object.assign(g.ball,{x:0,z:.75,y:miniHeight(4,0,.75)+mini.radius});
+    putt(g,0,-1,puttPowerForDistance(speed**2/(2*mini.friction)));
+    let peak=0;
+    for(let i=0;i<500&&['rolling','sinking'].includes(g.mode);i++){
+      step(g);
+      peak=Math.max(peak,g.ball.y-miniHeight(4,g.ball.x,g.ball.z)-mini.radius);
+    }
+    assert.ok(peak>.20,'the cup hop is visible');
+    assert.equal(g.mode,expected);
+    assert.equal(g.strokes,1);
+    assert.equal(g.soundEvents.filter(e=>e.type==='cup-lip').length,1);
+    assert.equal(g.soundEvents.filter(e=>e.type==='cup').length,expected==='holed'?1:0);
+  }
+});
+
+test('Hole 9 counts three full shots and one putt as a birdie',()=>{
+  const g=createGame(9),c=getCourse(9);
+  routeShot(g,7,23,.84);
+  g.club='Hybrid';
+  routeShot(g,110,-120,.93);
+  g.club='7 iron';
+  routeShot(g,c.pin.x,c.pin.z,.76);
+  assert.equal(g.strokes,3);
+  assert.ok(g.mini);
+  // Set up a short final putt while keeping the three actual approach strokes.
+  Object.assign(g.ball,{x:0,z:1,y:miniHeight(9,0,1)+mini.radius});
+  assert.ok(tapIn(g));
+  settle(g);
+  assert.equal(g.mode,'holed');
+  assert.deepEqual(g.history.map(event=>event.type),['shot','shot','shot','putt']);
+  assert.equal(g.strokes,4);
+  assert.equal(scoreName(g.strokes,g.par),'BIRDIE');
+});
