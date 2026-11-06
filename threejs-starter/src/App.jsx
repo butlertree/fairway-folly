@@ -325,7 +325,7 @@ export default function App(){
    }else{
      const accuracy=swingMeter(phase,elapsed);
      game.inputLocked=false;
-     game.swingCue={time:game.time,ball:{...game.ball},angle:game.angle,strike:true};
+     game.swingCue={time:game.time,ball:{...game.ball},angle:game.angle,power:game.power,accuracy};
      swing(game,game.power,accuracy);
      setPhase('ready');
    }
