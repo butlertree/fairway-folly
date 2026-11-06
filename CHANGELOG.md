@@ -311,3 +311,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Put club selection directly on the course screen, synchronize the glowing swing arc with both meters, and give accuracy a single pass with a slice on timeout.
 
 - Trace swing timing on a tilted loop with full power at the top and straight contact at the ball, followed by a continuous follow-through.
+
+- Replace the club dropdown and aim panel with a compact club strip and direct course aiming. Animate a stylized golfer through the existing swing timing, with club-specific stance, shaft length and head shape.

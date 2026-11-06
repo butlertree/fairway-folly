@@ -54,13 +54,11 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .match-card>button,.multiplayer-entry{margin-top:12px;width:100%;min-height:44px}.match-card input{width:100%;box-sizing:border-box}.match-card h1{font-size:34px}.match-card .board-table th{white-space:normal}.match-card .board-table{overflow-x:auto}.match-error{background:#f6ded0;color:#7c3028;padding:12px;border-radius:12px}.match-turn{font-weight:700}.match-pill{position:absolute;z-index:6;left:14px;top:68px;padding:8px 12px;background:#fff9e9;border:0;border-radius:12px;font-size:12px;color:#214f40}.match-pill small{display:block;font-size:10px;margin-top:3px}.is-pulling .match-pill{visibility:hidden}@media(max-width:600px){.match-pill{top:auto;bottom:68px;left:10px;font-size:10px;padding:6px 10px}.match-card{padding:22px 18px}.match-card h1{font-size:28px}}
 
 /* Keep the shot controls on the edges so the ball and target stay in view. */
-.shot-dock{position:absolute;z-index:20;bottom:70px;left:18px;display:flex;align-items:end;gap:7px}
-.shot-dock label{margin:0}
-.shot-dock>label,.shot-dock summary,.shot-aim-options,.rail-face{background:#fffbeded;border:1px solid #fff8;border-radius:9px}
-.shot-dock>label{padding:5px 8px 7px;font-size:10px;font-weight:700}
-.shot-dock select{display:block;margin-top:2px;max-width:54vw;min-height:34px;font:inherit;font-size:13px;color:#204839;background:#fffbed;border:1px solid #b9c3aa;border-radius:5px;padding:3px 5px}
-.shot-dock summary{cursor:pointer;list-style:none;padding:11px;min-height:40px;font-size:12px;font-weight:700}
-.shot-aim-options{position:absolute;bottom:100%;left:0;width:min(255px,76vw);padding:9px;margin-bottom:6px}
+ .shot-dock{position:absolute;z-index:20;bottom:70px;left:18px;display:flex;gap:3px;padding:4px;border:1px solid #fff9;border-radius:24px;background:#fff9e9ea;box-shadow:0 3px 14px #24443525}
+.shot-dock button{display:grid;place-content:center;gap:1px;min-width:42px;min-height:42px;padding:2px 5px;border:0;border-radius:18px;background:transparent;font-size:10px;line-height:1.15;white-space:nowrap}
+.shot-dock button small{font-size:8px;font-weight:500}
+.shot-dock button[aria-pressed="true"]{background:#285b47;color:#fff7e7}
+.rail-face{background:#fffbeded;border:1px solid #fff8;border-radius:9px}
 .swing-rail{position:absolute;z-index:21;right:max(12px,env(safe-area-inset-right));bottom:70px;display:grid;justify-items:end;gap:6px}
 .rail-face{width:76px;padding:6px;display:grid;justify-items:center;gap:4px;color:#183e35}
 .rail-face[hidden]{display:none}
@@ -75,3 +73,5 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 @media(max-width:650px){.shot-dock{left:10px;bottom:64px}.swing-rail{bottom:64px}.app:has(.swing-rail) .wind-readout{top:56px;bottom:auto}}
 
 .rail-rule{font-size:9px;font-weight:700}
+
+@media(max-width:350px){.shot-dock{bottom:116px}}

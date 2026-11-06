@@ -1,4 +1,4 @@
-import {SwingArc} from './SwingArc';
+import {SwingGolfer} from './SwingGolfer';
 import {CourseGrass,CourseLanding} from './CourseLife';
 import {ValleyForest} from './ValleyForest';
 import {PuttingVisibility} from './PuttingVisibility';
@@ -277,7 +277,7 @@ export function World({game,view,refresh,showControls,swingPhase, swingClock,atm
  <InputSurface game={game} view={view}/>
  {!game.mini&&game.mode==='ready'&&<GolfAim game={game}/>}
  <ShotTrail game={game}/>
- {!game.mini&&<SwingArc game={game} phase={swingPhase} clock={swingClock}/>}
+ {!game.mini&&<SwingGolfer game={game} phase={swingPhase} clock={swingClock}/>}
  {game.mini&&game.mode==='ready'&&<PuttAim game={game}/>}
 
  <Dynamics game={game} view={view} refresh={refresh}/>
@@ -325,7 +325,7 @@ export default function App(){
    }else{
      const accuracy=swingMeter(phase,elapsed);
      game.inputLocked=false;
-     game.swingCue={time:game.time,ball:{...game.ball},angle:game.angle,power:game.power,accuracy};
+     game.swingCue={time:game.time,ball:{...game.ball},angle:game.angle,power:game.power,accuracy,club:game.club};
      swing(game,game.power,accuracy);
      setPhase('ready');
    }
@@ -348,12 +348,11 @@ export default function App(){
  <nav><details className="game-menu"><summary>☰ Menu</summary><div><button disabled={phase!=='ready'||!['ready','holed'].includes(game.mode)} onClick={()=>multiplayer.open()}>Private multiplayer</button>{round&&<button className="menu-round-score" onClick={()=>setPanel('board')}>{round.name} · Round {roundProgress(game).over===0?'Even par':scoreText(roundProgress(game).over)} · {roundProgress(game).total} strokes</button>}<label className="hole-choice"><span>Choose hole</span><select aria-label="Choose hole" value={game.hole} disabled={inMatch||!!round||phase!=='ready'} onChange={e=>{chooseHole(Number(e.target.value));e.currentTarget.closest('details').open=false}}><option value="1">1 · Verdant Isles · Par 4</option><option value="2">2 · Cascade Reach · Par 5</option><option value="3">3 · Kingfisher Cove · Par 3</option>{Object.values(newHoles).map(c=><option key={c.id} value={c.id}>{c.id} · {c.title} · Par {c.par}</option>)}</select></label><label className="hole-choice"><span>Conditions</span><select aria-label="Conditions" value={game.weather} disabled={inMatch||!!round||game.mode!=='ready'} onChange={e=>setConditions(e.target.value)}>{['calm','windy','stormy'].map(c=><option key={c} value={c}>{c[0].toUpperCase()+c.slice(1)}</option>)}</select></label><button disabled={inMatch} onClick={()=>{setLayout(Number(stored('fairway-next-layout','0')));setPanel('setup')}}>Play Course</button><button onClick={()=>setPanel('board')}>Leaderboard</button><button disabled={inMatch} onClick={restart}>Restart this hole</button><button onClick={()=>{gameAudio.setEnabled(!soundOn);if(!soundOn)gameAudio.unlock();setSoundOn(!soundOn)}}>{soundOn?'Sound on':'Sound off'}</button><a href={`${import.meta.env.BASE_URL}audio/credits.html`} target="_blank" rel="noreferrer">Audio credits</a></div></details><button onClick={()=>{game.freeCamera=false;setView(view==='aerial'?'ball':'aerial');}}>{view==='aerial'?'Behind ball':'View hole'}</button>{view==='ball'&&<button className="camera-reset" aria-label="Reset camera" onClick={()=>{game.freeCamera=false;game.cameraGesture=false;refresh(x=>x+1)}}>Reset camera</button>}</nav>
  {game.mini&&game.mode==='ready'&&<><div className="putt-hint">Pull back · release to putt{canTapIn(game)&&!game.pull&&<button onClick={()=>tapIn(game)}>Tap in</button>}</div>{game.pull&&<PuttLiveReadout game={game}/>}</>}{import.meta.env.DEV&&new URLSearchParams(location.search).get('preview')==='flagstick'&&<output className="flagstick-check">{game.pinHitAt?'Flagstick contacted':game.mode==='flight'?'Approach in flight':'Shot stopped'}</output>}<ScreenMarkers game={game} view={view}/>{game.mode==='holed'&&<FinishBanner game={game}/>}
  {!game.paused&&!game.mini&&game.mode==='ready'&&<><ShotMeter vertical game={game} phase={phase} clock={clock} onHit={hit} mode={game.mode} club={game.club} lie={game.lie}/>
- {phase==='ready'&&<div className="shot-dock">
-   <label>Club<select aria-label="Club" value={game.club} onChange={e=>{game.club=e.target.value;refresh(x=>x+1)}}>{Object.keys(clubs).map(name=><option key={name} value={name}>{name} · {Math.round(carryYards({...game,club:name}))} yd</option>)}</select></label>
-   <details><summary>Aim</summary><div className="shot-aim-options">
-   <button className="aim-pin" onClick={()=>{alignToPin(game);refresh(x=>x+1)}}>Aim at pin · {distance}</button>
-   <label>Aim · {Math.round(game.angle*180/Math.PI)}°<input aria-label="Aim" type="range" min="-180" max="180" value={game.angle*180/Math.PI} onChange={e=>{game.angle=Number(e.target.value)*Math.PI/180;game.target=null;refresh(x=>x+1)}}/></label>
- {!game.mini&&game.hole===2&&<div className="landing-distances">{getCourse(2).islands.map((p,i)=><button key={i} onClick={()=>{selectTarget(game,p);refresh(x=>x+1)}}>{['Left layup','Left approach','Center island'][i]} · {Math.round(Math.hypot(p.x-game.ball.x,p.z-game.ball.z)/METRES_PER_YARD)} yd</button>)}</div>}{!game.mini&&newHoles[game.hole]&&<div className="landing-distances">{newHoles[game.hole].landingSites.map(p=><button key={p.label} onClick={()=>{selectTarget(game,p);refresh(x=>x+1)}}>{p.label} · {Math.round(Math.hypot(p.x-game.ball.x,p.z-game.ball.z)/METRES_PER_YARD)} yd</button>)}</div>}</div></details>
+ {phase==='ready'&&<div className="shot-dock" role="group" aria-label="Choose club">
+   {Object.keys(clubs).map(name=><button key={name} aria-label={name} aria-pressed={game.club===name} onClick={()=>{game.club=name;refresh(x=>x+1)}}>
+     <span>{name==='Sand wedge'?'SW':name}</span>
+     <small>{Math.round(carryYards({...game,club:name}))} yd</small>
+   </button>)}
  </div>}</>}
  {game.mode==='holed'&&<section className="controls putting-controls"><div className="status">{greenNames[game.hole].toUpperCase()} <span>HOLED</span></div><div className="win"><h2>{game.strokes-game.par>=2?'Get your head in the game.':game.strokes>game.par?'Shake it off.':'Beautifully done.'}</h2><p>{game.strokes} strokes · {game.strokes===game.par?'Par':game.strokes<game.par?`${game.par-game.strokes} under par`:`${game.strokes-game.par} over par`}</p><button className="primary" disabled={inMatch&&multiplayer.busy} onClick={advance}>{inMatch?(multiplayer.busy?'Saving…':'Submit hole · View match'):game.hole<(round?.holes??HOLE_COUNT)?`Next hole · ${getCourse(game.hole+1).title} · Par ${getCourse(game.hole+1).par}`:round?'View round results':'Start a new round'}</button>{!inMatch&&<button onClick={restart}>Play hole again</button>}{game.hole===HOLE_COUNT&&<p>{game.scorecard.length?'Round total':`Hole ${game.hole} practice`}: {game.scorecard.reduce((s,h)=>s+h.strokes,game.strokes)} strokes</p>}</div></section>}
  </div>
