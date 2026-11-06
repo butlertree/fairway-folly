@@ -313,3 +313,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Trace swing timing on a tilted loop with full power at the top and straight contact at the ball, followed by a continuous follow-through.
 
 - Replace the club dropdown and aim panel with a compact club strip and direct course aiming. Animate a stylized golfer through the existing swing timing, with club-specific stance, shaft length and head shape.
+
+- Put horizontal power and direction meters below the ball. Play the swoosh and launch at impact only after both values are locked.
