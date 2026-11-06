@@ -305,3 +305,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Extend gust-driven foliage, surface-specific landing effects and directional water motion across the nine-hole course. Add sway to mini-green scenery and keep hazard footprints intact.
 
 - Add a gentle visual breeze in Calm conditions for grass, tree crowns, mini-green foliage and flags while preserving zero wind drift for shots.
+
+- Replace the full shot panel with a compact club picker, optional aim controls, and a slim right-side power and accuracy meter. Animate a glowing backswing and follow-through at the ball.

@@ -52,3 +52,24 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 
 /* Private asynchronous matches */
 .match-card>button,.multiplayer-entry{margin-top:12px;width:100%;min-height:44px}.match-card input{width:100%;box-sizing:border-box}.match-card h1{font-size:34px}.match-card .board-table th{white-space:normal}.match-card .board-table{overflow-x:auto}.match-error{background:#f6ded0;color:#7c3028;padding:12px;border-radius:12px}.match-turn{font-weight:700}.match-pill{position:absolute;z-index:6;left:14px;top:68px;padding:8px 12px;background:#fff9e9;border:0;border-radius:12px;font-size:12px;color:#214f40}.match-pill small{display:block;font-size:10px;margin-top:3px}.is-pulling .match-pill{visibility:hidden}@media(max-width:600px){.match-pill{top:auto;bottom:68px;left:10px;font-size:10px;padding:6px 10px}.match-card{padding:22px 18px}.match-card h1{font-size:28px}}
+
+/* Keep the shot controls on the edges so the ball and target stay in view. */
+.shot-dock{position:absolute;z-index:20;bottom:70px;left:18px;display:flex;align-items:end;gap:7px}
+.shot-dock label{margin:0}
+.shot-dock>label,.shot-dock summary,.shot-aim-options,.rail-face{background:#fffbeded;border:1px solid #fff8;border-radius:9px}
+.shot-dock>label{padding:5px 8px 7px;font-size:10px;font-weight:700}
+.shot-dock select{display:block;margin-top:2px;max-width:54vw;min-height:34px;font:inherit;font-size:13px;color:#204839;background:#fffbed;border:1px solid #b9c3aa;border-radius:5px;padding:3px 5px}
+.shot-dock summary{cursor:pointer;list-style:none;padding:11px;min-height:40px;font-size:12px;font-weight:700}
+.shot-aim-options{position:absolute;bottom:100%;left:0;width:min(255px,76vw);padding:9px;margin-bottom:6px}
+.swing-rail{position:absolute;z-index:21;right:max(12px,env(safe-area-inset-right));bottom:70px;display:grid;justify-items:end;gap:6px}
+.rail-face{width:76px;padding:6px;display:grid;justify-items:center;gap:4px;color:#183e35}
+.rail-face[hidden]{display:none}
+.rail-face strong,.rail-carry{font-size:10px;text-align:center}
+.rail-face b{font-size:15px;font-variant-numeric:tabular-nums}
+.rail-scale{display:flex;align-items:stretch;gap:4px;height:clamp(78px,29dvh,230px)}
+.rail-labels{display:flex;flex-direction:column;justify-content:space-between;align-items:end;font-size:8px}
+.rail-track{position:relative;width:17px;overflow:hidden;border-radius:5px;background:#e3e7d6}
+.rail-fill{position:absolute;inset:0;background:linear-gradient(to top,#83a86c,#2d7051);transform:scaleY(0);transform-origin:center bottom}
+.rail-cursor{position:absolute;bottom:0;left:0;right:0;height:3px;background:#183e35;box-shadow:0 0 0 1px #fff9}
+.swing-rail .primary{width:auto;min-width:76px;min-height:44px;padding:8px;font-size:12px;touch-action:manipulation}
+@media(max-width:650px){.shot-dock{left:10px;bottom:64px}.swing-rail{bottom:64px}.app:has(.swing-rail) .wind-readout{top:56px;bottom:auto}}
