@@ -321,3 +321,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Let fast centered putts hop at the rim and drop when they land over the opening. Show counted full shots, putts and penalties in the finish banner, and clarify when a short pull was not counted.
 
 - Add private shot-play matches for two to four players, with tee honors, farthest-ball turn order, turn glow and shared shot replays. Existing hole-by-hole invitations retain their original format.
+
+- Clarify shot-play turn status and show standings and opponent lies. Lock regular putting to the active player, support eligible out-of-turn tap-ins, skip already seen replays, and shorten long roll playback.

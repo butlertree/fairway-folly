@@ -71,7 +71,7 @@ test("sculpted islands have raised playable shelves above their water",()=>{asse
 
 import {playbackRate} from './game.js';
 test('approach quality spreads putting starts and near pin is rewarded',()=>{for(const h of [1,2]){const c=getCourse(h),near=createGame(h),far=createGame(h);near.ball.x=1;near.ball.z=c.pin.z;far.ball.x=0;far.ball.z=c.pin.z+c.green.rz*.9;enterGreen(near);enterGreen(far);assert.ok(Math.hypot(far.ball.x,far.ball.z+12)-Math.hypot(near.ball.x,near.ball.z+12)>12);assert.notEqual(near.ball.z,far.ball.z);assert.ok(near.approachLanding.distanceYards<2)}});
-test('only prolonged full-course rolling is accelerated for display',()=>{const g=createGame();g.mode='flight';g.rollStarted=0;g.time=8;assert.equal(playbackRate(g),1);g.mode='rolling';assert.equal(playbackRate(g),2.5);g.mini=true;assert.equal(playbackRate(g),1);g.mini=false;g.time=.2;assert.equal(playbackRate(g),1)});
+test('only prolonged full-course rolling is accelerated for display',()=>{const g=createGame();g.mode='flight';g.rollStarted=0;g.time=8;assert.equal(playbackRate(g),1);g.mode='rolling';assert.equal(playbackRate(g),3.5);g.mini=true;assert.equal(playbackRate(g),1);g.mini=false;g.time=.2;assert.equal(playbackRate(g),1)});
 
 import {selectTarget,selectedTarget,courseHit,golfCameraPose} from './aim.js';
 import {alignToPin} from './game.js';
@@ -145,7 +145,7 @@ test('double and triple bogey use their names and a disappointed finish only onc
 import {roundProgress} from './rounds.js';
 test('round total includes a just-finished double bogey instead of the previous hole only',()=>{const g={scorecard:[{hole:1,par:4,strokes:3}],strokes:7,par:5,mode:'holed'};assert.deepEqual(roundProgress(g),{total:10,over:1,complete:2});g.mode='rolling';assert.equal(roundProgress(g).over,-1)});
 
-test('rolling playback eases gradually instead of jumping to three and six times speed',()=>{const g=createGame();g.mode='rolling';g.rollStarted=0;let last=1;for(let time=0;time<10;time+=.02){g.time=time;const rate=playbackRate(g);assert.ok(rate>=1&&rate<=2.5);assert.ok(Math.abs(rate-last)<.02);last=rate}});
+test('rolling playback eases smoothly into fast-forward',()=>{const g=createGame();g.mode='rolling';g.rollStarted=0;let last=1;for(let time=0;time<10;time+=.02){g.time=time;const rate=playbackRate(g);assert.ok(rate>=1&&rate<=3.5);assert.ok(Math.abs(rate-last)<.04);last=rate}});
 
 test('real cup sound is cued at the rim drop once, before the completion celebration',()=>{const g=createGame(3);g.strokes=1;enterGreen(g);g.ball.x=0;g.ball.z=1;putt(g,0,-1.3);let cue=null;for(let i=0;i<1000&&g.mode!=='holed';i++){step(g);if(cue===null&&g.soundEvents.some(e=>e.type==='cup')){cue=g.time-g.finish.started;assert.equal(g.mode,'sinking')}}assert.ok(cue>.5&&cue<.7);assert.equal(g.soundEvents.filter(e=>e.type==='cup').length,1);assert.equal(g.mode,'holed')});
 
@@ -311,4 +311,16 @@ test('Hole 9 counts three full shots and one putt as a birdie',()=>{
   assert.deepEqual(g.history.map(event=>event.type),['shot','shot','shot','putt']);
   assert.equal(g.strokes,4);
   assert.equal(scoreName(g.strokes,g.par),'BIRDIE');
+});
+
+test('paused multiplayer games reject normal putts and tap-in input',()=>{
+  const g=createGame(4);
+  enterGreen(g);
+  Object.assign(g.ball,{x:0,z:1,y:.3});
+  assert.ok(canTapIn(g));
+  g.paused=true;
+  assert.equal(tapIn(g),false);
+  putt(g,0,-1,18);
+  assert.equal(g.strokes,0);
+  assert.equal(g.mode,'ready');
 });

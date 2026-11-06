@@ -38,12 +38,21 @@ begin
  foreach player in array array[host,guest,third,fourth] loop
    assert state->>'player'=player::text;
    perform set_config('request.jwt.claim.sub',player::text,true);
-   state:=public.ff_group_shot(mid,(state->>'revision')::int,'{"hole":1,"mode":"ready","strokes":1}',
-     case when player=guest then 200 else 80 end,'{"input":{"type":"shot"}}');
+   state:=public.ff_group_shot(mid,(state->>'revision')::int,jsonb_build_object('hole',1,'mode','ready','strokes',1,'mini',player=host,'putts',0,'ball',jsonb_build_object('x',0,'y',.3,'z',1)),
+     case when player=guest then 200 when player=host then .3048 else 80 end,'{"input":{"type":"shot"}}');
  end loop;
  assert state->>'player'=guest::text;
  assert state->'last_shot'->>'player'=fourth::text;
- foreach player in array array[guest,host,third,fourth] loop
+ assert jsonb_array_length(state->'lies')=4;
+ perform set_config('request.jwt.claim.sub',host::text,true);
+ declare revision int:=(state->>'revision')::int;
+ begin
+   state:=public.ff_group_tap_in(mid,1,'{"hole":1,"mode":"holed","strokes":2,"mini":true,"putts":1}');
+   assert state->>'player'=guest::text;
+   assert (state->>'revision')::int=revision;
+   assert jsonb_array_length(state->'lies')=3;
+ end;
+ foreach player in array array[guest,third,fourth] loop
    assert state->>'player'=player::text;
    perform set_config('request.jwt.claim.sub',player::text,true);
    state:=public.ff_group_shot(mid,(state->>'revision')::int,'{"hole":1,"mode":"holed","strokes":2}',0,'{"input":{"type":"putt"}}');

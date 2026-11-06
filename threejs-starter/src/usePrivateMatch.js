@@ -1,8 +1,9 @@
+import {canTapIn,step,tapIn} from './game';
 import {useState,useRef,useEffect} from 'react';
 import {matchRpc,playerSession,inviteSecret,multiplayerReady} from './multiplayer-api';
-import {matchLink,matchUrl,myTurn,turnSnapshot,groupAway} from './multiplayer-state';
+import {matchLink,matchUrl,myTurn,turnSnapshot,groupAway,matchGame} from './multiplayer-state';
 export function usePrivateMatch(game,onPanel){const link=useRef(matchLink()),[match,setMatch]=useState(null),[user,setUser]=useState(null),[invite,setInvite]=useState(link.current.invite??''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[engaged,setEngaged]=useState(!!link.current.id),[saved,setSaved]=useState(false);const current=useRef(null),working=useRef(false),signature=useRef(''),epoch=useRef(0),panel=useRef(onPanel);panel.current=onPanel;
- function accept(m){if(current.current?.id===m.id&&current.current.revision>m.revision)return current.current;current.current=m;setMatch(m);return m}
+ function accept(m){const prior=current.current;if(prior?.id===m.id&&(prior.revision>m.revision||prior.revision===m.revision&&prior.scores.length>m.scores.length))return prior;current.current=m;setMatch(m);return m}
  async function action(fn){if(working.current)return;working.current=true;setBusy(true);setError('');try{return await fn()}catch(e){setError(e.message??'Could not reach the match. Please try again.');panel.current()}finally{working.current=false;setBusy(false)}}
  function remember(m){localStorage.setItem('fairway-last-match',m.id);const url=new URL(matchUrl(m.id));if(import.meta.env.DEV){const q=new URLSearchParams(location.search);for(const k of ['testplayer','preview'])if(q.has(k))url.searchParams.set(k,q.get(k))}history.replaceState(null,'',url);link.current={id:m.id,invite:null};setEngaged(true)}
  async function refresh(){return action(async()=>{const u=await playerSession();setUser(u.id);const id=current.current?.id??link.current.id??localStorage.getItem('fairway-last-match');if(!id)return;const m=await matchRpc('ff_get_match',{p_id:id});accept(m);remember(m);setInvite(localStorage.getItem('fairway-invite-'+id)??'');return m})}
@@ -26,7 +27,18 @@ export function usePrivateMatch(game,onPanel){const link=useRef(matchLink()),[ma
      accept(m);
    });
  },[busy,engaged,user,match?.revision,game,game.mode,game.paused]);
+ async function tapInEarly(){
+   return action(async()=>{
+     const m=current.current;
+     if(!m?.shot_play||m.status!=='playing'||myTurn(m,user))return;
+     const attempt=matchGame(m,user);
+     if(!canTapIn(attempt)||!tapIn(attempt))return;
+     for(let i=0;i<2400&&!['ready','holed'].includes(attempt.mode);i++)step(attempt);
+     if(attempt.mode!=='holed')throw Error('This putt needs to be played on your turn.');
+     accept(await matchRpc('ff_group_tap_in',{p_id:m.id,p_hole:m.hole,p_snapshot:turnSnapshot(attempt)}));
+   });
+ }
  async function start(){return action(async()=>accept(await matchRpc('ff_group_start',{p_id:match.id})))}
  async function finish(){return action(async()=>{if(!myTurn(current.current,user)||game.mode!=='holed')throw Error('Finish the hole first.');const latest=await matchRpc('ff_get_match',{p_id:match.id});accept(latest);if(latest.scores.some(s=>s.player===user&&s.hole===game.hole)){panel.current();return}const snap=turnSnapshot(game);const m=await matchRpc('ff_save_turn',{p_id:match.id,p_hole:game.hole,p_revision:current.current.revision,p_snapshot:snap});accept(m);const key=`fairway-submit-${match.id}-${user}-${game.hole}`;let submission=localStorage.getItem(key);if(!submission){submission=crypto.randomUUID();localStorage.setItem(key,submission)}const result=await matchRpc('ff_finish_hole',{p_id:match.id,p_hole:game.hole,p_strokes:game.strokes,p_submission:submission});accept(result);signature.current='';setSaved(true);panel.current()})}
- return {match,user,invite,error,busy,engaged,saved,pending:link.current.invite?link.current:null,create,join,start,refresh,load,leave,finish,newMatch,open:()=>{setEngaged(true);panel.current();if(!match&&!link.current.invite&&localStorage.getItem('fairway-last-match'))refresh()}};
+ return {match,user,invite,error,busy,engaged,saved,pending:link.current.invite?link.current:null,create,join,start,tapInEarly,refresh,load,leave,finish,newMatch,open:()=>{setEngaged(true);panel.current();if(!match&&!link.current.invite&&localStorage.getItem('fairway-last-match'))refresh()}};
 }

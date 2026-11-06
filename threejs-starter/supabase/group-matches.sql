@@ -29,6 +29,8 @@ begin
    'holes',m.holes,'hole',m.hole,'player',m.player,'status',m.status,
    'weather',m.weather,'layout',m.layout,'revision',m.revision,
    'last_shot',m.last_shot,'shot_queue',m.shot_queue,
+   'lies',coalesce((select jsonb_agg(jsonb_build_object('player',player,'mini',snapshot->'mini','ball',snapshot->'ball'))
+     from ff_private.turns where match_id=p_id and hole=m.hole and not finished),'[]'::jsonb),
    'players',(select jsonb_agg(jsonb_build_object('id',player,'name',name) order by seat) from ff_private.members where match_id=p_id),
    'scores',coalesce((select jsonb_agg(jsonb_build_object('player',player,'hole',hole,'strokes',strokes) order by hole) from ff_private.turns where match_id=p_id and finished),'[]'::jsonb),
    'snapshot',(select snapshot from ff_private.turns where match_id=p_id and player=auth.uid() and hole=m.hole)
@@ -153,5 +155,31 @@ end $$;
 
 revoke all on function public.ff_group_create(text,int,text,int,text),public.ff_group_join(uuid,text,text),public.ff_group_start(uuid),public.ff_group_shot(uuid,int,jsonb,double precision,jsonb) from public,anon,authenticated;
 grant execute on function public.ff_group_create(text,int,text,int,text),public.ff_group_join(uuid,text,text),public.ff_group_start(uuid),public.ff_group_shot(uuid,int,jsonb,double precision,jsonb) to authenticated;
+create or replace function public.ff_group_tap_in(p_id uuid,p_hole int,p_snapshot jsonb) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare m ff_private.matches; t ff_private.turns;
+begin
+ select * into m from ff_private.matches where id=p_id and shot_play for update;
+ if auth.uid() is null or m.id is null or not exists(
+   select 1 from ff_private.members where match_id=p_id and player=auth.uid()
+ ) then raise exception 'This match is private.'; end if;
+ select * into t from ff_private.turns where match_id=p_id and player=auth.uid() and hole=p_hole;
+ if t.finished and t.snapshot=p_snapshot then return ff_private.group_state(p_id); end if;
+ if m.hole is distinct from p_hole or m.status<>'playing' or m.player=auth.uid() or t.finished
+   or t.away is null or t.away>2.4384 or t.snapshot->>'mini' is distinct from 'true'
+   or t.snapshot->>'mode' is distinct from 'ready' then raise exception 'This tap-in is no longer available. Refresh the match.'; end if;
+ if p_snapshot is null or jsonb_typeof(p_snapshot)<>'object' or octet_length(p_snapshot::text)>100000
+   or p_snapshot->>'mode' is distinct from 'holed' or p_snapshot->>'mini' is distinct from 'true'
+   or (p_snapshot->>'hole')::int is distinct from p_hole
+   or (p_snapshot->>'strokes')::int is distinct from t.strokes+1
+   or (p_snapshot->>'putts')::int is distinct from coalesce((t.snapshot->>'putts')::int,0)+1
+   then raise exception 'The tap-in did not finish in one stroke.'; end if;
+ -- Leave the active player's revision intact so a shot already in flight can still save.
+ update ff_private.turns set snapshot=p_snapshot,strokes=t.strokes+1,away=0,finished=true
+ where match_id=p_id and player=auth.uid() and hole=p_hole;
+ return ff_private.group_state(p_id);
+end $$;
+revoke all on function public.ff_group_tap_in(uuid,int,jsonb) from public,anon,authenticated;
+grant execute on function public.ff_group_tap_in(uuid,int,jsonb) to authenticated;
 notify pgrst,'reload schema';
 commit;

@@ -70,3 +70,11 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .shot-dock{bottom:24px}
 .swing-back{display:block;margin:0 0 6px;padding:6px 9px;min-height:34px;font-size:11px}
 @media(max-width:820px){.shot-dock{left:10px;bottom:76px}}
+
+.shot-play-hud{position:absolute;z-index:20;top:62px;left:14px;display:grid;justify-items:start;gap:4px;max-width:min(420px,80vw)}
+.shot-play-hud .match-pill{position:static;margin:0;text-align:left;opacity:1}
+.match-standing{display:flex;flex-wrap:wrap;gap:4px;padding:4px 6px;background:#fff9e9e8;border-radius:8px;font-size:11px}
+.match-standing span{padding:2px 5px}
+.match-standing b{margin-left:3px}
+.opponent-ball-name{display:block;white-space:nowrap;padding:2px 6px;border-radius:7px;background:#fff9e9e8;color:#244a39;font:700 10px 'DM Sans',sans-serif}
+@media(max-width:650px){.shot-play-hud{top:53px;left:8px}.match-standing{font-size:10px}}
