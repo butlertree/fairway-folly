@@ -17,7 +17,7 @@ class ClubPath extends THREE.Curve{
 }
 
 export function SwingSwoosh({game}){
-  const group=useRef(),glow=useRef(),core=useRef();
+  const group=useRef(),glow=useRef(),core=useRef(),flare=useRef();
   const path=useMemo(()=>new ClubPath(),[]);
   useFrame(()=>{
     const cue=game.swingCue;
@@ -29,14 +29,19 @@ export function SwingSwoosh({game}){
     const head=age<swingImpactDelay
       ?Math.round(impact*Math.max(0,age/swingImpactDelay))
       :Math.round(impact+(segments-impact)*Math.min(1,(age-swingImpactDelay)/280));
-    const start=Math.max(0,head-18),end=Math.min(segments,head+2);
+    const boosted=cue.power>=.95;
+    const start=Math.max(0,head-(boosted?28:18)),end=Math.min(segments,head+2);
     const fade=1-THREE.MathUtils.smoothstep(age,330,570);
-    for(const [mesh,opacity] of [[glow.current,.30],[core.current,.94]]){
+    flare.current.visible=boosted;
+    flare.current.geometry.setDrawRange(start*sides*6,(end-start)*sides*6);
+    flare.current.material.opacity=fade*.48;
+    for(const [mesh,opacity] of [[glow.current,boosted?.65:.30],[core.current,.94]]){
       mesh.geometry.setDrawRange(start*sides*6,(end-start)*sides*6);
       mesh.material.opacity=fade*opacity;
     }
   });
   return <group ref={group} visible={false}>
+    <mesh ref={flare} visible={false}><tubeGeometry args={[path,segments,.21,sides,false]}/><meshBasicMaterial color="#ffad38" transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false}/></mesh>
     <mesh ref={glow}><tubeGeometry args={[path,segments,.10,sides,false]}/><meshBasicMaterial color="#f8c65e" transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false}/></mesh>
     <mesh ref={core}><tubeGeometry args={[path,segments,.034,sides,false]}/><meshBasicMaterial color="#fff1af" transparent depthWrite={false} toneMapped={false}/></mesh>
   </group>;

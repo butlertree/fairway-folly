@@ -59,7 +59,7 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .shot-dock button small{font-size:8px;font-weight:500}
 .shot-dock button[aria-pressed="true"]{background:#285b47;color:#fff7e7}
  .center-swing{position:absolute;z-index:21;left:50%;bottom:16px;transform:translateX(-50%);width:min(300px,calc(100% - 116px));padding:8px 10px;background:#fffbedee;border:1px solid #fff9;border-radius:12px;box-shadow:0 3px 14px #24443525}
-.center-swing.ready{width:max-content;bottom:76px;padding:0;border:0;background:transparent;box-shadow:none}
+.center-swing.ready{border-color:transparent;background:transparent;box-shadow:none}
 .center-swing.swinging{width:auto;font-size:12px;font-weight:700}
 .center-swing .primary{min-height:44px;padding:8px 16px;touch-action:manipulation}
 .center-swing .shot-readout{margin-top:0}
@@ -67,5 +67,6 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .center-swing .meter i{height:18px}
 .center-swing .meter-ends{margin:0 0 5px}
 .center-swing .carry-note,.center-swing .accuracy-instruction{display:none}
-.shot-dock{bottom:16px}
-@media(max-width:650px){.shot-dock{left:10px;bottom:12px}}
+.shot-dock{bottom:24px}
+.swing-back{display:block;margin:0 0 6px;padding:6px 9px;min-height:34px;font-size:11px}
+@media(max-width:820px){.shot-dock{left:10px;bottom:76px}}

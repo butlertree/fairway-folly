@@ -341,6 +341,12 @@ export default function App(){
    return ()=>clearTimeout(timer);
  },[game,game.paused,phase]);
 
+ function changeClub(){
+   if(phase!=='power'&&phase!=='accuracy')return;
+   game.inputLocked=false;
+   game.previewPower=null;
+   setPhase('ready');
+ }
  function advance(){if(inMatch){multiplayer.finish();return}if(round&&game.hole===(round.holes??HOLE_COUNT)&&game.mode==='holed'){setPanel('board');return}const next=nextHole(game)??createGame();next.weather=round?.weather??game.weather;next.wind=courseWind(next.hole,next.weather);next.layout=round?.layout??game.layout;next.cup=cupFor(next.hole,next.layout);alignForPlay(next);savedHoles.current.set(game.hole,game);savedHoles.current.set(next.hole,next);holeUrl(next.hole);setGame(next);setPhase('ready');setView('ball')}
  const distance=game.mini?Math.hypot(game.ball.x-miniCup(game).x,game.ball.z-miniCup(game).z).toFixed(1)+' ft':Math.round(yardsToPin(game.ball,game.hole,pinFor(game,getCourse(game.hole))))+' yd';
  return <div onPointerDownCapture={()=>gameAudio.unlock()} onClickCapture={()=>gameAudio.unlock()} onPointerUpCapture={()=>gameAudio.unlock()} onKeyDownCapture={()=>gameAudio.unlock()} className={'app '+(view==='aerial'?'inspect':'')+(game.mode==='holed'?'':' controls-hidden')+(game.mode==='holed'?' completed':'')+(game.mini?' mini-scene':'')+(game.pull?' is-pulling':'')}>{panel==='match'&&<MatchPanel {...multiplayer} onCreate={multiplayer.create} onJoin={multiplayer.join} onPlay={playMatch} onLeave={leaveMatch} onRefresh={multiplayer.refresh} onNew={multiplayer.newMatch}/>} {panel==='setup'&&<CourseSetup onMultiplayer={()=>multiplayer.open()} weather={weather} layout={layout} onWeather={setConditions} onStart={startCourse} onClose={()=>setPanel(null)} onBoard={(w,l)=>{setWeather(w);setLayout(l);setPanel('board')}}/>}{panel==='board'&&<Leaderboard entries={entries} onRemove={id=>setEntries(previous=>previous.filter(e=>e.id!==id))} weather={completed?.weather??weather} layout={completed?.layout??layout} current={completed} onImport={card=>setEntries(previous=>addScorecard(previous,card))} onClose={()=>setPanel(null)} onNew={()=>{setLayout(Number(stored('fairway-next-layout','0')));setPanel('setup')}}/>}<World key={game.hole} game={game} view={view} refresh={refresh} showControls={false}/>
@@ -353,7 +359,8 @@ export default function App(){
  {game.mini&&game.mode==='ready'&&<><div className="putt-hint">Pull back · release to putt{canTapIn(game)&&!game.pull&&<button onClick={()=>tapIn(game)}>Tap in</button>}</div>{game.pull&&<PuttLiveReadout game={game}/>}</>}{import.meta.env.DEV&&new URLSearchParams(location.search).get('preview')==='flagstick'&&<output className="flagstick-check">{game.pinHitAt?'Flagstick contacted':game.mode==='flight'?'Approach in flight':'Shot stopped'}</output>}<ScreenMarkers game={game} view={view}/>{game.mode==='holed'&&<FinishBanner game={game}/>}
  {!game.paused&&!game.mini&&game.mode==='ready'&&<><aside className={'center-swing '+phase} aria-label="Swing controls">
    {phase==='ready'?<button className="primary" onClick={()=>hit()}>Start swing</button>:phase==='swinging'?<div role="status">Swinging…</div>:
-     <ShotMeter game={game} phase={phase} clock={clock} onHit={hit} mode={game.mode} club={game.club} lie={game.lie}/>}
+     <><button className="swing-back" onClick={changeClub}>‹ Change club</button>
+       <ShotMeter game={game} phase={phase} clock={clock} onHit={hit} mode={game.mode} club={game.club} lie={game.lie}/></>}
  </aside>
  {phase==='ready'&&<div className="shot-dock" role="group" aria-label="Choose club">
    {Object.keys(clubs).map(name=><button key={name} aria-label={name} aria-pressed={game.club===name} onClick={()=>{game.club=name;refresh(x=>x+1)}}>
