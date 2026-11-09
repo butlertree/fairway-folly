@@ -51,3 +51,4 @@ The same `group-matches.sql` migration adds a private leaderboard option for 2â€
 `leaderboard-smoke.sql` verifies ten seats, outsider rejection, stale-shot protection, duplicate saves, independent hole progress and final results. Run it on the same disposable database as `group-smoke.sql`.
 
 New invitations now create leaderboard rounds. Existing shot-play matches can still be opened. Players in a leaderboard round can add, change, or remove one preset reaction per completed opponent score, including after the round ends.
+Each player can also post one plain-text comment of up to 160 characters per completed opponent score and edit or remove it. Comments are visible only to round participants.

@@ -97,3 +97,8 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .reaction-options button[aria-pressed="true"],.reaction-score[aria-expanded="true"]{background:#245643;color:white}
 .reaction-score[aria-expanded="true"] small{color:inherit}
 .hole-reactions ul{margin:0;padding-left:18px}
+.score-comment-form{display:grid;gap:5px;text-align:left}
+.score-comment-form textarea{width:100%;box-sizing:border-box;padding:8px;font:inherit;background:#fffdf4;border:1px solid #bdc9b1;border-radius:6px;resize:vertical}
+.hole-reactions .score-comments{list-style:none;text-align:left;padding:0;display:grid;gap:6px}
+.score-comments li{padding:6px;background:#fff9e9;border-radius:6px}
+.score-comments li span{display:block;white-space:pre-wrap;overflow-wrap:anywhere}

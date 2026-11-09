@@ -44,7 +44,10 @@ export function usePrivateMatch(game,onPanel){const link=useRef(matchLink()),[ma
  async function react(player,hole,reaction){
    return action(async()=>accept(await matchRpc('ff_leaderboard_react',{p_id:match.id,p_player:player,p_hole:hole,p_reaction:reaction})));
  }
+ async function comment(player,hole,text){
+   return action(async()=>accept(await matchRpc('ff_leaderboard_comment',{p_id:match.id,p_player:player,p_hole:hole,p_comment:text})));
+ }
  async function start(){return action(async()=>accept(await matchRpc('ff_group_start',{p_id:match.id})))}
  async function finish(){return action(async()=>{if(!myTurn(current.current,user)||game.mode!=='holed')throw Error('Finish the hole first.');const latest=await matchRpc('ff_get_match',{p_id:match.id});accept(latest);if(latest.scores.some(s=>s.player===user&&s.hole===game.hole)){panel.current();return}const snap=turnSnapshot(game);const m=await matchRpc('ff_save_turn',{p_id:match.id,p_hole:game.hole,p_revision:current.current.revision,p_snapshot:snap});accept(m);const key=`fairway-submit-${match.id}-${user}-${game.hole}`;let submission=localStorage.getItem(key);if(!submission){submission=crypto.randomUUID();localStorage.setItem(key,submission)}const result=await matchRpc('ff_finish_hole',{p_id:match.id,p_hole:game.hole,p_strokes:game.strokes,p_submission:submission});accept(result);signature.current='';setSaved(true);panel.current()})}
- return {match,user,invite,error,busy,engaged,saved,pending:link.current.invite?link.current:null,create,join,start,react,tapInEarly,refresh,load,leave,finish,newMatch,open:()=>{setEngaged(true);panel.current();if(!match&&!link.current.invite&&localStorage.getItem('fairway-last-match'))refresh()}};
+ return {match,user,invite,error,busy,engaged,saved,pending:link.current.invite?link.current:null,create,join,start,react,comment,tapInEarly,refresh,load,leave,finish,newMatch,open:()=>{setEngaged(true);panel.current();if(!match&&!link.current.invite&&localStorage.getItem('fairway-last-match'))refresh()}};
 }

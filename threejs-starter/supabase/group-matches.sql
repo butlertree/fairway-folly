@@ -33,6 +33,20 @@ create table if not exists ff_private.hole_reactions (
 alter table ff_private.hole_reactions enable row level security;
 revoke all on ff_private.hole_reactions from public,anon,authenticated;
 
+create table if not exists ff_private.hole_comments (
+  match_id uuid not null,
+  player uuid not null,
+  hole int not null,
+  author uuid not null,
+  comment text not null check(char_length(comment) between 1 and 160 and comment ~ '[^[:space:]]'),
+  primary key(match_id,player,hole,author),
+  foreign key(match_id,player,hole) references ff_private.turns(match_id,player,hole) on delete cascade,
+  foreign key(match_id,author) references ff_private.members(match_id,player) on delete cascade,
+  check(player<>author)
+);
+alter table ff_private.hole_comments enable row level security;
+revoke all on ff_private.hole_comments from public,anon,authenticated;
+
 create or replace function ff_private.group_state(p_id uuid) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare m ff_private.matches; finished_holes int; player_hole int;
@@ -58,6 +72,8 @@ begin
    'scores',coalesce((select jsonb_agg(jsonb_build_object('player',player,'hole',hole,'strokes',strokes) order by hole) from ff_private.turns where match_id=p_id and finished),'[]'::jsonb),
    'reactions',coalesce((select jsonb_agg(jsonb_build_object('player',player,'hole',hole,'author',author,'reaction',reaction) order by hole,player,author)
      from ff_private.hole_reactions where match_id=p_id),'[]'::jsonb),
+   'comments',coalesce((select jsonb_agg(jsonb_build_object('player',player,'hole',hole,'author',author,'text',comment) order by hole,player,author)
+     from ff_private.hole_comments where match_id=p_id),'[]'::jsonb),
    'snapshot',(select snapshot from ff_private.turns where match_id=p_id and player=auth.uid() and hole=player_hole)
  );
 end $$;
@@ -281,5 +297,27 @@ begin
 end $$;
 revoke all on function public.ff_leaderboard_react(uuid,uuid,int,text) from public,anon,authenticated;
 grant execute on function public.ff_leaderboard_react(uuid,uuid,int,text) to authenticated;
+create or replace function public.ff_leaderboard_comment(p_id uuid,p_player uuid,p_hole int,p_comment text) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare member_id uuid:=auth.uid(); m ff_private.matches; body text:=trim(p_comment);
+begin
+ select * into m from ff_private.matches where id=p_id and leaderboard for update;
+ if member_id is null or m.id is null or not exists(
+   select 1 from ff_private.members where match_id=p_id and player=member_id
+ ) then raise exception 'This match is private.'; end if;
+ if member_id=p_player or not exists(
+   select 1 from ff_private.turns where match_id=p_id and player=p_player and hole=p_hole and finished
+ ) then raise exception 'Choose another player’s completed hole.'; end if;
+ if body is null then
+   delete from ff_private.hole_comments where match_id=p_id and player=p_player and hole=p_hole and author=member_id;
+ elsif char_length(body) between 1 and 160 and body ~ '[^[:space:]]' then
+   insert into ff_private.hole_comments values(p_id,p_player,p_hole,member_id,body)
+   on conflict(match_id,player,hole,author) do update set comment=excluded.comment;
+ else raise exception 'Write a comment of 1 to 160 characters.'; end if;
+ update ff_private.matches set revision=revision+1,updated_at=now() where id=p_id;
+ return ff_private.group_state(p_id);
+end $$;
+revoke all on function public.ff_leaderboard_comment(uuid,uuid,int,text) from public,anon,authenticated;
+grant execute on function public.ff_leaderboard_comment(uuid,uuid,int,text) to authenticated;
 notify pgrst,'reload schema';
 commit;

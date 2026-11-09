@@ -333,3 +333,4 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 
 - Added Well played, Great birdie, and Tough hole reactions to completed scores in private leaderboard rounds.
 - Made live leaderboard the only mode for new private rounds while retaining existing match links.
+- Added private typed comments on completed scores alongside preset reactions.

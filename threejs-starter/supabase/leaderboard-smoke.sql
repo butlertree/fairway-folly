@@ -84,10 +84,40 @@ begin
  perform set_config('request.jwt.claim.sub',host::text,true);
  state:=public.ff_get_match(mid);
  assert state->'reactions'->0->>'author'=player::text;
+ perform set_config('request.jwt.claim.sub',player::text,true);
+ state:=public.ff_leaderboard_comment(mid,host,2,' That hole got me too. ');
+ assert state->'comments'->0->>'text'='That hole got me too.';
+ state:=public.ff_leaderboard_comment(mid,host,2,'Edited comment');
+ assert jsonb_array_length(state->'comments')=1;
+ assert state->'comments'->0->>'text'='Edited comment';
+ assert state->'reactions'->0->>'reaction'='great-birdie';
+ begin
+   perform public.ff_leaderboard_comment(mid,host,2,repeat('x',161));
+   raise exception 'Oversized comment accepted';
+ exception when raise_exception then
+   if sqlerrm<>'Write a comment of 1 to 160 characters.' then raise; end if;
+ end;
+ begin
+   perform public.ff_leaderboard_comment(mid,host,3,'No finished score');
+   raise exception 'Comment on unfinished score accepted';
+ exception when raise_exception then
+   if sqlerrm<>'Choose another player’s completed hole.' then raise; end if;
+ end;
+ perform set_config('request.jwt.claim.sub',host::text,true);
+ assert public.ff_get_match(mid)->'comments'->0->>'text'='Edited comment';
+ perform set_config('request.jwt.claim.sub',player::text,true);
+ state:=public.ff_leaderboard_comment(mid,host,2,null);
+ assert state->'comments'='[]'::jsonb;
  perform set_config('request.jwt.claim.sub',lpad('11',32,'0')::uuid::text,true);
  begin
    perform public.ff_leaderboard_react(mid,host,1,'well-played');
    raise exception 'An outsider could react';
+ exception when raise_exception then
+   if sqlerrm<>'This match is private.' then raise; end if;
+ end;
+ begin
+   perform public.ff_leaderboard_comment(mid,host,2,'Outsider');
+   raise exception 'An outsider could comment';
  exception when raise_exception then
    if sqlerrm<>'This match is private.' then raise; end if;
  end;
