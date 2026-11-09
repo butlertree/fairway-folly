@@ -43,3 +43,9 @@ Apply `group-matches.sql` after `multiplayer.sql` before deploying a frontend th
 Each settled shot saves the new lie and replay input atomically. Other clients poll and replay the shot locally. The latest 16 shots are retained to bridge polling gaps. This is near-live playback after a shot settles. As with the original mode, physics is client-side and intended for trusted private play.
 
 `group-smoke.sql` exercises a four-player match against a disposable PostgreSQL database with an `auth.uid()` test shim. It rolls back its fixtures.
+
+## Live leaderboard rounds
+
+The same `group-matches.sql` migration adds a private leaderboard option for 2–10 players. Everyone plays the host's selected holes, weather and pins at their own pace. Settled shots save per player, and finished holes appear in the shared standings as clients poll. The standings rank by score to par on finished holes and display holes finished alongside each score. Final ties share the result.
+
+`leaderboard-smoke.sql` verifies ten seats, outsider rejection, stale-shot protection, duplicate saves, independent hole progress and final results. Run it on the same disposable database as `group-smoke.sql`.

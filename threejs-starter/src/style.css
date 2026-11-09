@@ -78,3 +78,17 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .match-standing b{margin-left:3px}
 .opponent-ball-name{display:block;white-space:nowrap;padding:2px 6px;border-radius:7px;background:#fff9e9e8;color:#244a39;font:700 10px 'DM Sans',sans-serif}
 @media(max-width:650px){.shot-play-hud{top:53px;left:8px}.match-standing{font-size:10px}}
+
+.match-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;border:0;padding:0;margin:0}
+.match-mode legend{font-size:12px;font-weight:700;margin-bottom:6px}
+.match-mode button[aria-pressed="true"]{background:#245643;color:#fff}
+.match-mode small{display:block;font-weight:400}
+.live-standings{position:absolute;z-index:20;top:62px;left:14px;width:min(195px,44vw);background:#fff9e9f5;border-radius:10px;color:#193f32;font-size:11px}
+.live-standings>button{display:flex;align-items:center;justify-content:space-between;gap:4px;width:100%;font:inherit;font-weight:800;padding:6px 8px;min-height:30px;border:0;background:transparent}
+.live-standings button span,.live-standings small{font-size:.9em}
+.live-standings ol{margin:0;padding:0 4px 4px;list-style:none}
+.live-standings li{display:grid;grid-template-columns:minmax(0,1fr) auto 3ch;align-items:center;gap:5px;padding:1px 4px;font-variant-numeric:tabular-nums}
+.live-standings li>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.live-standings li.is-you{background:#e1ead3;border-radius:4px}
+.live-standings small{text-align:right}
+@media(max-width:650px){.live-standings{top:53px;left:8px;font-size:10px;width:min(153px,43vw)}}

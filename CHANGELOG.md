@@ -323,3 +323,8 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Add private shot-play matches for two to four players, with tee honors, farthest-ball turn order, turn glow and shared shot replays. Existing hole-by-hole invitations retain their original format.
 
 - Clarify shot-play turn status and show standings and opponent lies. Lock regular putting to the active player, support eligible out-of-turn tap-ins, skip already seen replays, and shorten long roll playback.
+
+### Live leaderboard rounds — November 9, 2026
+
+- Added private leaderboard rounds for 2–10 players with independent progress, a live on-course standings panel, and automatic posting after each completed hole.
+- Kept shot-by-shot matches available separately for 2–4 players.

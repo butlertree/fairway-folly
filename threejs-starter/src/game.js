@@ -35,7 +35,7 @@ function contactSound(g,strength,type='bank'){if(strength>.3&&g.time-(g.lastCont
 export function bladeTransforms(time){return [0,Math.PI/2].map(offset=>({...mini.rotor,angle:time*mini.rotor.speed+offset}))}
 export function createGame(hole=1,scorecard=[]){const c=getCourse(hole);return {hole,par:c.par,scorecard,greenRevision:2,mode:'ready',mini:false,ball:{x:0,y:height(0,c.tee.z,hole)+.18+c.ballRadius,z:c.tee.z,vx:0,vy:0,vz:0},strokes:0,putts:0,angle:0,time:0,club:c.par===3?(c.yards>=185?'Hybrid':'7 iron'):'Driver',puttPower:50,power:0,accuracy:0,message:newHoles[hole]?.hint??(hole===3?'Kingfisher Cove · a 165-yard carry to the island. Take enough club; water guards the front and sides.':hole===2?'Lay up left for three safe shots, or carry the lake to the narrow island for a risky two-shot route.':'Carry the pond or lay up left. Choose a club, aim, then start your swing.'),history:[],lie:'Tee box',settle:0,drop:0,trail:[],soundEvents:[],soundSeq:0}}
 function recordGroupShot(g,input){
- if(g.groupTurn==null)return;
+ if(g.groupTurn==null&&!g.leaderboardId)return;
  const {hole,mini,strokes,putts,angle,time,club,lie,greenRevision}=g;
  g.groupReplay={start:{v:1,mode:'ready',hole,mini,strokes,putts,angle,time,club,lie,greenRevision,ball:{...g.ball}},input};
 }

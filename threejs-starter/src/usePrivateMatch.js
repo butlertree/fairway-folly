@@ -7,7 +7,7 @@ export function usePrivateMatch(game,onPanel){const link=useRef(matchLink()),[ma
  async function action(fn){if(working.current)return;working.current=true;setBusy(true);setError('');try{return await fn()}catch(e){setError(e.message??'Could not reach the match. Please try again.');panel.current()}finally{working.current=false;setBusy(false)}}
  function remember(m){localStorage.setItem('fairway-last-match',m.id);const url=new URL(matchUrl(m.id));if(import.meta.env.DEV){const q=new URLSearchParams(location.search);for(const k of ['testplayer','preview'])if(q.has(k))url.searchParams.set(k,q.get(k))}history.replaceState(null,'',url);link.current={id:m.id,invite:null};setEngaged(true)}
  async function refresh(){return action(async()=>{const u=await playerSession();setUser(u.id);const id=current.current?.id??link.current.id??localStorage.getItem('fairway-last-match');if(!id)return;const m=await matchRpc('ff_get_match',{p_id:id});accept(m);remember(m);setInvite(localStorage.getItem('fairway-invite-'+id)??'');return m})}
- async function create(name,holes,weather,layout){return action(async()=>{const u=await playerSession();setUser(u.id);const secret=inviteSecret();const m=await matchRpc('ff_group_create',{p_name:name,p_holes:holes,p_weather:weather,p_layout:layout,p_invite:secret});localStorage.setItem('fairway-invite-'+m.id,secret);localStorage.setItem('fairway-player',name);setInvite(secret);accept(m);remember(m);signature.current='';setSaved(false)})}
+ async function create(name,holes,weather,layout,mode){return action(async()=>{const u=await playerSession();setUser(u.id);const secret=inviteSecret();const m=await matchRpc(mode==='leaderboard'?'ff_leaderboard_create':'ff_group_create',{p_name:name,p_holes:holes,p_weather:weather,p_layout:layout,p_invite:secret});localStorage.setItem('fairway-invite-'+m.id,secret);localStorage.setItem('fairway-player',name);setInvite(secret);accept(m);remember(m);signature.current='';setSaved(false)})}
  async function join(name){return action(async()=>{const u=await playerSession();setUser(u.id);const m=await matchRpc(link.current.group?'ff_group_join':'ff_join_match',{p_id:link.current.id,p_invite:link.current.invite,p_name:name});localStorage.setItem('fairway-player',name);setInvite('');accept(m);remember(m);signature.current='';setSaved(false)})}
  function load(){epoch.current++;setEngaged(true);setSaved(false);signature.current=match.snapshot?JSON.stringify({...match.snapshot,time:0}):'';return match}
  function newMatch(){epoch.current++;current.current=null;setMatch(null);setInvite('');setError('');signature.current='';link.current={id:null,invite:null};localStorage.removeItem('fairway-last-match');history.replaceState(null,'',location.pathname+location.search);panel.current()}
@@ -17,16 +17,19 @@ export function usePrivateMatch(game,onPanel){const link=useRef(matchLink()),[ma
  // Save only stable rests, never an in-flight interpolation or a half-finished swing.
  useEffect(()=>{if(match?.shot_play||busy||!engaged||!myTurn(match,user)||game.paused||!['ready','holed'].includes(game.mode)||game.hole!==match.hole||game.inputLocked)return;const snap=turnSnapshot(game);if(!snap)return;const sig=JSON.stringify({...snap,time:0});if(sig===signature.current)return;const version=epoch.current;setSaved(false);const timer=setTimeout(()=>action(async()=>{if(version!==epoch.current)return;const m=await matchRpc('ff_save_turn',{p_id:match.id,p_hole:game.hole,p_revision:current.current.revision,p_snapshot:snap});if(version!==epoch.current)return;signature.current=sig;accept(m);setSaved(true)}),180);return()=>clearTimeout(timer)},[busy,engaged,user,game,game.mode,game.strokes,game.mini,game.paused,match?.status,match?.hole]);
  useEffect(()=>{
-   if(!match?.shot_play||busy||!engaged||game.paused||!myTurn(match,user)||game.groupTurn!==match.revision||
+   if(!match?.shot_play||busy||error||!engaged||!myTurn(match,user)||
+      (match.leaderboard?game.leaderboardId!==match.id||game.hole!==match.hole:game.paused||game.groupTurn!==match.revision)||
       !game.groupReplay||!['ready','holed'].includes(game.mode))return;
    const snapshot=turnSnapshot(game);
    if(!snapshot)return;
    action(async()=>{
-     const m=await matchRpc('ff_group_shot',{p_id:match.id,p_revision:match.revision,p_snapshot:snapshot,p_away:groupAway(game),p_replay:game.groupReplay});
+     const m=match.leaderboard
+       ?await matchRpc('ff_leaderboard_shot',{p_id:match.id,p_previous:game.groupReplay.start.strokes,p_snapshot:snapshot})
+       :await matchRpc('ff_group_shot',{p_id:match.id,p_revision:match.revision,p_snapshot:snapshot,p_away:groupAway(game),p_replay:game.groupReplay});
      game.groupReplay=null;
      accept(m);
    });
- },[busy,engaged,user,match?.revision,game,game.mode,game.paused]);
+ },[busy,error,engaged,user,match?.revision,game,game.mode,game.paused]);
  async function tapInEarly(){
    return action(async()=>{
      const m=current.current;

@@ -17,11 +17,11 @@ function restoreChannelLie(game){
   Object.assign(game.ball,{x:dry.x,z:dry.z,y:miniHeight(3,dry.x,dry.z)+.3,vx:0,vy:0,vz:0});
   alignForPlay(game);
 }
-export function myTurn(match,user){return match?.status==='playing'&&match.player===user}
+export function myTurn(match,user){return match?.status==='playing'&&!match.round_finished&&match.player===user}
 export function matchTotals(match,user){const scores=match.scores.filter(s=>s.player===user);return {strokes:scores.reduce((n,s)=>n+s.strokes,0),over:scores.reduce((n,s)=>n+s.strokes-holePars[s.hole-1],0),holes:scores.length}}
-export function invitationUrl(match,invite,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:match.id,invite,...(match.shot_play?{group:'1'}:{})}).toString();return url.href}
+export function invitationUrl(match,invite,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:match.id,invite,...(match.shot_play?{group:'1'}:{}),...(match.leaderboard?{leaderboard:'1'}:{})}).toString();return url.href}
 export function matchUrl(id,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:id}).toString();return url.href}
-export function matchLink(base=location.href){const url=new URL(base),params=new URLSearchParams(url.hash.slice(1));return {id:params.get('match'),invite:params.get('invite'),...(params.get('group')==='1'?{group:true}:{})}}
+export function matchLink(base=location.href){const url=new URL(base),params=new URLSearchParams(url.hash.slice(1));return {id:params.get('match'),invite:params.get('invite'),...(params.get('group')==='1'?{group:true}:{}),...(params.get('leaderboard')==='1'?{leaderboard:true}:{})}}
 export function matchPlayers(match){
  return match.players??[{id:match.host,name:match.host_name},{id:match.guest,name:match.guest_name??'Friend joining…'}];
 }
@@ -53,4 +53,9 @@ export function groupReplay(match,user){
  if(!['flight','rolling'].includes(g.mode))return null;
  g.watchingShot=replay.player;
  return g;
+}
+
+export function liveStandings(match){
+ return matchPlayers(match).map(player=>({...player,...matchTotals(match,player.id)}))
+   .sort((a,b)=>Number(!a.holes)-Number(!b.holes)||a.over-b.over||b.holes-a.holes);
 }
