@@ -19,6 +19,20 @@ alter table ff_private.members add constraint members_seat_check check(seat betw
 alter table ff_private.members enable row level security;
 revoke all on ff_private.members from public,anon,authenticated;
 
+create table if not exists ff_private.hole_reactions (
+  match_id uuid not null,
+  player uuid not null,
+  hole int not null,
+  author uuid not null,
+  reaction text not null check(reaction in ('well-played','great-birdie','tough-hole')),
+  primary key(match_id,player,hole,author),
+  foreign key(match_id,player,hole) references ff_private.turns(match_id,player,hole) on delete cascade,
+  foreign key(match_id,author) references ff_private.members(match_id,player) on delete cascade,
+  check(player<>author)
+);
+alter table ff_private.hole_reactions enable row level security;
+revoke all on ff_private.hole_reactions from public,anon,authenticated;
+
 create or replace function ff_private.group_state(p_id uuid) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare m ff_private.matches; finished_holes int; player_hole int;
@@ -42,6 +56,8 @@ begin
      from ff_private.turns where match_id=p_id and hole=m.hole and not finished),'[]'::jsonb),
    'players',(select jsonb_agg(jsonb_build_object('id',player,'name',name) order by seat) from ff_private.members where match_id=p_id),
    'scores',coalesce((select jsonb_agg(jsonb_build_object('player',player,'hole',hole,'strokes',strokes) order by hole) from ff_private.turns where match_id=p_id and finished),'[]'::jsonb),
+   'reactions',coalesce((select jsonb_agg(jsonb_build_object('player',player,'hole',hole,'author',author,'reaction',reaction) order by hole,player,author)
+     from ff_private.hole_reactions where match_id=p_id),'[]'::jsonb),
    'snapshot',(select snapshot from ff_private.turns where match_id=p_id and player=auth.uid() and hole=player_hole)
  );
 end $$;
@@ -233,5 +249,37 @@ begin
 end $$;
 revoke all on function public.ff_leaderboard_create(text,int,text,int,text),public.ff_leaderboard_shot(uuid,int,jsonb) from public,anon,authenticated;
 grant execute on function public.ff_leaderboard_create(text,int,text,int,text),public.ff_leaderboard_shot(uuid,int,jsonb) to authenticated;
+-- Only leaderboard rounds can be created by clients. Keep the helper for
+-- the leaderboard creator and preserve access to existing shot-play matches.
+revoke execute on function public.ff_group_create(text,int,text,int,text) from authenticated;
+revoke execute on function public.ff_create_match(text,int,text,int,text) from authenticated;
+
+create or replace function public.ff_leaderboard_react(p_id uuid,p_player uuid,p_hole int,p_reaction text) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare member_id uuid:=auth.uid(); m ff_private.matches;
+begin
+ select * into m from ff_private.matches where id=p_id and leaderboard for update;
+ if member_id is null or m.id is null or not exists(
+   select 1 from ff_private.members where match_id=p_id and player=member_id
+ ) then raise exception 'This match is private.'; end if;
+ if member_id=p_player or not exists(
+   select 1 from ff_private.turns where match_id=p_id and player=p_player and hole=p_hole and finished
+ ) then raise exception 'Choose another player’s completed hole.'; end if;
+ if p_reaction='great-birdie' and not exists(
+   select 1 from ff_private.turns where match_id=p_id and player=p_player and hole=p_hole
+   and strokes=(array[4,5,3,4,5,3,4,3,5])[p_hole]-1
+ ) then raise exception 'That score was not a birdie.'; end if;
+ if p_reaction is null then
+   delete from ff_private.hole_reactions where match_id=p_id and player=p_player and hole=p_hole and author=member_id;
+ elsif p_reaction in ('well-played','great-birdie','tough-hole') then
+   insert into ff_private.hole_reactions values(p_id,p_player,p_hole,member_id,p_reaction)
+   on conflict(match_id,player,hole,author) do update set reaction=excluded.reaction;
+ else raise exception 'Choose a score reaction.';
+ end if;
+ update ff_private.matches set revision=revision+1,updated_at=now() where id=p_id;
+ return ff_private.group_state(p_id);
+end $$;
+revoke all on function public.ff_leaderboard_react(uuid,uuid,int,text) from public,anon,authenticated;
+grant execute on function public.ff_leaderboard_react(uuid,uuid,int,text) to authenticated;
 notify pgrst,'reload schema';
 commit;

@@ -49,3 +49,5 @@ Each settled shot saves the new lie and replay input atomically. Other clients p
 The same `group-matches.sql` migration adds a private leaderboard option for 2–10 players. Everyone plays the host's selected holes, weather and pins at their own pace. Settled shots save per player, and finished holes appear in the shared standings as clients poll. The standings rank by score to par on finished holes and display holes finished alongside each score. Final ties share the result.
 
 `leaderboard-smoke.sql` verifies ten seats, outsider rejection, stale-shot protection, duplicate saves, independent hole progress and final results. Run it on the same disposable database as `group-smoke.sql`.
+
+New invitations now create leaderboard rounds. Existing shot-play matches can still be opened. Players in a leaderboard round can add, change, or remove one preset reaction per completed opponent score, including after the round ends.

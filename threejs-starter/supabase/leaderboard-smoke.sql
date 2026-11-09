@@ -45,7 +45,8 @@ begin
  assert (state->>'hole')::int=2;
  assert state->'snapshot'='null'::jsonb;
  assert state=public.ff_leaderboard_shot(mid,1,'{"hole":1,"mode":"holed","strokes":2}');
- state:=public.ff_leaderboard_shot(mid,0,'{"hole":2,"mode":"holed","strokes":2}');
+ perform public.ff_leaderboard_shot(mid,0,'{"hole":2,"mode":"ready","strokes":2}');
+ state:=public.ff_leaderboard_shot(mid,2,'{"hole":2,"mode":"holed","strokes":4}');
  assert (state->>'round_finished')::boolean and state->>'status'='playing';
  for i in 2..10 loop
    player:=lpad(i::text,32,'0')::uuid;
@@ -58,5 +59,37 @@ begin
    state:=public.ff_leaderboard_shot(mid,0,'{"hole":2,"mode":"holed","strokes":2}');
  end loop;
  assert state->>'status'='complete' and jsonb_array_length(state->'scores')=20;
+ assert not has_function_privilege('authenticated','public.ff_group_create(text,int,text,int,text)','EXECUTE');
+ assert not has_function_privilege('authenticated','public.ff_create_match(text,int,text,int,text)','EXECUTE');
+ state:=public.ff_leaderboard_react(mid,host,1,'well-played');
+ assert state->'reactions'->0->>'reaction'='well-played';
+ state:=public.ff_leaderboard_react(mid,host,1,'tough-hole');
+ assert jsonb_array_length(state->'reactions')=1 and state->'reactions'->0->>'reaction'='tough-hole';
+ begin
+   perform public.ff_leaderboard_react(mid,host,1,'great-birdie');
+   raise exception 'A birdie reaction was accepted on an eagle';
+ exception when raise_exception then
+   if sqlerrm<>'That score was not a birdie.' then raise; end if;
+ end;
+ begin
+   perform public.ff_leaderboard_react(mid,player,1,'well-played');
+   raise exception 'A self-reaction was accepted';
+ exception when raise_exception then
+   if sqlerrm<>'Choose another player’s completed hole.' then raise; end if;
+ end;
+ state:=public.ff_leaderboard_react(mid,host,1,null);
+ assert state->'reactions'='[]'::jsonb;
+ state:=public.ff_leaderboard_react(mid,host,2,'great-birdie');
+ assert state->'reactions'->0->>'reaction'='great-birdie';
+ perform set_config('request.jwt.claim.sub',host::text,true);
+ state:=public.ff_get_match(mid);
+ assert state->'reactions'->0->>'author'=player::text;
+ perform set_config('request.jwt.claim.sub',lpad('11',32,'0')::uuid::text,true);
+ begin
+   perform public.ff_leaderboard_react(mid,host,1,'well-played');
+   raise exception 'An outsider could react';
+ exception when raise_exception then
+   if sqlerrm<>'This match is private.' then raise; end if;
+ end;
 end $$;
 rollback;

@@ -328,3 +328,8 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 
 - Added private leaderboard rounds for 2–10 players with independent progress, a live on-course standings panel, and automatic posting after each completed hole.
 - Kept shot-by-shot matches available separately for 2–4 players.
+
+### Scorecard reactions
+
+- Added Well played, Great birdie, and Tough hole reactions to completed scores in private leaderboard rounds.
+- Made live leaderboard the only mode for new private rounds while retaining existing match links.

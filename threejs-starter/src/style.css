@@ -79,10 +79,6 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .opponent-ball-name{display:block;white-space:nowrap;padding:2px 6px;border-radius:7px;background:#fff9e9e8;color:#244a39;font:700 10px 'DM Sans',sans-serif}
 @media(max-width:650px){.shot-play-hud{top:53px;left:8px}.match-standing{font-size:10px}}
 
-.match-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;border:0;padding:0;margin:0}
-.match-mode legend{font-size:12px;font-weight:700;margin-bottom:6px}
-.match-mode button[aria-pressed="true"]{background:#245643;color:#fff}
-.match-mode small{display:block;font-weight:400}
 .live-standings{position:absolute;z-index:20;top:62px;left:14px;width:min(195px,44vw);background:#fff9e9f5;border-radius:10px;color:#193f32;font-size:11px}
 .live-standings>button{display:flex;align-items:center;justify-content:space-between;gap:4px;width:100%;font:inherit;font-weight:800;padding:6px 8px;min-height:30px;border:0;background:transparent}
 .live-standings button span,.live-standings small{font-size:.9em}
@@ -92,3 +88,12 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .live-standings li.is-you{background:#e1ead3;border-radius:4px}
 .live-standings small{text-align:right}
 @media(max-width:650px){.live-standings{top:53px;left:8px;font-size:10px;width:min(153px,43vw)}}
+
+.board-table .reaction-score{font:inherit;font-weight:700;min-width:38px;min-height:38px;padding:4px 6px}
+.reaction-score small{color:#365d47;font-size:10px;white-space:nowrap}
+.hole-reactions{display:grid;gap:7px;background:#ebe9d7;padding:9px;border-radius:9px;font-size:13px}
+.reaction-options{display:flex;flex-wrap:wrap;gap:6px}
+.reaction-options button{min-height:44px}
+.reaction-options button[aria-pressed="true"],.reaction-score[aria-expanded="true"]{background:#245643;color:white}
+.reaction-score[aria-expanded="true"] small{color:inherit}
+.hole-reactions ul{margin:0;padding-left:18px}
