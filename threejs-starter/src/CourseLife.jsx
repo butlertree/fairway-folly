@@ -41,6 +41,13 @@ export function CourseGrass({game}){
        }
      }
    }
+   if(hole===11){
+     for(let i=0;i<45;i++){
+       const x=course.pin.x+(i%15-7)*3.3+Math.sin(i*3)*1.5;
+       const z=course.pin.z-14-Math.floor(i/15)*3+Math.cos(i*2)*1.5;
+       plant(x,z);
+     }
+   }
    for(const [anchor,radius] of [[course.tee,13],[course.pin,Math.max(course.green.rx,course.green.rz)+4]]){
      for(let i=0;i<16;i++){
        const a=i*Math.PI/8,r=radius+(i%3)*2;
@@ -56,8 +63,8 @@ export function CourseGrass({game}){
  },[]);
  const transforms=useMemo(()=>clumps.flatMap(({x,z},i)=>Array.from({length:bladesPerClump},(_,j)=>{
    const a=j*2.399+i*.7, r=.42*j/bladesPerClump, px=x+Math.cos(a)*r,pz=z+Math.sin(a)*r;
-   return {x:px,z:pz,y:height(px,pz,hole)-.08,angle:a,size:.55+.75*((i*13+j*19)%23)/23};
- })),[clumps,hole]);
+   return {x:px,z:pz,y:height(px,pz,hole)-.08,angle:a,size:(.55+.75*((i*13+j*19)%23)/23)*(hole===11&&pz<course.pin.z-11?2.2:1)};
+ })),[clumps,hole,course]);
  function draw(wind,time){
    const direction=Math.atan2(wind.x??0,-(wind.z??-1));
    for(let i=0;i<transforms.length;i++){

@@ -334,3 +334,9 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Added Well played, Great birdie, and Tough hole reactions to completed scores in private leaderboard rounds.
 - Made live leaderboard the only mode for new private rounds while retaining existing match links.
 - Added private typed comments on completed scores alongside preset reactions.
+
+### Twelve-hole playtest
+
+- Added Creekbank Hollow, Sandstone Crown, and Timberroot Vale with new putting challenges.
+- Extended course rounds and scorecards to twelve holes.
+- Clarified where approaches finish on the green and made firm, centered cup hops more forgiving.

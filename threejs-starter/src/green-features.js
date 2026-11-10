@@ -1,13 +1,37 @@
+import {culvertFeet} from './creekbank.js';
 import {cascadePool} from './mini-surfaces.js';
 import {projectInside} from './mini-boundary.js';
 import {expansionBanks,expansionObstacles,movingGreenGates} from './expansion-greens.js';
 // Every low obstacle drawn in the signature gardens uses these same collision shapes.
 export const gardenObstacles={
+  10:culvertFeet,
   1:[{x:-4,z:-5,r:1},{x:4,z:5,r:1},{x:-1.6,z:6.5,r:.55},{x:1.6,z:6.5,r:.55}],
   2:[{x:-4.8,z:8.2,r:1.15},{x:5.4,z:-6.5,r:1.05}],
   ...expansionObstacles,3:[{x:-5,z:-4,r:1.05},{x:5,z:-4,r:.85},{x:-5,z:-9,r:.8}]
 };
+export const sandstoneElbows=[
+  [{ax:4.45,az:4.5,bx:5.55,bz:9.05,r:.62},{ax:5.55,az:9.05,bx:10.35,bz:8.8,r:.72}],
+  [{ax:-4.25,az:-6.3,bx:-6.45,bz:-10.55,r:.62},{ax:-6.45,az:-10.55,bx:-7.35,bz:-11.25,r:.72}],
+  [{ax:-2.4,az:6.1,bx:.8,bz:6.8,r:.55},{ax:-3.8,az:5.3,bx:-2.4,bz:6.1,r:.68}]
+];
+export const timberRoots=[
+  {ax:5.9,az:.8,bx:3.5,bz:3.2,r:.53},
+  {ax:3.5,az:3.2,bx:2.9,bz:6.8,r:.57},
+  {ax:2.9,az:6.8,bx:7.4,bz:7.6,r:.68},
+  {ax:7.4,az:7.6,bx:8.6,bz:5.5,r:.76},
+  {ax:8.6,az:5.5,bx:12.55,bz:5.5,r:.62},
+  {ax:7.4,az:7.6,bx:6.72,bz:8.75,r:.34},
+  {ax:6.72,az:8.75,bx:5.7,bz:9.37,r:.22}
+];
+export const timberStoneBanks=[
+  {ax:-7.8,az:4.3,bx:-5.1,bz:2.9,r:.53},
+  {ax:-8.7,az:6.2,bx:-7.8,bz:4.3,r:.65},
+  {ax:3.4,az:-5.4,bx:6.6,bz:-7.4,r:.54},
+  {ax:6.6,az:-7.4,bx:7.2,bz:-8.2,r:.60}
+];
 export const gardenBanks={
+  12:[...timberRoots,...timberStoneBanks],
+  11:sandstoneElbows.flat(),
   1:[{ax:-4.8,az:7,bx:-6, bz:4,r:.38},{ax:-6,az:4,bx:-6.2,bz:1,r:.38},{ax:-6.2,az:1,bx:-5.5,bz:-2,r:.38}],
   2:[{ax:6.5,az:8.3,bx:7.4,bz:5.6,r:.35},{ax:-6.8,az:-10.2,bx:-4.6,bz:-11.4,r:.35}],
   ...expansionBanks,3:[]

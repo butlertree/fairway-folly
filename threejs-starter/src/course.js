@@ -1,5 +1,5 @@
 import {bunkerAt,bunkerHeight} from './bunkers.js';
-import {newHoles,heightNew,lieNew} from './new-holes.js';
+import {HOLE_COUNT,newHoles,heightNew,lieNew} from './new-holes.js';
 import {holeThree,heightThree,lieThree} from './hole-three.js';
 import {edgeShape} from './landscape.js';
 import {holeTwo,heightTwo,lieTwo} from './hole-two.js';
@@ -31,6 +31,6 @@ export const riverOutlet=(()=>{let lo=32,hi=60;for(let i=0;i<40;i++){const nz=(l
 export const sceneryRocks=[{x:24*course.sx,z:30*course.sz,r:1.5},{x:25*course.sx,z:25*course.sz,r:2.2},{x:-20*course.sx,z:24*course.sz,r:1.5},{x:-24*course.sx,z:-27*course.sz,r:2.2}];
 export function rockBaseY(rock){let y=Infinity;for(let i=0;i<12;i++){const a=i/12*Math.PI*2;y=Math.min(y,height(rock.x+Math.cos(a)*rock.r,rock.z+Math.sin(a)*rock.r))}return y+rock.r*.34}
 
-const bunkerBases=Array.from({length:10},(_,hole)=>(x,z)=>terrainHeight(x,z,hole));
+const bunkerBases=Array.from({length:HOLE_COUNT+1},(_,hole)=>(x,z)=>terrainHeight(x,z,hole));
 export function height(x,z,hole=1){return bunkerHeight(x,z,hole,bunkerBases[hole]??bunkerBases[1])}
 export function lie(x,z,hole=1){const surface=terrainLie(x,z,hole);return !['OB','Water','Green','Tee box'].includes(surface)&&bunkerAt(x,z,hole)?'Sand':surface}
