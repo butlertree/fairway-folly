@@ -118,9 +118,9 @@ function TimberrootGarden(){
    {[[-11.5,-2],[-4.6,13.6],[9.2,-8.7],[12.5,1.5]].map(([x,z],i)=><Flowers key={x} x={x} z={z} r={.67} y={-.3} color={i%2?'#d8ba70':'#e7ddaf'}/>)}
  </>;
 }
-function FallenCedar({s}){
- const a=new THREE.Vector3(s.ax,miniHeight(15,s.ax,s.az)+s.r*.38,s.az);
- const b=new THREE.Vector3(s.bx,miniHeight(15,s.bx,s.bz)+s.r*.38,s.bz);
+function FallenCedar({s,hole=15}){
+ const a=new THREE.Vector3(s.ax,miniHeight(hole,s.ax,s.az)+s.r*.38,s.az);
+ const b=new THREE.Vector3(s.bx,miniHeight(hole,s.bx,s.bz)+s.r*.38,s.bz);
  const axis=b.clone().sub(a),length=axis.length()+s.r*1.65;
  const rotation=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),axis.normalize());
  return <group position={a.lerp(b,.5)} quaternion={rotation}>
@@ -138,6 +138,43 @@ function FallenCedar({s}){
      </mesh>)}
    </group>)}
  </group>;
+}
+function CedarGlade(){
+ return <>
+   {gardenBanks[18].map(s=><FallenCedar key={s.ax} s={s} hole={18}/>)}
+   {[[-13,-6,.67],[3,-14,.86],[13,0,.72],[-9,14,.58]].map(([x,z,scale])=>
+     <RootPine key={x} x={x} z={z} scale={scale}/>)}
+   {[[-12,7],[10,9],[-8,-12],[8,-11]].map(([x,z],i)=>
+     <Flowers key={x} x={x} z={z} r={.85} y={-.38} color={i%2?'#c6a4d4':'#eee0ae'}/>)}
+ </>;
+}
+function CrownridgeGarden(){
+ return <>
+   {gardenObstacles[17].map(({x,z,r},i)=>{
+     const h=[.54,.81,.44,.65][i];
+     const bark=['#654a34','#786047','#594936','#6d513b'][i];
+     return <group key={x} position={[x,miniHeight(17,x,z),z]} rotation={[.045*(i-1),i*1.7,-.065+i*.035]}>
+       <mesh position={[0,h*.35,0]} castShadow receiveShadow>
+         <cylinderGeometry args={[r*.87,r,h*1.4,15]}/>
+         <meshStandardMaterial color={bark} roughness={1}/>
+       </mesh>
+       <mesh position={[0,h*1.06,0]} rotation={[-Math.PI/2,0,0]} receiveShadow>
+         <circleGeometry args={[r*.78,30]}/>
+         <meshStandardMaterial color="#c8a477" roughness={1}/>
+       </mesh>
+       {[.35,2.35,4.6].map((angle,j)=><mesh key={angle} position={[Math.cos(angle)*r*.63,.05,Math.sin(angle)*r*.63]} rotation={[0,-angle,0]} scale={[r*.36,.13+j*.025,r*.17]} castShadow>
+         <sphereGeometry args={[1,12,8]}/>
+         <meshStandardMaterial color={bark} roughness={1}/>
+       </mesh>)}
+       {[.24,.45,.65].map((ring,j)=><mesh key={ring} position={[-r*.05,h*1.067+j*.002,0]} rotation={[-Math.PI/2,0,0]}>
+         <ringGeometry args={[r*ring,r*(ring+.025),32]}/>
+         <meshStandardMaterial color="#99734f" roughness={1}/>
+       </mesh>)}
+     </group>;
+   })}
+   {[[-13,-6,.69],[4,-14,.84],[13,3,.72],[-10,12,.63]].map(([x,z,scale])=><RootPine key={x} x={x} z={z} scale={scale}/>)}
+   {[[-13,4],[11,10],[10,-11],[-5,15.5]].map(([x,z],i)=><Flowers key={x} x={x} z={z} r={.72} y={-.39} color={i%2?'#d4bdda':'#f0d7a2'}/>)}
+ </>;
 }
 function HollowGarden(){
  return <>
@@ -193,4 +230,4 @@ function Waterwheel(){const wheel=useRef();useFrame((_,dt)=>{if(wheel.current)wh
 function MoonPavilion(){return <group position={[-11.25,.15,-1]}><mesh position={[0,.1,0]} castShadow><cylinderGeometry args={[1.8,2,.3,6]}/><meshStandardMaterial color="#aab59c"/></mesh>{Array.from({length:6},(_,i)=><mesh key={i} position={[Math.cos(i*Math.PI/3)*1.35,1.4,Math.sin(i*Math.PI/3)*1.35]} castShadow><cylinderGeometry args={[.08,.12,2.6,8]}/><meshStandardMaterial color="#9d7650"/></mesh>)}{[0,1].map(i=><mesh key={i} position={[0,3.1+i*.6,0]} castShadow><coneGeometry args={[2.3-i*.7,1,6]}/><meshStandardMaterial color={i?'#538078':'#426b63'}/></mesh>)}<mesh position={[0,4,0]}><sphereGeometry args={[.13,12,12]}/><meshStandardMaterial color="#dac183" metalness={.4} roughness={.4}/></mesh></group>}
 function KingfisherFalls(){return <><CascadeChannel/><group position={[10.9,-.27,9.2]}>{[0,1,2].map(i=><Boulder key={i} position={[i*.45,.3+i*.45,-i*.18]} scale={[1.25,.4,.85]} color={i%2?'#a4b89a':'#7d967d'}/>)}<Flowers x={-.2} z={-1.1} y={.65} r={.55} color="#e5cf8f"/></group><group position={[-11,0,5.8]}><mesh position={[0,.14,0]} scale={[.9,.24,.55]} castShadow receiveShadow><sphereGeometry args={[1,24,12]}/><meshStandardMaterial color="#c4bfa2"/></mesh></group>{[[-11,8],[-11,-10],[10.8,10]].map(([x,z],i)=><Flowers key={i} x={x} z={z} r={.65} y={.1} color={i%2?'#b5c8db':'#e6cc91'}/>)}</>}
 
-export function SignatureGreen({hole,game}){return <>{[12,15].includes(hole)?null:hole===11?sandstoneElbows.map(([face,join])=><SandstoneShoulder key={face.ax} face={face} join={join}/>):(gardenBanks[hole]??[]).map((s,i)=><Bank key={i} s={s} hole={hole} game={game}/>)}{(gardenObstacles[hole]??[]).filter((_,i)=>hole!==6&&hole!==10&&hole!==16&&(hole!==1||i<2)).map((o,i)=><Planter key={i} o={o} hole={hole} index={i}/>)}{hole===1?<><MillCottage/><Waterwheel/><CourseWaterfall outlet={{x:12.6,z:-7.5,width:1.3}} level={.04} rotation={Math.PI/2} bottom={-5.4}/>{[[-10,9],[-10,-10],[10,8],[10,-13]].map(([x,z],i)=><Flowers key={i} x={x} z={z} r={.8} y={.1} color={i%2?'#dca0a4':'#edcb76'}/>)}</>:hole===2?<><MoonPavilion/>{[[-9.8,-9],[10.5,8],[-10.7,9],[10.5,-11]].map(([x,z],i)=><Lantern key={i} x={x} z={z}/>)}{[-1,1].map(s=><group key={s} position={[s*10.2,-.2,s*11]}><Boulder position={[0,.3,0]} scale={[1.7,.6,2.2]} color="#a4b493"/><Flowers x={0} z={0} y={.8} r={.8} color="#e2b9c1"/></group>)}<CourseWaterfall outlet={{x:-12.5,z:-7,width:1.6}} level={.04} rotation={Math.PI/2} bottom={-5.4}/></>:hole===3?<KingfisherFalls/>:hole===6?<SanctuaryGarden/>:hole===12?<TimberrootGarden/>:hole===13?<DuneGarden/>:hole===14?<AlderGarden/>:hole===15?<CedarGarden/>:hole===16?<HollowGarden/>:<ExpansionGreen hole={hole} game={game}/>}</>}
+export function SignatureGreen({hole,game}){return <>{[12,15,18].includes(hole)?null:hole===11?sandstoneElbows.map(([face,join])=><SandstoneShoulder key={face.ax} face={face} join={join}/>):(gardenBanks[hole]??[]).map((s,i)=><Bank key={i} s={s} hole={hole} game={game}/>)}{(gardenObstacles[hole]??[]).filter((_,i)=>hole!==6&&hole!==10&&hole!==16&&hole!==17&&(hole!==1||i<2)).map((o,i)=><Planter key={i} o={o} hole={hole} index={i}/>)}{hole===1?<><MillCottage/><Waterwheel/><CourseWaterfall outlet={{x:12.6,z:-7.5,width:1.3}} level={.04} rotation={Math.PI/2} bottom={-5.4}/>{[[-10,9],[-10,-10],[10,8],[10,-13]].map(([x,z],i)=><Flowers key={i} x={x} z={z} r={.8} y={.1} color={i%2?'#dca0a4':'#edcb76'}/>)}</>:hole===2?<><MoonPavilion/>{[[-9.8,-9],[10.5,8],[-10.7,9],[10.5,-11]].map(([x,z],i)=><Lantern key={i} x={x} z={z}/>)}{[-1,1].map(s=><group key={s} position={[s*10.2,-.2,s*11]}><Boulder position={[0,.3,0]} scale={[1.7,.6,2.2]} color="#a4b493"/><Flowers x={0} z={0} y={.8} r={.8} color="#e2b9c1"/></group>)}<CourseWaterfall outlet={{x:-12.5,z:-7,width:1.6}} level={.04} rotation={Math.PI/2} bottom={-5.4}/></>:hole===3?<KingfisherFalls/>:hole===6?<SanctuaryGarden/>:hole===12?<TimberrootGarden/>:hole===13?<DuneGarden/>:hole===14?<AlderGarden/>:hole===15?<CedarGarden/>:hole===16?<HollowGarden/>:hole===17?<CrownridgeGarden/>:hole===18?<CedarGlade/>:<ExpansionGreen hole={hole} game={game}/>}</>}

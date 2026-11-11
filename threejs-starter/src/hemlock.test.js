@@ -26,7 +26,7 @@ test('Hemlock Elbow gives a 230-yard valley layup and an uphill iron',()=>{
  assert.equal(game.mini,true);
  assert.equal(gardenObstacles[hole].length,4);
  assert.ok(miniHeight(hole,.8,4)<miniHeight(hole,5,4)-.45);
- putt(game,Math.sin(-1.491934812),Math.cos(-1.491934812),52);
+ putt(game,Math.sin(-1.420585271179607),Math.cos(-1.420585271179607),26);
  settle(game);
  assert.equal(game.mode,'holed');
  assert.equal(game.strokes,3);

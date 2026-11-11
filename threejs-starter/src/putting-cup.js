@@ -27,10 +27,22 @@ export function puttingCupContact(previous,ball,cup,speed){
     const turn=Math.sign(tangent);
     return {type:'lip-in',ux:-nz*turn,uz:nx*turn};
   }
-  const slide=speed*.7*tangent,escape=Math.max(.14,speed*.10);
   return {
     type:'lip-out',
-    x:contactX+nx*.003,z:contactZ+nz*.003,
-    vx:-nz*slide+nx*escape,vz:nx*slide+nz*escape
+    angle:Math.atan2(nz,nx),
+    turn:Math.sign(tangent),
+    sweep:.55+.6*(1-edgeFraction),
+    speed:speed*(.55+.2*Math.abs(tangent))
   };
+}
+
+export function rollCupLip(ball,cup,lip,dt){
+  lip.angle+=lip.turn*Math.min(lip.sweep,lip.speed*dt/puttingCupRadius);
+  lip.sweep-=lip.speed*dt/puttingCupRadius;
+  const nx=Math.cos(lip.angle),nz=Math.sin(lip.angle);
+  ball.x=cup.x+nx*(puttingCupRadius+.004);
+  ball.z=cup.z+nz*(puttingCupRadius+.004);
+  ball.vx=-nz*lip.turn*lip.speed;
+  ball.vz=nx*lip.turn*lip.speed;
+  return lip.sweep<=0;
 }

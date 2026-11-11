@@ -2,6 +2,8 @@
 const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
 const bunker=(id,x,z,rx,rz,depth=.8,rotation=0,seed=0,pot=false)=>({id,x,z,rx,rz,depth,rotation,seed,pot});
 export const bunkersByHole={
+18:[bunker('cedar-gate-right',-16,-11,7,17,1.25,.25,2),bunker('cedar-gate-green',-52,-156,15,6,1.15,-.24,1.7)],
+17:[bunker('crownridge-left',78,-115,8.3,22,1.35,.48,3.1),bunker('crownridge-rear',232,-174,4.8,16,1.2,-.35,1.6)],
 16:[bunker('hemlock-pot',-155,-88,8.6,10.2,2.25,.24,2.9,true)],
 1:[bunker('fairway',18,-142,5.8,10,.85,-.2,.7),bunker('left-drive',-11,-62,6,13,.8,.25,1.8),bunker('green-pot',-20,-157,3.8,6,1.8,-.3,2.3,true)],
 2:[bunker('green',24,-214,5.8,9,.95,.25,.4),bunker('shelf-pot',-45,94,5,10,1.9,-.2,1.1,true),bunker('approach',-55,-70,5.5,12,.8,.4,2.4),bunker('island-carry',32,15,4.2,8,.9,.2,2.7)],

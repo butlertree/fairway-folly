@@ -73,6 +73,27 @@ export const newHoles={
    landingSites:[{x:12,z:-83,label:'Valley layup'}],
    hint:'Play down to the valley, then turn left and climb to the green. A strong driver hook can round the tall trees, with trouble on both sides.',
    miniHint:'Let the diagonal hollow turn the putt, and use enough pace to climb onto the cup shelf.'
+ }),
+ 17:make(17,5,'Crownridge Pass',555,245,205,220,325,{
+   pin:{x:205,z:-163},landRadius:{rx:220,rz:325,cx:82},bounds:{rx:209,rz:304,cx:82},
+   theme:'crownridge',waterLevel:47,teeHeight:98,greenHeight:87,greenName:'The Crownridge Saddle',
+   green:{rx:24,rz:17},lakes:[],
+   waste:[{x:1,z:5,rx:53,rz:31},{x:-29,z:36,rx:25,rz:40},{x:30,z:34,rx:24,rz:44}],
+   route:[{x:-2,z:173,w:14},{x:-5,z:112,w:18},{x:-3,z:63,w:23},{x:0,z:33,w:20}],
+   layupRoute:[{x:42,z:-29,w:17},{x:73,z:-74,w:19},{x:104,z:-119,w:23},{x:112,z:-133,w:22}],
+   landingSites:[{x:0,z:30,label:'Valley landing'},{x:110,z:-128,label:'Uphill landing'}],
+   hint:'Play down to the waste-ringed fairway, then turn right uphill. Favor the middle of the second landing to keep the cottonwood out of your blind approach.',
+   miniHint:'Crest the grassy saddle with enough pace or let the wider shoulder turn the ball toward the cup.'
+ }),
+ 18:make(18,4,'Cedar Gate',415,195,-81,148,250,{
+   landRadius:{cx:-24,rx:172,rz:276},bounds:{cx:-24,rx:147,rz:245},
+   theme:'woodland',waterLevel:47,teeHeight:78,greenHeight:74,greenName:'The Cedar Glade',
+   green:{rx:22,rz:16},lakes:[],
+   route:[{x:0,z:195,w:9},{x:4,z:148,w:10},{x:0,z:106,w:12},{x:-27,z:63,w:15},
+     {x:-66,z:11,w:20},{x:-79,z:-10,w:21},{x:-74,z:-53,w:23},{x:-75,z:-112,w:21},{x:-81,z:-176,w:22}],
+   landingSites:[{x:-76,z:-10,label:'Draw landing'}],
+   hint:'Start through the cedar chute and bend the drive left into the fairway.',
+   miniHint:'Use the open glade or bank around the low garden edges.'
  })
 };
 export function organicFraction(x,z,p){const nx=(x-p.x)/p.rx,nz=(z-p.z)/p.rz,a=Math.atan2(nz,nx);return Math.hypot(nx,nz)/(1+.12*Math.sin(a*3+.8)+.06*Math.cos(a*5))}
@@ -97,7 +118,7 @@ export function wasteFraction(x,z,c){
    const overlap=Math.max(0,.28-Math.abs(fraction-next));
    fraction=Math.min(fraction,next)-overlap*overlap/1.12;
  }
- return c.id===12?Math.max(fraction,2-fairwayFraction(x,z,c)):fraction;
+ return [12,17].includes(c.id)?Math.max(fraction,2-fairwayFraction(x,z,c)):fraction;
 }
 export function waterFraction(x,z,c){if(c.id===10)return creekbankFraction(x,z);let f=Math.min(...c.lakes.map(p=>organicFraction(x,z,p)));if(c.id===4&&x>48)f=Math.min(f,Math.abs(z+29)/2.5);if(creekWidth(c.id)>0)f=Math.min(f,Math.abs(z-creekCenter(x,c.id))/creekWidth(c.id));return f}
 export const cedarWasteRocks=[
@@ -111,8 +132,17 @@ export const cedarGrass=[
  {x:42,z:-1,rx:7,rz:5},{x:-29,z:-38,rx:12,rz:8},{x:-34,z:-53,rx:9,rz:5},
  {x:45,z:-48,rx:12,rz:7},{x:31,z:-61,rx:6,rz:4}
 ];
+export const crownridgeWasteRocks=[
+ {x:-38,z:41,rx:3.6,ry:1.9,rz:2.8},{x:-42,z:45,rx:1.8,ry:1,rz:1.6},
+ {x:42,z:29,rx:3.1,ry:1.7,rz:2.5},{x:46,z:32,rx:1.7,ry:1,rz:1.5},
+ {x:-26,z:-7,rx:2.8,ry:1.5,rz:2.4},{x:32,z:4,rx:2.7,ry:1.4,rz:2}
+];
+export const crownridgeGrass=[
+ {x:-38,z:42,rx:7,rz:8},{x:-37,z:23,rx:6,rz:6},{x:-25,z:-8,rx:6,rz:5},
+ {x:42,z:30,rx:7,rz:8},{x:35,z:54,rx:5,rz:7},{x:32,z:4,rx:6,rz:5}
+];
 export function wasteGrassFraction(x,z,hole){
- return Math.min(...(hole===15?cedarGrass:timberGrass).map(p=>organicFraction(x,z,p)));
+ return Math.min(...(hole===17?crownridgeGrass:hole===15?cedarGrass:timberGrass).map(p=>organicFraction(x,z,p)));
 }
 export const timberWasteRocks=[
  {x:-48,z:-27,rx:3.7,ry:2.0,rz:2.6},{x:-55,z:-35,rx:2.1,ry:1.35,rz:2.5},
@@ -258,7 +288,24 @@ function hemlockHeight(x,z,c,fair,green){
  const tee=Math.hypot(x/9,(z-c.tee.z)/12);
  return y+(c.teeHeight-y)*(1-smooth((tee-.75)/1.23));
 }
-export function heightNew(x,z,hole){const c=newHoles[hole],gr=newGreenFraction(x,z,c),fair=fairwayFraction(x,z,c);if(hole===12)return timberrootHeight(x,z,c,fair,gr);if(hole===13)return dunewatchHeight(x,z,c,fair,gr);if(hole===14)return alderwaterHeight(x,z,c,fair,gr);if(hole===15)return cedarfallHeight(x,z,c,gr);if(hole===16)return hemlockHeight(x,z,c,fair,gr);let y=66+1.7*Math.cos(z/54)+1.4*Math.sin(x/24)+16*Math.exp(-((x+70)**2/400+(z+80)**2/2300))+11*Math.exp(-((x-77)**2/450+(z-96)**2/2600));if(hole===9){const v=valleyFrame(x,z,c);y=v.y+2.2*Math.sin(z/47+x/61)*Math.cos(x/75)+32*smooth((v.distance-v.width*.95)/95)+(27*Math.exp(-((x+85)**2/7000+(z-85)**2/17000))+29*Math.exp(-((x-115)**2/9000+(z-110)**2/11000))+25*Math.exp(-((x-180)**2/16000+(z+215)**2/3600))+5*Math.sin(x/65)*Math.cos(z/83))*smooth((v.distance-v.width*.85)/58);}else {y+=(67-y)*(1-smooth((fair-.7)/.7));y+=(9*Math.sin(x/31+z/73)+8*Math.cos(z/42-x/54)+12)*smooth((fair-1)/1.1)*smooth((Math.hypot(x,z-c.tee.z)-15)/35);}const water=waterFraction(x,z,c);
+function crownridgeHeight(x,z,c,fair,green){
+ const hill=(cx,cz,rx,rz)=>Math.exp(-(((x-cx)/rx)**2+((z-cz)/rz)**2));
+ let y=61+2*Math.sin(x/31+z/44)+1.3*Math.cos(z/31)
+   +17*hill(-65,44,43,132)+15*hill(81,53,32,85)+18*hill(161,-102,39,88)
+   +29*hill(239,-181,51,58)+18*hill(205,-204,46,30);
+ y+=20*hill(177,52,49,102)*smooth((x-110)/38)*smooth((z+99)/48);
+ y+=13*hill(-52,-116,45,71)*smooth((-x-5)/35);
+ const shelf=61+13*smooth((10-z)/135);
+ y+=(shelf-y)*(1-smooth((fair-.58)/.9));
+ y+=(59-y)*.72*(1-smooth((wasteFraction(x,z,c)-.64)/.56));
+ const along=(x-110)*.94-(z+128)*.342;
+ const across=(x-110)*.342+(z+128)*.94;
+ y+=16*Math.exp(-(((along-55)/27)**2+(across/53)**2));
+ y+=(c.greenHeight-y)*(1-smooth((green-.84)/.72));
+ const teeR=Math.hypot(x/62,(z-c.tee.z)/79);
+ return y+(c.teeHeight-y)*(1-smooth((teeR-.10)/1.20));
+}
+export function heightNew(x,z,hole){const c=newHoles[hole],gr=newGreenFraction(x,z,c),fair=fairwayFraction(x,z,c);if(hole===12)return timberrootHeight(x,z,c,fair,gr);if(hole===13)return dunewatchHeight(x,z,c,fair,gr);if(hole===14)return alderwaterHeight(x,z,c,fair,gr);if(hole===15)return cedarfallHeight(x,z,c,gr);if(hole===16)return hemlockHeight(x,z,c,fair,gr);if(hole===17)return crownridgeHeight(x,z,c,fair,gr);let y=66+1.7*Math.cos(z/54)+1.4*Math.sin(x/24)+16*Math.exp(-((x+70)**2/400+(z+80)**2/2300))+11*Math.exp(-((x-77)**2/450+(z-96)**2/2600));if(hole===9){const v=valleyFrame(x,z,c);y=v.y+2.2*Math.sin(z/47+x/61)*Math.cos(x/75)+32*smooth((v.distance-v.width*.95)/95)+(27*Math.exp(-((x+85)**2/7000+(z-85)**2/17000))+29*Math.exp(-((x-115)**2/9000+(z-110)**2/11000))+25*Math.exp(-((x-180)**2/16000+(z+215)**2/3600))+5*Math.sin(x/65)*Math.cos(z/83))*smooth((v.distance-v.width*.85)/58);}else {y+=(67-y)*(1-smooth((fair-.7)/.7));y+=(9*Math.sin(x/31+z/73)+8*Math.cos(z/42-x/54)+12)*smooth((fair-1)/1.1)*smooth((Math.hypot(x,z-c.tee.z)-15)/35);}if(hole===18)y+=20*Math.exp(-(((x+78)/52)**2+((z+214)/24)**2));const water=waterFraction(x,z,c);
  if(hole===10){
    const waste=wasteFraction(x,z,c);
    const floor=63.1+.5*Math.cos(z/35);
@@ -272,10 +319,10 @@ export function heightNew(x,z,hole){const c=newHoles[hole],gr=newGreenFraction(x
    y+=(Math.min(y,59+.45*Math.cos(z/25))-y)*valley;
  }
  y+=(c.waterLevel-.9-y)*(1-smooth((water-(hole===10?1.02:1.05))/(hole===10?1.15:.9)));y+=(c.greenHeight-y)*(1-smooth((gr-.88)/.55));y+=smooth((gr-1)/.35)*3.3*smooth((waterFraction(x,z,c)-1)/.5)*Math.exp(-(((gr-1.65)/.55)**2))*(.2+.8*(1-Math.sin(Math.atan2(z-c.pin.z,x-c.pin.x)))/2)*(1+.35*Math.cos(Math.atan2(z-c.pin.z,x-c.pin.x)*3));if(c.id===7&&gr<1.45)y+=1.2*(1-smooth(gr/1.45));const tee=Math.max(Math.abs(x)/7,Math.abs(z-c.tee.z)/9);y+=(c.teeHeight-y)*(hole===10?(1-smooth((Math.hypot(x/19,(z-c.tee.z)/23)-.48)/.62))*smooth((water-1.08)/1.5):hole===11?1-smooth((Math.hypot(x/18,(z-c.tee.z)/22)-.47)/.87):hole===9?1-smooth((Math.hypot(x/40,(z-c.tee.z)/65)-.24)/1.05):1-smooth((tee-1)/1.5));return hole===9?y-teeApron(x,z,c):y}
-export function lieNew(x,z,hole){const c=newHoles[hole];if(((x-(c.bounds.cx??0))/c.bounds.rx)**2+(z/c.bounds.rz)**2>1)return 'OB';if(Math.abs(x)<6&&Math.abs(z-c.tee.z)<8)return 'Tee box';if(hole===14&&waterFraction(x,z,c)<1)return 'Water';if(newGreenFraction(x,z,c)<1)return 'Green';if(waterFraction(x,z,c)<1&&newGreenFraction(x,z,c)>1.25)return 'Water';if(wasteFraction(x,z,c)<1)return [12,15].includes(hole)&&wasteGrassFraction(x,z,hole)<.84?'Rough':'Waste sand';return fairwayFraction(x,z,c)<1?'Fairway':'Rough'}
+export function lieNew(x,z,hole){const c=newHoles[hole];if(((x-(c.bounds.cx??0))/c.bounds.rx)**2+(z/c.bounds.rz)**2>1)return 'OB';if(Math.abs(x)<6&&Math.abs(z-c.tee.z)<8)return 'Tee box';if(hole===14&&waterFraction(x,z,c)<1)return 'Water';if(newGreenFraction(x,z,c)<1)return 'Green';if(waterFraction(x,z,c)<1&&newGreenFraction(x,z,c)>1.25)return 'Water';if(wasteFraction(x,z,c)<1)return [12,15,17].includes(hole)&&wasteGrassFraction(x,z,hole)<.84?'Rough':'Waste sand';return fairwayFraction(x,z,c)<1?'Fairway':'Rough'}
 // Each creek reaches the actual sculpted edge, so the fall begins at the lip.
 export function newOutlet(hole){const c=newHoles[hole];if(![4,5,6,8].includes(hole))return null;if(hole===4){const z=-29;let x=50;while(Math.hypot(x/c.landRadius.rx,z/c.landRadius.rz)<edgeShape(Math.atan2(z/c.landRadius.rz,x/c.landRadius.rx)))x+=.1;return {x,z,width:5}}let x=0;while(true){const z=creekCenter(x,hole),a=Math.atan2(z/c.landRadius.rz,x/c.landRadius.rx);if(Math.hypot(x/c.landRadius.rx,z/c.landRadius.rz)>=edgeShape(a))return {x,z,width:creekWidth(hole)*2};x+=.1}}
-export const HOLE_COUNT=16;
+export const HOLE_COUNT=18;
 export const greenNames=['','Waterwheel Run','The Two-Tier Garden','Cascade Crossing',...Object.values(newHoles).map(c=>c.greenName)];
 
 export function valleyFrame(x,z,c=newHoles[9]){let best={distance:Infinity,width:0,y:66};for(let i=1;i<c.route.length;i++){const a=c.route[i-1],b=c.route[i],dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz))),d=Math.hypot(x-a.x-t*dx,z-a.z-t*dz);if(d<best.distance)best={distance:d,width:a.w+(b.w-a.w)*t,y:a.y+(b.y-a.y)*t}}return best}

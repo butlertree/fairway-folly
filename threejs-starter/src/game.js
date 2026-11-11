@@ -1,4 +1,4 @@
-import {puttingCupContact,puttingCupRadius} from './putting-cup.js';
+import {puttingCupContact,rollCupLip,puttingCupRadius} from './putting-cup.js';
 import {courseWoodland} from './course-woodland.js';
 import {strategicTrees,treeContact,ellipsoidHit} from './hole-nine-trees.js';
 import {heightNew,fairwayFraction} from './new-holes.js';
@@ -6,7 +6,7 @@ import {bunkerLaunch} from './bunker-launch.js';
 import {approachStart,clearApproachStart} from './approach-start.js';
 import {miniHeight,miniSlope,cascadeWaterLevel,miniPool,onCrossing,crossingContact} from './mini-surfaces.js';
 import {flagstick,flagstickContact,reflectFlagstick} from './flagstick.js';
-import {HOLE_COUNT,newHoles,timberWasteRocks,cedarWasteRocks,alderWallHalfWidth,alderWallHeight,waterFraction} from './new-holes.js';
+import {HOLE_COUNT,newHoles,timberWasteRocks,cedarWasteRocks,crownridgeWasteRocks,alderWallHalfWidth,alderWallHeight,waterFraction} from './new-holes.js';
 import {movingGreenGates} from './expansion-greens.js';
 import {miniCup,pinFor} from './cups.js';
 import {gardenObstacles,gardenBanks,segmentContact,timberRoots,cedarBanks} from './green-features.js';
@@ -17,7 +17,7 @@ import {course,height,lie,ponds,inPond,METRES_PER_YARD,getCourse,waterLevel,rive
 export {course,height,lie,ponds,inPond,METRES_PER_YARD,pondOutline,pondRadius,waterLevel,yardsToPin,riverWidth,getCourse} from './course.js';
 const alderwater=newHoles[14];
 const forestNine=courseWoodland(9);
-const wasteRocks=Object.fromEntries([[12,timberWasteRocks],[15,cedarWasteRocks]].map(([hole,rocks])=>[hole,rocks.map(rock=>({...rock,y:height(rock.x,rock.z,hole)-.2}))]));
+const wasteRocks=Object.fromEntries([[12,timberWasteRocks],[15,cedarWasteRocks],[17,crownridgeWasteRocks]].map(([hole,rocks])=>[hole,rocks.map(rock=>({...rock,y:height(rock.x,rock.z,hole)-.2}))]));
 function wasteRockContact(previous,ball,radius,rocks){
  let first=null;
  for(const rock of rocks){
@@ -32,7 +32,7 @@ export function swingMeter(phase,seconds){return phase==='power'?1-Math.abs((sec
 export function canTapIn(g){const cup=miniCup(g),dx=g.ball.x-cup.x,dz=g.ball.z-cup.z,d=Math.hypot(dx,dz);return g.mini&&g.mode==='ready'&&d>.05&&d<=8&&Array.from({length:25},(_,i)=>{const t=i/24;const x=cup.x+dx*(1-t),z=cup.z+dz*(1-t),s=miniSlope(g.hole,x,z),cross=Math.abs(s.x*dz-s.z*dx)/d;return clearApproachStart(g.hole,x,z)&&cross<.01}).every(Boolean)}
 export function tapIn(g){if(g.paused||!canTapIn(g))return false;const dx=miniCup(g).x-g.ball.x,dz=miniCup(g).z-g.ball.z,d=Math.hypot(dx,dz),speed=Math.sqrt(Math.max(0,2*mini.friction*Math.max(0,d-.2)+2*32.2*(miniHeight(g.hole,miniCup(g).x,miniCup(g).z)-miniHeight(g.hole,g.ball.x,g.ball.z))))+.35;const percent=Math.max(1,puttPowerForDistance(speed*speed/(2*mini.friction)));g.puttPower=Math.max(1,Math.round(percent));putt(g,dx,dz,percent);g.message='Tap-in · watch it home';return true}
 
-export const clubs=Object.fromEntries(Object.entries({Driver:{yards:245,loft:.55,zone:.025,sand:.55},Hybrid:{yards:200,loft:.67,zone:.032,sand:.62},'7 iron':{yards:155,loft:.8,zone:.04,sand:.7},Wedge:{yards:95,loft:1.02,zone:.048,sand:.8},'Sand wedge':{yards:55,loft:1.15,bunker:true,zone:.055,sand:.88}}).map(([name,c])=>[name,{...c,carry:c.yards*METRES_PER_YARD}]));
+export const clubs=Object.fromEntries(Object.entries({Driver:{yards:245,loft:.55,zone:.018,sand:.55},Hybrid:{yards:200,loft:.67,zone:.023,sand:.62},'7 iron':{yards:155,loft:.8,zone:.029,sand:.7},Wedge:{yards:95,loft:1.02,zone:.035,sand:.8},'Sand wedge':{yards:55,loft:1.15,bunker:true,zone:.042,sand:.88}}).map(([name,c])=>[name,{...c,carry:c.yards*METRES_PER_YARD}]));
 export const accuracyZone=club=>clubs[club].zone;
 export function strikeAccuracy(club,value){const zone=accuracyZone(club),m=Math.abs(value);return m<=zone?0:Math.sign(value)*(m-zone)/(1-zone)}
 export const mini={feetPerUnit:1,friction:2.2,maxRollFeet:60,halfX:9,halfZ:15,radius:.3,cup:{x:0,z:0},rotor:{x:0,y:3.3,z:7.9,radius:3.75,width:.34,depth:.23,speed:.65}};
@@ -49,7 +49,8 @@ function recordGroupShot(g,input){
  const {hole,mini,strokes,putts,angle,time,club,lie,greenRevision}=g;
  g.groupReplay={start:{v:1,mode:'ready',hole,mini,strokes,putts,angle,time,club,lie,greenRevision,ball:{...g.ball}},input};
 }
-export function swing(g,power,accuracy){if(g.mode!=='ready'||g.mini)return;power=Math.max(0,Math.min(1,power));accuracy=Math.max(-1,Math.min(1,accuracy));const rawAccuracy=accuracy;recordGroupShot(g,{type:'shot',power,accuracy});accuracy=strikeAccuracy(g.club,accuracy);g.freeCamera=false;g.cameraGesture=false;g.origin={...g.ball};g.strokes++;g.history.push({type:'shot',origin:{...g.ball},power,accuracy:rawAccuracy,club:g.club});const c=clubs[g.club],loft=c.loft,speed=Math.sqrt(c.carry*9.81/Math.sin(2*loft))*Math.sqrt(Math.max(0,power))*lieFactor(g),a=g.angle+accuracy*.06,launch=bunkerLaunch(g,speed*Math.cos(loft),speed*Math.sin(loft),a,power);Object.assign(g.ball,{vx:Math.sin(a)*launch.horizontal,vy:launch.vertical,vz:-Math.cos(a)*launch.horizontal});g.spin=accuracy*Math.abs(accuracy)*2;g.trail=[[g.ball.x,g.ball.y,g.ball.z]];g.trailTime=g.time;emitSound(g,clubSound(g.club,power),Math.max(.25,Math.sqrt(power)));g.mode='flight';g.waterCrossing=null;g.rollStarted=null;g.settle=0;g.message='Ball in flight'}
+export function swing(g,power,accuracy){if(g.mode!=='ready'||g.mini)return;power=Math.max(0,Math.min(1,power));accuracy=Math.max(-1,Math.min(1,accuracy));const rawAccuracy=accuracy;recordGroupShot(g,{type:'shot',power,accuracy});accuracy=strikeAccuracy(g.club,accuracy);g.freeCamera=false;g.cameraGesture=false;g.origin={...g.ball};g.strokes++;g.history.push({type:'shot',origin:{...g.ball},power,accuracy:rawAccuracy,club:g.club});const c=clubs[g.club],loft=c.loft,speed=Math.sqrt(c.carry*9.81/Math.sin(2*loft))*Math.sqrt(Math.max(0,power))*lieFactor(g),a=g.angle+accuracy*.06,launch=bunkerLaunch(g,speed*Math.cos(loft),speed*Math.sin(loft),a,power);Object.assign(g.ball,{vx:Math.sin(a)*launch.horizontal,vy:launch.vertical,vz:-Math.cos(a)*launch.horizontal});const miss=Math.abs(accuracy);
+ g.spin=2*accuracy*(miss+.7*(1-miss)**5);g.trail=[[g.ball.x,g.ball.y,g.ball.z]];g.trailTime=g.time;emitSound(g,clubSound(g.club,power),Math.max(.25,Math.sqrt(power)));g.mode='flight';g.waterCrossing=null;g.rollStarted=null;g.settle=0;g.message='Ball in flight'}
 export function putt(g,dx,dz,percent){if(g.paused||!g.mini||g.mode!=='ready'||Math.hypot(dx,dz)<.001||(percent!==undefined&&percent<1))return;recordGroupShot(g,{type:'putt',dx,dz,percent});g.freeCamera=false;g.cameraGesture=false;if(!g.pull||!g.puttCameraAnchor)g.puttCameraAnchor={x:g.ball.x,z:g.ball.z,angle:g.angle};g.origin={...g.ball};g.strokes++;g.putts++;g.history.push({type:'putt',origin:{...g.ball},dx,dz,percent});const l=Math.hypot(dx,dz),s=percent===undefined?Math.min(20,l*1.5):puttInfo(percent).speed;if(l){g.ball.vx=dx/l*s;g.ball.vz=dz/l*s}g.trail=[[g.ball.x,g.ball.y,g.ball.z]];g.trailTime=g.time;emitSound(g,'putt',Math.max(.15,Math.sqrt((percent??50)/100)));g.mode='rolling';g.message='Putting';}
 function waterBoundary(previous,ball,hole){
  let dry=previous,wet=ball;
@@ -156,7 +157,13 @@ export function step(g,dt=DT){if(g.paused)return;g.time+=dt;const b=g.ball;if(g.
  }
  if(b.y<=ground){b.y=ground;if(tryFullShotCup(g,previous))return;if(b.vy< -1){emitSound(g,landingSound(surface),Math.min(1,-b.vy/12));b.vy=-b.vy*(surface==='Sand'?.05:.16);b.vx*=.38;b.vz*=.38}else{b.vy=0;if(g.mode!=='rolling')g.rollStarted=g.time;g.mode='rolling';g.message='Ball rolling';const friction=surface==='Sand'?9:surface==='Waste sand'?8:surface==='Rough'?7:surface==='Green'?1.8:4.5;const v=Math.hypot(b.vx,b.vz),f=Math.max(0,1-friction*dt/Math.max(v,.01));b.vx*=f;b.vz*=f;if(v>.1){b.vx-=(height(b.x+.1,b.z,g.hole)-height(b.x-.1,b.z,g.hole))/.2*9.81*dt;b.vz-=(height(b.x,b.z+.1,g.hole)-height(b.x,b.z-.1,g.hole))/.2*9.81*dt}if(v<.18){g.settle+=dt;if(g.settle>.35){b.vx=b.vz=0;g.lie=surface;g.mode='ready';if(surface==='Sand')g.club='Sand wedge';alignForPlay(g);g.message=surface+' · ready for your next shot';if(surface==='Green'){g.mode='green-arrival';g.greenRevealAt=g.time+(g.hole===11?1.4:.9);g.message='Ball settled on the green · revealing the putting hole…'}}}else g.settle=0}}
 }
-export function stepMini(g,dt){const b=g.ball,r=mini.radius;if(g.mode==='holed')return;const wasReady=g.mode==='ready',address={x:b.x,z:b.z,angle:g.angle};b.x+=b.vx*dt;b.z+=b.vz*dt;
+export function stepMini(g,dt){const b=g.ball,r=mini.radius;if(g.mode==='holed')return;
+ if(g.cupLip){
+   if(rollCupLip(b,miniCup(g),g.cupLip,dt))g.cupLip=null;
+   b.y=miniHeight(g.hole,b.x,b.z)+r;
+   return;
+ }
+ const wasReady=g.mode==='ready',address={x:b.x,z:b.z,angle:g.angle};b.x+=b.vx*dt;b.z+=b.vz*dt;
  const bankImpact=bankBall(g.hole,b,r);if(bankImpact>.3)contactSound(g,bankImpact);
  for(const o of (gardenObstacles[g.hole]??[])){const dx=b.x-o.x,dz=b.z-o.z,d=Math.hypot(dx,dz),rr=o.r+r;if(d<rr){const nx=d>1e-8?dx/d:Math.cos(Math.atan2(-b.vz,-b.vx)),nz=d>1e-8?dz/d:Math.sin(Math.atan2(-b.vz,-b.vx));b.x=o.x+nx*rr;b.z=o.z+nz*rr;const vn=b.vx*nx+b.vz*nz;if(vn<0){contactSound(g,-vn,'stone-bank');b.vx-=1.8*vn*nx;b.vz-=1.8*vn*nz}}}
  for(const s of gardenBanks[g.hole]??[]){const hit=segmentContact(b.x,b.z,s,r);if(hit){b.x=hit.x;b.z=hit.z;const vn=b.vx*hit.nx+b.vz*hit.nz;if(vn<0){contactSound(g,-vn,timberRoots.includes(s)||cedarBanks.includes(s)?'bank':'stone-bank');b.vx-=1.8*vn*hit.nx;b.vz-=1.8*vn*hit.nz}}}
@@ -210,8 +217,9 @@ export function stepMini(g,dt){const b=g.ball,r=mini.radius;if(g.mode==='holed')
    return;
  }
  if(cupContact?.type==='lip-out'){
-   const {x,z,vx,vz}=cupContact;
-   Object.assign(b,{x,z,vx,vz,y:miniHeight(g.hole,x,z)+r});
+   g.cupLip=cupContact;
+   rollCupLip(b,cup,g.cupLip,0);
+   b.y=miniHeight(g.hole,b.x,b.z)+r;
    emitSound(g,'cup-lip',Math.min(.75,speed/5));
    g.message='Lip out';
    return;
@@ -231,7 +239,8 @@ export function stepMini(g,dt){const b=g.ball,r=mini.radius;if(g.mode==='holed')
 export function playbackRate(g){if(g.mini||g.mode!=='rolling')return 1;const t=g.time-(g.rollStarted??g.time),u=Math.max(0,Math.min(1,(t-.65)/2.2));return 1+2.5*u*u*(3-2*u)}
 
 export function alignForPlay(g){alignToPin(g);if(g.mini)return;
- if(([10,13,14,16].includes(g.hole)&&g.lie==='Tee box')||(g.hole===12&&g.ball.z>-90)){
+ if(g.hole===18&&g.lie==='Tee box'){g.angle=.075;return;}
+ if(([10,13,14,16,17].includes(g.hole)&&g.lie==='Tee box')||(g.hole===12&&g.ball.z>-90)||(g.hole===17&&g.ball.z>0)){
    const p=getCourse(g.hole).landingSites[g.lie==='Tee box'?0:1];
    g.angle=Math.atan2(p.x-g.ball.x,g.ball.z-p.z);
    g.target={x:p.x,z:p.z};

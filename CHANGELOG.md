@@ -335,13 +335,85 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Made live leaderboard the only mode for new private rounds while retaining existing match links.
 - Added private typed comments on completed scores alongside preset reactions.
 
-### Twelve-hole playtest
+### Hole 10 — Creekbank Hollow
 
-- Added Creekbank Hollow, Sandstone Crown, and Timberroot Vale with new putting challenges.
-- Extended course rounds and scorecards to twelve holes.
-- Clarified where approaches finish on the green and made firm, centered cup hops more forgiving.
+- Added a 440-yard par 4 with a creek carry, timber footbridge, left waste sand, and a fairway that bends toward the raised green.
+- Added Creekbank Terrace, a contoured putting green with a raised central cup, creekside bank, and an animated stream outside the playable bank.
+- Extended local course rounds and scorecards through hole 10.
+- Removed the bridge approach strips, recessed the waste sand, and added two bankable stone walls to Creekbank Terrace.
+- Moved the creek into the right edge of the driving landing area and integrated the putting obstacles into the stone-lined perimeter bank.
+- Added a playable stone culvert to Creekbank Terrace and softened the mini creek shoreline.
+- Placed four matching stone gates around the Creekbank Terrace cup, with a playable line through each.
 
-### Sixteen-hole playtest
+### Hole 11 — Sandstone Crown
 
-- Added Dunewatch Rise, Alderwater Pass, Cedarfall Hollow, and Hemlock Elbow.
-- Updated course turf, tee woodland, water relief, cup sounds, and the Starlight Saddle.
+- Added a 170-yard par 3 with an elevated tee, broad waste sand carry, a left greenside bunker, and a long-grass ridge behind the shallow green.
+- Added Boulder Split with two playable putting lanes around a mossy boulder and an open cup area for precise approaches.
+- Extended the waste sand to the front of Sandstone Crown's green, enlarged the back-right bunker, and restored mixed woodland around the sand valley.
+- Set Boulder Split's stone outcrop between a lower inside lane and a wider, banked route.
+- Reworked Hole 11's putting layout into an asymmetric sandstone shelf with a low swale and a banked route around a sandstone ridge.
+- Regraded Hole 11's putting rim to keep balls from draining to the wall and added an angled sandstone rail with a tested bank line to the cup.
+- Connected Hole 11's bank face to a sandstone shoulder and verified a one-putt line from eight wide approach directions.
+- Added a second bankable sandstone elbow on the opposite side of Hole 11's green.
+- Shaped Hole 11 around actual tee-shot lies. A short hybrid approach now leaves a screened cup and a tested bank, and the putting shelf has a more angular outline.
+
+### Hole 12 — Timberroot Vale
+
+- Added a 525-yard par 5 with two fairway shelves separated by a recessed waste valley, mixed woodland, and a steep approach to an elevated green below a ridge.
+- Added The Root Bank, an asymmetric, contoured mini green with a fixed offset cup and a bankable exposed pine root. Actual three-shot finishes demonstrate both a close tap-in and a wider one-putt bank.
+- Extended local rounds and scorecards to twelve holes.
+- Reworked the Root Bank with a flared pine trunk, branching bark roots, two mossy stone banks, and separate side slopes. Verified one-putt bank lines from three actual approach finishes and a tap-in after the close approach.
+- Narrowed Timberroot Vale's first fairway and continued the woodland along the waste valley. Extended the sand to the foot of the green ledge, added playable grass patches and boulders, and reduced recovery carry from the waste. Cleared the line from the layup shelf to the green.
+
+### Hole 13 — Dunewatch Rise
+
+- Added a 430-yard par 4 with stairs to a raised tee, tall dune grass backed by woodland, a right-side bunker at 256 yards, and a left approach slope that feeds onto the green.
+- Added The Split Terrace with a soft downhill line from the high shelf and a firmer uphill stone-bank route from the lower shelf. Verified both from actual approach shots.
+- Extended local rounds and scorecards to thirteen holes.
+- Cleared tall dune grass from the tee and thickened it along the fairway. Extended the drive bunker about 40 yards toward the green and farther into the fairway.
+- Raised and deepened the Split Terrace and replaced its stone rails with three flowering planters. Verified a downhill finish and an uphill flower-pot bank.
+- Broke Dunewatch’s tall grass into irregular drifts that weave into the woods and gather around the drive bunker.
+- Gave Dunewatch finer curved dune grass and an angular putting green with distinct shelves and steeper ramps.
+- Filled out Dunewatch’s dune grass and added stronger, coordinated sway in wind.
+
+### Hole 14 — Alderwater Pass
+
+- Added a 440-yard par 4 with a wooded layup, lake carry, false front that sheds short approaches back into the water, and a long rear bunker.
+- Added The Grassy Pass with a saddle between two shoulders and one-putt lines from real central and wide approach lies.
+- Replaced the steady hiss in Calm with occasional recorded blackbird calls and softened the wind layer in breezier conditions.
+- Shortened Alderwater Pass to 340 yards with the near shore about 210 yards away. Added a timber retaining wall, rounded the false-front crest, and added two mounds behind the mini cup.
+- Sculpted separate shoulders into the false front, filled in the grove behind the green, and fitted weathered timber to the curved lake edge. A ball rolling over the wall makes a wooden clack before it reaches the water.
+- Added visible splashes for airborne water entries and ripples for roll-ins. After a short hold, full-size holes take one-stroke back-on-the-line relief when the island provides a playable dry lie. Mini-golf water and unavailable drops use the previous lie.
+- Carried Alderwater's false front into the mini green with a 16-inch rise, a gentler right shoulder, and a dry lower shelf that catches underhit putts. Verified both one-putt routes from real approach lies and a tap-in after a close approach.
+
+### Hole 15 — Cedarfall Hollow
+
+- Added a 185-yard par 3 from an elevated tee across deep waste sand, with collidable boulders, pockets of dune grass, and a shallow green shelf below wooded hills.
+- Added The Fallen Cedar, an asymmetric putting green with two timber banks and an open slope. Verified all three one-putt routes from actual tee shots and included Hole 15 in the local round and scorecard.
+- Raised Cedarfall's full-size green and shaped the front and right runoffs into the waste sand. Spaced tall trees behind the tee for intermittent shade.
+- Blended short tee turf into the shared terrain and added shallow shoulders to the flatter ridge tees. Swapped the cup-rim clank for a soft brush and curved lip-ins along the rim before they drop.
+- Matched the short tee turf across all fifteen holes to the richer green on Alderwater and Cedarfall, with a feathered collar and individually grounded signposts.
+- Unified fairway, rough, and full-size green colors across all fifteen holes. The putting greens share the same grass tones, with their individual contour shading retained. Reviewed every full-hole and putting-green overview.
+- Continued the woodland around the tees with scattered oaks, birches, and cypresses, spaced to preserve the opening shot on each hole.
+- Reworked Hole 6's mini green into the Starlight Saddle, with a low pass, a sloping shoulder, and a planted rock border. Removed the decorative fountain and block obstacles, and verified one-putt routes from two tee-shot finishes.
+- Added a pair of natural boulders to the Starlight Saddle, with the larger rock on the adjoining flat.
+
+### Hole 16 — Hemlock Elbow
+
+- Added a 380-yard par 4 with a 230-yard valley layup, an uphill approach of about 150 yards, tall trees across the direct tee line, and a left greenside pot bunker. A strong driver hook can reach the apron.
+- Added the Half-Pipe Hollow, with a diagonal grassy channel, a cup shelf, and four natural boulders.
+- Matched the later greens to the earlier holes with a softer turf transition and removed their decorative perimeter line.
+
+- Standardized the darker grass collar and soft turf transitions on all 16 full-size greens, using Hole 16 as the reference.
+
+### Hole 17 — Crownridge Pass
+
+- Added a 555-yard par 5 with a downhill drive to a waste-ringed landing, then two uphill turns of roughly 35 degrees to the right. The signature oak guards the right side and a ridge hides the green, with a long bunker behind it.
+- Added the Crownridge Saddle with two grassy shoulders, a wider breaking route, and four boulders. Verified one-putt routes from two approach finishes.
+
+## November 11, 2026
+
+- Opened the view from Crownridge Pass’s raised tee and added Cedar Gate, a 415-yard finishing par four with a wooded draw chute, greenside bunker, and rear hill.
+
+- Added breaking turf shoulders, a shallow swale, and fallen cedar banks to the Cedar Glade putting green.
+- Refined Crownridge Pass, tuned shot shape and carry checks, and made lip-outs follow the cup rim.

@@ -107,7 +107,7 @@ import {holeThree,coveFraction} from './hole-three.js';
 test('signature par three is 165 yards, starts with an iron and has a submerged shared lake',()=>{const g=createGame(3);assert.equal(g.par,3);assert.equal(g.club,'7 iron');assert.equal(Math.round(yardsToPin(g.ball,3)),165);assert.equal(lie(0,holeThree.pin.z,3),'Green');assert.ok(height(0,holeThree.pin.z,3)>holeThree.waterLevel+8);assert.equal(lie(0,0,3),'Water');assert.ok(height(0,0,3)<holeThree.waterLevel);for(let i=0;i<20;i++){const a=i/20*Math.PI*2,r=1+.12*Math.sin(a*3+.8)+.06*Math.cos(a*5);assert.ok(Math.abs(coveFraction(holeThree.lake.x+holeThree.lake.rx*r*Math.cos(a),holeThree.lake.z+holeThree.lake.rz*r*Math.sin(a))-1)<1e-8)}});
 test('par three rewards a full iron, penalizes an underhit and rejects wild misses',()=>{const g=createGame(3);swing(g,.98,0);settle(g);assert.ok(g.mini);assert.equal(g.strokes,1);assert.ok(g.approachLanding.distanceYards<2);const short=createGame(3);swing(short,.8,0);settle(short);assert.equal(short.strokes,2);assert.match(short.message,/Water/);assert.ok(short.ball.z<holeThree.tee.z);assert.ok(!['Water','OB'].includes(short.lie));const wild=createGame(3);wild.angle=Math.PI/2;swing(wild,1,1);settle(wild);assert.equal(wild.strokes,2);assert.match(wild.message,/bounds/)});
 test('third putting green has no invisible windmill or old side pond',()=>{const g=createGame(3);enterGreen(g);g.ball.x=0;g.ball.z=1;run(g,100);assert.equal(g.mode,'ready');assert.equal(g.ball.x,0);g.ball.x=6;g.ball.z=-7;putt(g,0,-1,10);settle(g);assert.equal(g.strokes,1);assert.equal(g.mode,'ready')});
-test('complete sixteen-hole round preserves actual strokes through every tee and cup',()=>{let g=createGame(),total=0;for(let h=1;h<=HOLE_COUNT;h++){assert.equal(g.hole,h);const c=getCourse(h);if(h===1){swing(g,1,0);settle(g);g.club='Wedge';routeShot(g,0,c.pin.z,.725)}if(h===2){routeShot(g,24,7,1);routeShot(g,0,c.pin.z,.98)}if(h===3)swing(g,.98,0),settle(g);if(h===4){routeShot(g,-35,-22,.86);g.club='Hybrid';routeShot(g,c.pin.x,c.pin.z,.99)}if(h===5){routeShot(g,-39,42,.76);g.club='Hybrid';routeShot(g,-31,-130,.87);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.79)}if(h===6)routeShot(g,c.pin.x,c.pin.z,.74);if(h===8){g.club='Hybrid';routeShot(g,c.pin.x,c.pin.z,.9)}if(h===7){routeShot(g,24,-5,.83);routeShot(g,c.pin.x,c.pin.z,.89)}if(h===9){routeShot(g,7,23,.84);g.club='Hybrid';routeShot(g,110,-120,.93);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.76)}if(h===10){routeShot(g,22,-55,1);g.club='Hybrid';routeShot(g,c.pin.x,c.pin.z,.8)}if(h===11)routeShot(g,c.pin.x,c.pin.z,1);if(h===12){routeShot(g,0,33,.86);g.club='Hybrid';routeShot(g,47,-145,.95);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.88)}if(h===13){routeShot(g,-9,-45,.91);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.98)}if(h===14){routeShot(g,-3,-68,.84);routeShot(g,c.pin.x,c.pin.z,.67)}if(h===15)routeShot(g,10,c.pin.z,.72);if(h===16){g.club='Hybrid';routeShot(g,12,-83,.94);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.98);}assert.ok(g.mini);finishMini(g);assert.equal(g.mode,'holed');assert.equal(g.history.length,g.strokes);total+=g.strokes;if(h<HOLE_COUNT)g=nextHole(g)}assert.equal(g.scorecard.length,HOLE_COUNT-1);assert.equal(g.scorecard.reduce((n,h)=>n+h.strokes,g.strokes),total);assert.ok(total>=31&&total<=72,`actual round ${total}`);assert.equal(nextHole(g),null)});
+test('complete eighteen-hole round preserves actual strokes through every tee and cup',()=>{let g=createGame(),total=0;for(let h=1;h<=HOLE_COUNT;h++){assert.equal(g.hole,h);const c=getCourse(h);if(h===1){swing(g,1,0);settle(g);g.club='Wedge';routeShot(g,0,c.pin.z,.725)}if(h===2){routeShot(g,24,7,1);routeShot(g,0,c.pin.z,.98)}if(h===3)swing(g,.98,0),settle(g);if(h===4){routeShot(g,-35,-22,.86);g.club='Hybrid';routeShot(g,c.pin.x,c.pin.z,.99)}if(h===5){routeShot(g,-39,42,.76);g.club='Hybrid';routeShot(g,-31,-130,.87);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.79)}if(h===6)routeShot(g,c.pin.x,c.pin.z,.74);if(h===8){g.club='Hybrid';routeShot(g,c.pin.x,c.pin.z,.9)}if(h===7){routeShot(g,24,-5,.83);routeShot(g,c.pin.x,c.pin.z,.89)}if(h===9){routeShot(g,7,23,.84);g.club='Hybrid';routeShot(g,110,-120,.93);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.76)}if(h===10){routeShot(g,22,-55,1);g.club='Hybrid';routeShot(g,c.pin.x,c.pin.z,.8)}if(h===11)routeShot(g,c.pin.x,c.pin.z,1);if(h===12){routeShot(g,0,33,.86);g.club='Hybrid';routeShot(g,47,-145,.95);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.88)}if(h===13){routeShot(g,-9,-45,.91);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.98)}if(h===14){routeShot(g,-3,-68,.84);routeShot(g,c.pin.x,c.pin.z,.67)}if(h===15)routeShot(g,10,c.pin.z,.72);if(h===16){g.club='Hybrid';routeShot(g,12,-83,.94);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.98);}if(h===17){routeShot(g,0,30,.6914);routeShot(g,110,-128,.9);g.club='7 iron';routeShot(g,c.pin.x,c.pin.z,.82)}if(h===18){g.angle=.075;swing(g,.85,-.85);settle(g);assert.equal(g.lie,'Fairway');assert.equal(g.treeHits??0,0);g.club='Hybrid';routeShot(g,c.pin.x,c.pin.z,.9)}assert.ok(g.mini);finishMini(g);assert.equal(g.mode,'holed');assert.equal(g.history.length,g.strokes);total+=g.strokes;if(h<HOLE_COUNT)g=nextHole(g)}assert.equal(g.scorecard.length,HOLE_COUNT-1);assert.equal(g.scorecard.reduce((n,h)=>n+h.strokes,g.strokes),total);assert.ok(total>=31&&total<=76,`actual round ${total}`);assert.equal(nextHole(g),null)});
 
 import {tryFullShotCup} from './game.js';
 test('a slow full shot can hole out without requiring a putt or spending another stroke',()=>{for(const hole of [1,2,3]){const g=createGame(hole),c=getCourse(hole);g.club='Sand wedge';swing(g,.1,0);g.ball={x:c.pin.x,y:height(c.pin.x,c.pin.z,hole)+c.ballRadius,z:c.pin.z+.003,vx:0,vy:0,vz:-.2};g.mode='rolling';step(g);assert.equal(g.mode,'sinking');assert.equal(g.putts,0);assert.equal(g.strokes,1);assert.ok(g.holeOut);run(g,200);assert.equal(g.mode,'holed');assert.equal(g.strokes,1);assert.equal(g.soundEvents.filter(e=>e.type==='cup').length,1)}});
@@ -162,7 +162,7 @@ test('render interpolation smooths between physics ticks without changing the ph
 import {newHoles,newOutlet,creekCenter,waterFraction,newGreenFraction,HOLE_COUNT} from './new-holes.js';
 import {movingGreenGates} from './expansion-greens.js';
 import {roundPar,roundYards} from './rounds.js';
-test('three original expansion holes have exact yardages, pars and raised level tees',()=>{assert.equal(HOLE_COUNT,16);for(const [id,par,yards] of [[4,4,445],[5,5,535],[6,3,142]]){const g=createGame(id),c=getCourse(id);assert.equal(g.par,par);assert.ok(Math.abs(yardsToPin(g.ball,id)-yards)<1e-9);assert.equal(lie(c.pin.x,c.pin.z,id),'Green');assert.equal(lie(0,c.tee.z,id),'Tee box');assert.equal(g.strokes,0);assert.ok(height(0,c.tee.z,id)>height(22,c.tee.z,id)+3);assert.ok(Math.abs(height(0,c.tee.z,id)-height(2,c.tee.z+2,id))<.01);assert.equal(g.club,par===3?'7 iron':'Driver')}});
+test('three original expansion holes have exact yardages, pars and raised level tees',()=>{assert.equal(HOLE_COUNT,18);for(const [id,par,yards] of [[4,4,445],[5,5,535],[6,3,142]]){const g=createGame(id),c=getCourse(id);assert.equal(g.par,par);assert.ok(Math.abs(yardsToPin(g.ball,id)-yards)<1e-9);assert.equal(lie(c.pin.x,c.pin.z,id),'Green');assert.equal(lie(0,c.tee.z,id),'Tee box');assert.equal(g.strokes,0);assert.ok(height(0,c.tee.z,id)>height(22,c.tee.z,id)+3);assert.ok(Math.abs(height(0,c.tee.z,id)-height(2,c.tee.z+2,id))<.01);assert.equal(g.club,par===3?'7 iron':'Driver')}});
 test('new safe landing shelves have usable width rather than pinpoint targets',()=>{for(const id of [4,5]){const c=newHoles[id];for(const p of c.landingSites.filter(p=>!p.label.includes('Bold')&&!p.label.includes('Corner')))for(const dx of [-7,0,7])for(const dz of [-5,0,5])assert.ok(['Fairway','Green'].includes(lie(p.x+dx,p.z+dz,id)),`${id} ${p.label} ${dx},${dz}`)}});
 test('Amberlight Bluff supports a counted two-shot approach and a real mini-green finish',()=>{const g=createGame(4),c=getCourse(4);routeShot(g,-35,-22,.86);assert.equal(g.lie,'Fairway');g.club='Hybrid';routeShot(g,c.pin.x,c.pin.z,.99);assert.ok(g.mini);assert.equal(g.strokes,2);assert.ok(g.approachLanding.distanceYards<20);});
 test('Willowspire safe route reaches in three while the demanding route can reach in two',()=>{const safe=createGame(5),c=getCourse(5);routeShot(safe,-39,42,.76);assert.equal(safe.lie,'Fairway');safe.club='Hybrid';routeShot(safe,-31,-130,.87);assert.equal(safe.lie,'Fairway');safe.club='7 iron';routeShot(safe,c.pin.x,c.pin.z,.79);assert.ok(safe.mini);assert.equal(safe.strokes,3);const bold=createGame(5);routeShot(bold,-30,-10,.94);assert.equal(bold.lie,'Fairway');routeShot(bold,c.pin.x,c.pin.z,.94);assert.ok(bold.mini);assert.equal(bold.strokes,2);});
@@ -222,7 +222,11 @@ test('a paced glancing putt curls in while the same line with extra speed lips o
     g.ball.x=.46;
     g.ball.z=.6;
     putt(g,0,-1,puttPowerForDistance(speed*speed/(2*mini.friction)));
-    for(let i=0;i<360&&['rolling','sinking'].includes(g.mode);i++)step(g);
+    const rimAngles=[];
+    for(let i=0;i<360&&['rolling','sinking'].includes(g.mode);i++){
+      step(g);
+      if(g.cupLip)rimAngles.push(g.cupLip.angle);
+    }
     assert.equal(g.soundEvents.filter(e=>e.type==='cup-lip').length,1);
     assert.equal(g.strokes,1);
     if(expected==='in'){
@@ -231,7 +235,8 @@ test('a paced glancing putt curls in while the same line with extra speed lips o
       assert.equal(g.soundEvents.filter(e=>e.type==='cup').length,1);
     }else{
       assert.equal(g.mode,'ready');
-      assert.ok(g.ball.x>.55,'the rim deflects the ball away from the cup');
+      assert.ok(rimAngles.length>5,'the ball follows the rim over several frames');
+      assert.ok(Math.abs(rimAngles.at(-1)-rimAngles[0])>.4);
       assert.equal(g.soundEvents.some(e=>e.type==='cup'),false);
     }
   }
@@ -331,4 +336,40 @@ test('paused multiplayer games reject normal putts and tap-in input',()=>{
   putt(g,0,-1,18);
   assert.equal(g.strokes,0);
   assert.equal(g.mode,'ready');
+});
+
+test('Cedar Gate punishes a straight drive through the chute',()=>{const g=createGame(18);g.angle=.075;swing(g,.85,0);settle(g);assert.ok(g.treeHits>0);assert.notEqual(g.lie,'Fairway')});
+
+test('rated carry matches a clean launch at equal elevation',()=>{
+ for(const [name,club] of Object.entries(clubs))for(const power of [.5,1]){
+   const game=createGame();
+   game.club=name;
+   swing(game,power,0);
+   const {vy,vz}=game.ball;
+   const carry=-vz*2*vy/9.81/.9144;
+   assert.ok(Math.abs(carry-club.yards*power)<.01,name);
+ }
+});
+
+test('small 7-iron timing misses bend visibly in both directions',()=>{
+ for(const miss of [-.1,0,.1]){
+   const game=createGame(18);
+   game.club='7 iron';
+   swing(game,1,miss);
+   const initialBearing=Math.atan2(game.ball.vx,-game.ball.vz);
+   run(game,400);
+   assert.equal(game.mode,'flight');
+   const bend=game.ball.x+Math.tan(initialBearing)*(game.ball.z-game.origin.z);
+   if(miss===0)assert.equal(bend,0);
+   else assert.ok(bend*Math.sign(miss)>.8);
+ }
+});
+
+test('Cedar Gate has playable ground at least ten yards around its green',()=>{
+ const {pin,green}=getCourse(18);
+ const radius=Math.max(green.rx,green.rz)*1.2+10*.9144;
+ for(let i=0;i<72;i++){
+   const a=i*Math.PI/36;
+   assert.notEqual(lie(pin.x+radius*Math.cos(a),pin.z+radius*Math.sin(a),18),'OB');
+ }
 });

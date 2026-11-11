@@ -10,6 +10,7 @@ export const onCrossing=(x,z)=>Math.abs(z-crossing.z)<crossing.halfLength&&Math.
 export function miniPool(hole){return hole===3?cascadePool:null}
 // Gentle playable landforms, with a flat three-foot reward area and level outer banks.
 export const greenContours={
+ 18:[[-5.9,5.2,3.6,5.8,.78],[5.3,-5.8,3.6,4.7,.64],[6.2,6.9,4.6,3.2,-.26]],
  1:[[-3.5,-8,3,5,.7],[4,1,3.2,4,.65]],
  2:[[-4,9,3,4,.35],[5,-9,3,4,.3]],
  3:[[-4,-7,3.2,5,.65],[4,-7,3.2,5,.65]],
@@ -42,6 +43,17 @@ function grassyPass(x,z){
  const backShoulders=.88*(1-Math.exp(-(((x-.6)/4.1)**2)));
  return terrace+edge*(frontShoulders+back*backShoulders+breakToCup);
 }
+function crownridgeSaddle(x,z){
+ const edge=smooth(boundaryClearance(17,x,z)/3.1);
+ const cupShelf=smooth((Math.hypot(x,z)-2.6)/2.8);
+ const seam=x+1.65-.29*(z-5);
+ const ridge=Math.exp(-(((z-5.5+.16*x)/3.35)**2));
+ const shoulders=1.05*(1-Math.exp(-((seam/2.9)**2)));
+ const side=.52*Math.exp(-(((x-7.7)/3.8)**2+((z+2.8)/6.2)**2));
+ const rolls=.17*Math.exp(-(((x+7.6)/2.5)**2+((z+5)/3.2)**2))
+   -.09*Math.exp(-(((x-3)/4.9)**2+((z+10)/2.5)**2));
+ return edge*cupShelf*(ridge*(.44+shoulders)+side+rolls);
+}
 function halfPipeHollow(x,z){
  const edge=smooth(boundaryClearance(16,x,z)/3.1);
  const cupShelf=smooth((Math.hypot(x,z)-2.7)/2.4);
@@ -67,7 +79,7 @@ function fallenCedar(x,z){
  const rear=.48*Math.exp(-(((x-.7)/7.2)**2+((z+8.8)/3.8)**2));
  return edge*cupFade*(east+west+rear);
 }
-function contours(hole,x,z){if(hole===16)return halfPipeHollow(x,z);if(hole===6)return sanctuarySaddle(x,z);if(hole===15)return fallenCedar(x,z);if(hole===14)return grassyPass(x,z);if(hole===13)return splitTerrace(x,z);const cup=miniCup({hole}),r=Math.hypot(x-cup.x,z-cup.z),edge=boundaryClearance(hole,x,z);let h=0;for(const [cx,cz,rx,rz,amplitude] of greenContours[hole]??[]){
+function contours(hole,x,z){if(hole===17)return crownridgeSaddle(x,z);if(hole===16)return halfPipeHollow(x,z);if(hole===6)return sanctuarySaddle(x,z);if(hole===15)return fallenCedar(x,z);if(hole===14)return grassyPass(x,z);if(hole===13)return splitTerrace(x,z);const cup=miniCup({hole}),r=Math.hypot(x-cup.x,z-cup.z),edge=boundaryClearance(hole,x,z);let h=0;for(const [cx,cz,rx,rz,amplitude] of greenContours[hole]??[]){
  const d2=((x-cx)/rx)**2+((z-cz)/rz)**2;
  h+=amplitude*(hole===12?1-smooth((Math.sqrt(d2)-.15)/1.08):Math.exp(-d2));
 }const approach=hole===12?1:smooth((r-3.1)/2);let envelope=approach*smooth(edge/(hole>=10?3.6:2));if(hole===1)envelope*=smooth((x+7)/1.5)*smooth((Math.hypot(x,z-7)-3)/2);if(hole===3)envelope*=smooth((Math.abs(z-crossing.z)-crossing.halfLength)/1.2);return h*envelope}

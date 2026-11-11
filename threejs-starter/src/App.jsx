@@ -1,4 +1,4 @@
-import {turfPalette} from './turf-palette.js';
+import {turfPalette,blendGreenTurf} from './turf-palette.js';
 import {SwingSwoosh,swingImpactDelay} from './SwingSwoosh';
 import {CourseGrass,CourseLanding,WaterEntryEffect} from './CourseLife';
 import {ValleyForest} from './ValleyForest';
@@ -14,7 +14,7 @@ import {bunkersByHole} from './bunkers';
 import {CourseBunkers,BunkerGroundMaterial} from './CourseBunkers';
 import {terrainHeight} from './course';
 import {NewTerrain} from './NewTerrain';
-import {HOLE_COUNT,newHoles,greenNames,newGreenOutline} from './new-holes';
+import {HOLE_COUNT,newHoles,greenNames} from './new-holes';
 import {cameraBlend,renderBallBetween} from './camera-motion';
 import {WeatherEffects} from './WeatherEffects';
 import {ShotMeter} from './ShotMeter';
@@ -63,7 +63,7 @@ const elevation=terrainY;
 function islandGeometry() {
   const {rings,segments}=verdantMesh;
   const positions = [], colors = [], indices = [];
-  const c = new THREE.Color(),fairwayColour=new THREE.Color(turfPalette.fairway),greenColour=new THREE.Color(turfPalette.green),bankColour=new THREE.Color('#7a8463');
+  const c = new THREE.Color(),fairwayColour=new THREE.Color(turfPalette.fairway),bankColour=new THREE.Color('#7a8463');
   for (let r = 0; r <= rings; r++) {
     const portion = r / rings;
     for (let s = 0; s <= segments; s++) {
@@ -77,7 +77,7 @@ function islandGeometry() {
       if (cliff > 0.45) c.set('#376f4c');
       else if (y > 30) c.set(turfPalette.rough);
       else c.set(turfPalette.rough);
-      const nx=x/course.sx,nz=z/course.sz,w=9.3+2.1*Math.sin(nz/10);const f=(1-THREE.MathUtils.smoothstep(Math.abs(nx-3*Math.sin(nz/12)),w-.9,w+.9))*(1-THREE.MathUtils.smoothstep(nz,31,33));if(cliff<.2)c.lerp(fairwayColour,f);const gr=Math.hypot(x/course.green.rx,(z-course.pin.z)/course.green.rz),sr=Math.hypot((x-12*course.sx)/5.2,(z+25*course.sz)/9.5);c.lerp(greenColour,1-THREE.MathUtils.smoothstep(gr,.92,1.08));
+      const nx=x/course.sx,nz=z/course.sz,w=9.3+2.1*Math.sin(nz/10);const f=(1-THREE.MathUtils.smoothstep(Math.abs(nx-3*Math.sin(nz/12)),w-.9,w+.9))*(1-THREE.MathUtils.smoothstep(nz,31,33));if(cliff<.2)c.lerp(fairwayColour,f);const gr=Math.hypot(x/course.green.rx,(z-course.pin.z)/course.green.rz),sr=Math.hypot((x-12*course.sx)/5.2,(z+25*course.sz)/9.5);blendGreenTurf(c,gr);
       const width=riverWidth(nz),edgeDistance=Math.abs(nx-riverCenter(nz))-width;
       if(width>0)c.lerp(bankColour,.75*(1-THREE.MathUtils.smoothstep(edgeDistance,-.25,1.45)));
       colors.push(c.r,c.g,c.b);
@@ -170,17 +170,17 @@ function Decorations({game}) {
   </>;
 }
 
-function Green({hole=1,wind,game}){const course=getCourse(hole),pin=pinFor(game??{hole},course),flag=useRef(),stick=useRef();const edge=useMemo(()=>hole>=11?newGreenOutline(course).map(({x,z})=>[x,height(x,z,hole)+.065,z]):null,[course,hole]);useFrame(({clock})=>{if(stick.current){const t=(game?.time??0)-(game?.pinHitAt??-10);stick.current.rotation.z=t>=0&&t<.45?Math.sin(t*55)*.014*(1-t/.45):0}if(flag.current){
+function Green({hole=1,wind,game}){const course=getCourse(hole),pin=pinFor(game??{hole},course),flag=useRef(),stick=useRef();useFrame(({clock})=>{if(stick.current){const t=(game?.time??0)-(game?.pinHitAt??-10);stick.current.rotation.z=t>=0&&t<.45?Math.sin(t*55)*.014*(1-t/.45):0}if(flag.current){
  const breeze=scenicWindAt(game?.wind??wind,game?.time??0);
  const angle=Math.atan2(breeze.x,-breeze.z);
  flag.current.rotation.y=Math.PI/2-angle+Math.sin(clock.elapsedTime*5)*(.045+breeze.mph*.008);
  flag.current.scale.x=.86+Math.min(.2,breeze.mph*.013)+Math.sin(clock.elapsedTime*7)*.025;
  }});
 
-return <>{edge&&<Line points={edge} color="#789648" lineWidth={1.25}/>}<group position={[pin.x,height(pin.x,pin.z,hole)+flagstick.baseOffset,pin.z]} scale={1.8}><group ref={stick}>
+return <group position={[pin.x,height(pin.x,pin.z,hole)+flagstick.baseOffset,pin.z]} scale={1.8}><group ref={stick}>
  {Array.from({length:6},(_,i)=><mesh key={i} position={[0,.25+i*.5,0]} castShadow><cylinderGeometry args={[flagstick.radius/1.8,flagstick.radius/1.8,flagstick.height/10.8,12]}/><meshStandardMaterial color={i%2?'#244c40':'#fff9ec'}/></mesh>)}
  <group ref={flag} position={[0,2.65,0]}><group position={[.52,0,0]}><mesh><planeGeometry args={[1.04,.68]}/><meshBasicMaterial color="#fff7e8" side={THREE.DoubleSide}/></mesh>{[-1,1].map(sign=><group key={sign}><mesh position={[0,0,sign*.008]}><planeGeometry args={[.92,.56]}/><meshBasicMaterial color="#d34f43" side={THREE.DoubleSide}/></mesh><mesh position={[0,-.12,sign*.014]}><planeGeometry args={[.92,.055]}/><meshBasicMaterial color="#fff7e8" side={THREE.DoubleSide}/></mesh></group>)}</group></group>
- </group><mesh rotation={[-Math.PI/2,0,0]} position={[0,.01,0]}><circleGeometry args={[.12,32]}/><meshStandardMaterial color="#25433c"/></mesh></group></>
+ </group><mesh rotation={[-Math.PI/2,0,0]} position={[0,.01,0]}><circleGeometry args={[.12,32]}/><meshStandardMaterial color="#25433c"/></mesh></group>
 }
 function TeeBox({hole=1}){
  const {tee}=getCourse(hole),y=height(tee.x,tee.z,hole);
@@ -294,6 +294,22 @@ export function World({game,view,refresh,showControls,opponentBalls=[],atmospher
 export default function App(){
  if(import.meta.env.DEV&&new URLSearchParams(location.search).has('soundcheck'))return <AudioCheck/>;
  const [game,setGame]=useState(()=>{const g=createGame(Math.max(1,Math.min(HOLE_COUNT,Number(new URLSearchParams(location.search).get('hole'))||1))),course=getCourse(g.hole);if(import.meta.env.DEV){const preview=new URLSearchParams(location.search).get('preview');
+ if(g.hole===17&&['crownridge-saddle','crownridge-approach'].includes(preview)){
+   g.weather='calm';
+   g.wind=courseWind(17,'calm');
+   g.layout=0;
+   g.cup=cupFor(17,0);
+   const approach=preview==='crownridge-approach';
+   const shots=[['Driver',0,30,.6914],['Driver',110,-128,approach?.66:.9]];
+   if(!approach)shots.push(['7 iron',205,-159,.72]);
+   for(const [club,x,z,power] of shots){
+     g.club=club;
+     g.angle=Math.atan2(x-g.ball.x,g.ball.z-z);
+     swing(g,power,0);
+     for(let i=0;i<4800&&!['ready','holed'].includes(g.mode);i++)step(g);
+   }
+   g.soundEvents=[];
+ }
  if(g.hole===16&&preview==='half-pipe'){
    g.weather='calm';
    g.wind=courseWind(16,'calm');

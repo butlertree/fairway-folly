@@ -5,7 +5,7 @@ import {newHoles,heightNew,fairwayFraction,inTimberApproach,wasteFraction} from 
 import {getCourse,height,lie} from './course.js';
 const cache=new Map();
 // Irregular woodland follows the rough beside usable fairways, never sand, water or greens.
-export function courseWoodland(hole){if(cache.has(hole))return cache.get(hole);const c=getCourse(hole);if(hole===9){const trees=strategicTrees(newHoles[9],heightNew,fairwayFraction,inTimberApproach,wasteFraction);addGreenWoodland(trees,c,hole);addTeeWoodland(trees,c,hole);cache.set(hole,trees);return trees}const trees=[],rx=c.bounds.rx,rz=c.bounds.rz;let seed=(hole===7?8:hole===8?7:hole)*7319;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};for(let i=0;i<4200;i++){const x=(random()*2-1)*rx,z=(random()*2-1)*rz;if(hole===13&&(z< -172&&x> -40&&x<46&&z> -217||fairwayFraction(x,z,c)<1.95))continue;if(hole===12&&(inTimberApproach(x,z)||wasteFraction(x,z,c)<1.09))continue;if(hole===10&&z>115&&x>-29&&x<37)continue;if(lie(x,z,hole)!=='Rough'||(x/rx)**2+(z/rz)**2>.88||Math.hypot(x-c.pin.x,z-c.pin.z)<38||Math.hypot(x-c.tee.x,z-c.tee.z)<30)continue;let near=false,clear=true;for(let j=0;j<12;j++){const a=j*Math.PI/6;for(const r of [hole===1?4:8,18,30,50,75]){const s=lie(x+Math.cos(a)*r,z+Math.sin(a)*r,hole);if(r===(hole===1?4:8)&&s!=='Rough')clear=false;if(r>8&&s==='Fairway')near=true}}if(!clear||!near||trees.some(t=>Math.hypot(t.x-x,t.z-z)<(hole===1?7:10)+random()*4))continue;trees.push({x,z,y:height(x,z,hole)-.15,tall:(hole===1?.17:.25)+random()*.1,wide:(hole===1?.22:.3)+random()*.13,flip:random()>.5?1:-1,id:trees.length,kind:hole>=12?['cypress','oak','birch'][trees.length%3]:undefined})}if(hole===11)addSandstoneWoodland(trees,c);addGreenWoodland(trees,c,hole);if(hole===12)addTimberWoodland(trees,c);if(hole===14)addAlderBackdrop(trees,c);if(hole===15)addCedarWoodland(trees,c);else addTeeWoodland(trees,c,hole);if(hole===16)addHemlockWoodland(trees,c);cache.set(hole,trees);return trees}
+export function courseWoodland(hole){if(cache.has(hole))return cache.get(hole);const c=getCourse(hole);if(hole===9){const trees=strategicTrees(newHoles[9],heightNew,fairwayFraction,inTimberApproach,wasteFraction);addGreenWoodland(trees,c,hole);addTeeWoodland(trees,c,hole);cache.set(hole,trees);return trees}const trees=[],rx=c.bounds.rx,rz=c.bounds.rz;let seed=(hole===7?8:hole===8?7:hole)*7319;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};for(let i=0;i<4200;i++){const x=(random()*2-1)*rx,z=(random()*2-1)*rz;if(hole===13&&(z< -172&&x> -40&&x<46&&z> -217||fairwayFraction(x,z,c)<1.95))continue;if(hole===12&&(inTimberApproach(x,z)||wasteFraction(x,z,c)<1.09))continue;if(hole===10&&z>115&&x>-29&&x<37)continue;if(lie(x,z,hole)!=='Rough'||(x/rx)**2+(z/rz)**2>.88||Math.hypot(x-c.pin.x,z-c.pin.z)<38||Math.hypot(x-c.tee.x,z-c.tee.z)<30)continue;let near=false,clear=true;for(let j=0;j<12;j++){const a=j*Math.PI/6;for(const r of [hole===1?4:8,18,30,50,75]){const s=lie(x+Math.cos(a)*r,z+Math.sin(a)*r,hole);if(r===(hole===1?4:8)&&s!=='Rough')clear=false;if(r>8&&s==='Fairway')near=true}}if(!clear||!near||trees.some(t=>Math.hypot(t.x-x,t.z-z)<(hole===1?7:10)+random()*4))continue;trees.push({x,z,y:height(x,z,hole)-.15,tall:(hole===1?.17:.25)+random()*.1,wide:(hole===1?.22:.3)+random()*.13,flip:random()>.5?1:-1,id:trees.length,kind:hole>=12?['cypress','oak','birch'][trees.length%3]:undefined})}if(hole===11)addSandstoneWoodland(trees,c);addGreenWoodland(trees,c,hole);if(hole===12)addTimberWoodland(trees,c);if(hole===14)addAlderBackdrop(trees,c);if(hole===15)addCedarWoodland(trees,c);else addTeeWoodland(trees,c,hole);if(hole===16)addHemlockWoodland(trees,c);if(hole===17){addCrownridgeWoodland(trees,c);for(let i=trees.length-1;i>=0;i--){const t=trees[i],ahead=c.tee.z-t.z;if(ahead>0&&ahead<57&&Math.abs(t.x-c.tee.x)<33)trees.splice(i,1);}}if(hole===18)addCedarGate(trees,c);cache.set(hole,trees);return trees}
 
 function addTeeWoodland(trees,c,hole){
  const {tee}=c,rx=c.landRadius?.rx??(hole===1?40*c.sx:130);
@@ -130,5 +130,32 @@ function addHemlockWoodland(trees,c){
       trees.some(t=>Math.hypot(t.x-x,t.z-z)<9.3))continue;
    trees.push({x,z,y:height(x,z,16)-.22,tall:.34+(i%8)*.033,wide:.36+(i%6)*.041,
      kind:['cypress','oak','birch'][i%3],id:trees.length,flip:i%2?1:-1});
+ }
+}
+
+function addCrownridgeWoodland(trees,c){
+ const x=142,z=-114;
+ trees.push({x,z,y:height(x,z,17)-.22,tall:.64,wide:.65,kind:'cottonwood',
+   id:trees.length,flip:1,signature:'The Crownridge Cottonwood'});
+ const groves=[[150,-182,30,22],[209,-206,36,19],[244,-161,17,36],[68,-110,24,42],[68,48,22,61],[-51,85,23,75],[158,54,38,93],[211,5,22,52],[-52,-110,25,59]];
+ for(const [cx,cz,rx,rz] of groves)for(let i=0;i<72;i++){
+   const a=i*2.399963,r=Math.sqrt((i+.5)/72);
+   const x=cx+Math.cos(a)*r*rx,z=cz+Math.sin(a)*r*rz;
+   const nx=(x-c.landRadius.cx)/c.landRadius.rx,nz=z/c.landRadius.rz;
+   if(Math.hypot(nx,nz)>edgeShape(Math.atan2(nz,nx))-.045||
+      !['Rough','OB'].includes(lie(x,z,17))||wasteFraction(x,z,c)<1.13||
+      x>120&&x<195&&Math.abs(z+128+(x-110)*.364)<18||
+      trees.some(t=>Math.hypot(t.x-x,t.z-z)<9.4))continue;
+   trees.push({x,z,y:height(x,z,17)-.2,tall:.29+(i%8)*.031,wide:.32+(i%6)*.037,
+     kind:['oak','cypress','birch'][i%3],id:trees.length,flip:i%2?1:-1});
+ }
+}
+
+function addCedarGate(trees,c){
+ const sites=[[-17,174],[20,168],[-19,151],[24,144],[-19,127],[20,121],[-22,104],[17,98],[-28,81],[14,75],[-35,65],[10,53]];
+ for(const [i,[x,z]] of sites.entries()){
+   for(let j=trees.length-1;j>=0;j--)if(Math.hypot(trees[j].x-x,trees[j].z-z)<8)trees.splice(j,1);
+   trees.push({x,z,y:height(x,z,c.id)-.2,tall:.60+i%3*.07,wide:.39+i%4*.035,
+     kind:i%3?'cypress':'birch',id:1000+i,flip:i%2?1:-1});
  }
 }

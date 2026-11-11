@@ -1,11 +1,11 @@
-import {turfPalette} from './turf-palette.js';
+import {turfPalette,blendGreenTurf} from './turf-palette.js';
 import {CreekbankRiver} from './CreekbankScenery';
 import {ValleyForest} from './ValleyForest';
 import {BunkerGroundMaterial} from './CourseBunkers';
 import React,{useMemo,useRef} from 'react';
 import {useFrame} from '@react-three/fiber';
 import * as THREE from 'three';
-import {newHoles,heightNew,lieNew,newGreenFraction,fairwayFraction,waterFraction,creekCenter,creekWidth,newOutlet,wasteFraction,timberWasteRocks,timberGrass,cedarWasteRocks,cedarGrass,wasteGrassFraction,duneGrassFraction,alderShoreZ,alderWallHeight} from './new-holes';
+import {newHoles,heightNew,lieNew,newGreenFraction,fairwayFraction,waterFraction,creekCenter,creekWidth,newOutlet,wasteFraction,timberWasteRocks,timberGrass,cedarWasteRocks,cedarGrass,crownridgeWasteRocks,crownridgeGrass,wasteGrassFraction,duneGrassFraction,alderShoreZ,alderWallHeight} from './new-holes';
 import {edgeShape} from './landscape';
 import {WaterPond,WaterMaterial} from './Water';
 import {CourseWaterfall} from './CourseWaterfall';
@@ -14,14 +14,14 @@ export function Lighthouse({scale=1}){const beam=useRef();useFrame((_,dt)=>{if(b
 function CoastalLighthouse(){const x=66,z=-94,scale=3;const ground=Array.from({length:24},(_,i)=>{const a=i/24*Math.PI*2;return heightNew(x+Math.cos(a)*1.4*scale,z+Math.sin(a)*1.4*scale,4)});const base=Math.min(...ground)-.65;return <group position={[x,base,z]}><Lighthouse scale={scale}/></group>}
 export function BlossomTree({x,z,y,scale=1,color='#e7b5b5'}){return <group position={[x,y,z]} scale={scale}><mesh position={[0,2.8,0]} castShadow><cylinderGeometry args={[.18,.4,5.6,8]}/><meshStandardMaterial color="#806042"/></mesh>{[[-1.2,5.5,0],[1,6,.3],[0,6.8,-.3]].map((p,i)=><mesh key={i} position={p} scale={[1.3,.7,1]} castShadow><icosahedronGeometry args={[1.8,2]}/><meshStandardMaterial color={color} roughness={1}/></mesh>)}</group>}
 function Waterways({c}){const outlet=useMemo(()=>newOutlet(c.id),[c.id]);const geometry=useMemo(()=>{const p=[],idx=[];if(!outlet)return new THREE.BufferGeometry();let start=48;const end=outlet.x;if(c.id!==4){start=0;while(true){const z=creekCenter(start,c.id),a=Math.atan2(z/c.landRadius.rz,start/c.landRadius.rx);if(Math.hypot(start/c.landRadius.rx,z/c.landRadius.rz)>=edgeShape(a))break;start-=.1;}}for(let i=0;i<=160;i++){const x=start+(end-start)*i/160,z=c.id===4?-29:creekCenter(x,c.id),w=c.id===4?2.5:creekWidth(c.id);for(const s of [-1,1])p.push(x,c.waterLevel+.04,z+s*w);if(i<160){const k=i*2;idx.push(k,k+1,k+2,k+1,k+3,k+2)}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();return g},[c,outlet]);return <>{c.lakes.map((p,i)=><WaterPond key={i} pond={p} terrain level={c.waterLevel} flow={.25}/>)}{outlet&&<><mesh geometry={geometry}><WaterMaterial flow excludePonds={c.lakes} pond={{x:0,z:outlet.z,rx:c.landRadius.rx,rz:7}}/></mesh><CourseWaterfall outlet={outlet} level={c.waterLevel+.04} rotation={Math.PI/2}/></>}</>}
-export function NewTerrain({hole,game}){const c=newHoles[hole];const geometry=useMemo(()=>{const p=[],colors=[],idx=[],rings=hole===14?232:180,segments=hole===14?448:320;for(let j=0;j<=rings;j++)for(let i=0;i<=segments;i++){const a=i/segments*Math.PI*2,r=j/rings,e=edgeShape(a),x=(c.landRadius.cx??0)+c.landRadius.rx*r*e*Math.cos(a),z=c.landRadius.rz*r*e*Math.sin(a),y=heightNew(x,z,hole),surface=lieNew(x,z,hole),gr=newGreenFraction(x,z,c);p.push(x,y,z);const color=new THREE.Color(y>86?turfPalette.upland:turfPalette.rough);color.lerp(new THREE.Color(turfPalette.fairway),1-THREE.MathUtils.smoothstep(fairwayFraction(x,z,c),.9,1.15));if(c.waste)color.lerp(new THREE.Color('#d8c28c'),1-THREE.MathUtils.smoothstep(wasteFraction(x,z,c),.96,1.04));if((hole===12||hole===15)&&wasteFraction(x,z,c)<1)color.lerp(new THREE.Color('#869359'),1-THREE.MathUtils.smoothstep(wasteGrassFraction(x,z,hole),.59,1.08));if(hole===13&&surface==='Rough'&&z<145&&z> -174){
+export function NewTerrain({hole,game}){const c=newHoles[hole];const geometry=useMemo(()=>{const p=[],colors=[],idx=[],rings=hole===14?232:180,segments=hole===14?448:320;for(let j=0;j<=rings;j++)for(let i=0;i<=segments;i++){const a=i/segments*Math.PI*2,r=j/rings,e=edgeShape(a),x=(c.landRadius.cx??0)+c.landRadius.rx*r*e*Math.cos(a),z=c.landRadius.rz*r*e*Math.sin(a),y=heightNew(x,z,hole),surface=lieNew(x,z,hole),gr=newGreenFraction(x,z,c);p.push(x,y,z);const color=new THREE.Color(y>86?turfPalette.upland:turfPalette.rough);color.lerp(new THREE.Color(turfPalette.fairway),1-THREE.MathUtils.smoothstep(fairwayFraction(x,z,c),.9,1.15));if(c.waste)color.lerp(new THREE.Color('#d8c28c'),1-THREE.MathUtils.smoothstep(wasteFraction(x,z,c),.96,1.04));if([12,15,17].includes(hole)&&wasteFraction(x,z,c)<1)color.lerp(new THREE.Color('#869359'),1-THREE.MathUtils.smoothstep(wasteGrassFraction(x,z,hole),.59,1.08));if(hole===13&&surface==='Rough'&&z<145&&z> -174){
  const patch=duneGrassFraction(x,z)+.08*Math.sin(x*.52+z*.41);
  color.lerp(new THREE.Color('#8f9954'),.65*(1-THREE.MathUtils.smoothstep(patch,.27,1.12)));
-}if(surface==='Sand')color.set('#e5d0a1');if(hole===14)color.lerp(new THREE.Color('#b7bb86'),1-THREE.MathUtils.smoothstep(y,c.waterLevel+.15,c.waterLevel+1.65));else if(waterFraction(x,z,c)<1.5&&y<c.waterLevel+1)color.set('#b7bb86');if(hole<11||surface!=='Waste sand')color.lerp(new THREE.Color(turfPalette.green),1-THREE.MathUtils.smoothstep(gr,hole>=11?.96:.82,hole>=11?1.045:1.25));if(hole===14&&z>c.pin.z-2&&z< -180&&gr<1.5){
+}if(surface==='Sand')color.set('#e5d0a1');if(hole===14)color.lerp(new THREE.Color('#b7bb86'),1-THREE.MathUtils.smoothstep(y,c.waterLevel+.15,c.waterLevel+1.65));else if(waterFraction(x,z,c)<1.5&&y<c.waterLevel+1)color.set('#b7bb86');if(!['Waste sand','Water','Sand'].includes(surface))blendGreenTurf(color,gr);if(hole===14&&z>c.pin.z-2&&z< -180&&gr<1.5){
  const crest=THREE.MathUtils.smoothstep(y,c.waterLevel+.65,c.greenHeight-.7);
  const strength=(1-crest)*.64*(1-THREE.MathUtils.smoothstep(gr,.88,1.5));
  color.lerp(new THREE.Color('#749851'),strength);
-}color.multiplyScalar(1+.015*Math.sin(x*.035+z*.02)*Math.cos(z*.018));colors.push(color.r,color.g,color.b);if(i<segments&&j<rings){const k=j*(segments+1)+i;idx.push(k,k+segments+1,k+1,k+1,k+segments+1,k+segments+2)}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(idx);g.computeVertexNormals();return g},[hole,c]);return <><mesh geometry={geometry} receiveShadow><BunkerGroundMaterial hole={hole} vertexColors roughness={1} side={THREE.DoubleSide}/></mesh>{hole===10?<CreekbankRiver course={c}/>:<Waterways c={c}/>}{hole===4?<CoastalLighthouse/>:hole>=7?null:Array.from({length:12},(_,i)=>{const z=(i/11-.5)*c.landRadius.rz*1.5,x=(i%2?1:-1)*(hole===5?77:52);if(lieNew(x,z,hole)!=='Rough')return null;return <BlossomTree key={i} x={x} z={z} y={heightNew(x,z,hole)} scale={1.2+(i%3)*.15} color={hole===5?'#d9cf85':i%2?'#e8b1b4':'#eacac1'}/>})}{hole===9&&<ValleyForest game={game}/>}{(hole===12||hole===15)&&<ValleyWaste hole={hole}/>}{hole===13&&<DuneTeeSteps tee={c.tee}/>} {hole===14&&<AlderLakeWall course={c}/>}<NewLandmarks hole={hole}/></>}
+}color.multiplyScalar(1+.015*Math.sin(x*.035+z*.02)*Math.cos(z*.018));colors.push(color.r,color.g,color.b);if(i<segments&&j<rings){const k=j*(segments+1)+i;idx.push(k,k+segments+1,k+1,k+1,k+segments+1,k+segments+2)}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(idx);g.computeVertexNormals();return g},[hole,c]);return <><mesh geometry={geometry} receiveShadow><BunkerGroundMaterial hole={hole} vertexColors roughness={1} side={THREE.DoubleSide}/></mesh>{hole===10?<CreekbankRiver course={c}/>:<Waterways c={c}/>}{hole===4?<CoastalLighthouse/>:hole>=7?null:Array.from({length:12},(_,i)=>{const z=(i/11-.5)*c.landRadius.rz*1.5,x=(i%2?1:-1)*(hole===5?77:52);if(lieNew(x,z,hole)!=='Rough')return null;return <BlossomTree key={i} x={x} z={z} y={heightNew(x,z,hole)} scale={1.2+(i%3)*.15} color={hole===5?'#d9cf85':i%2?'#e8b1b4':'#eacac1'}/>})}{hole===9&&<ValleyForest game={game}/>}{[12,15,17].includes(hole)&&<ValleyWaste hole={hole}/>}{hole===13&&<DuneTeeSteps tee={c.tee}/>} {hole===14&&<AlderLakeWall course={c}/>}<NewLandmarks hole={hole}/></>}
 
 function AlderLakeWall({course}){
  const boards=useMemo(()=>{
@@ -58,12 +58,13 @@ function DuneTeeSteps({tee}){
  </group>;
 }
 function ValleyWaste({hole}){
- const grass=hole===15?cedarGrass:timberGrass,rocks=hole===15?cedarWasteRocks:timberWasteRocks;
+ const grass=hole===17?crownridgeGrass:hole===15?cedarGrass:timberGrass,rocks=hole===17?crownridgeWasteRocks:hole===15?cedarWasteRocks:timberWasteRocks;
  const tufts=useMemo(()=>{
    const points=[];
    for(const patch of grass)for(let i=0;i<(hole===15?65:30);i++){
      const a=i*2.399963,r=Math.sqrt((i+.5)/(hole===15?65:30))*.88;
      const x=patch.x+Math.cos(a)*r*patch.rx,z=patch.z+Math.sin(a)*r*patch.rz,y=heightNew(x,z,hole)-.04;
+     if(hole===17&&wasteFraction(x,z,newHoles[hole])>=1)continue;
      const size=(.37+(i%7)*.09)*(hole===15?1.9:1);
      for(let j=0;j<3;j++){
        const direction=a+j*2.3,dx=Math.cos(direction),dz=Math.sin(direction);
@@ -78,7 +79,7 @@ function ValleyWaste({hole}){
  return <>
    <mesh geometry={tufts} receiveShadow><meshStandardMaterial color="#77844a" side={THREE.DoubleSide} roughness={1}/></mesh>
    {rocks.map(({x,z,rx,ry,rz},i)=><mesh key={x} position={[x,heightNew(x,z,hole)-.2,z]} scale={[rx,ry,rz]} castShadow receiveShadow>
-     <icosahedronGeometry args={[1,1]}/><meshStandardMaterial color={i%2?'#898778':'#9c9581'} roughness={1} flatShading/>
+     <icosahedronGeometry args={[1,hole===17?3:1]}/><meshStandardMaterial color={i%2?'#898778':'#9c9581'} roughness={1} flatShading={hole!==17}/>
    </mesh>)}
  </>;
 }
