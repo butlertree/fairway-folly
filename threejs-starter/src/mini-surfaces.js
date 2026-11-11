@@ -15,7 +15,6 @@ export const greenContours={
  3:[[-4,-7,3.2,5,.65],[4,-7,3.2,5,.65]],
  4:[[-3,3,3.5,7,.95],[5,-8,3.5,4,.55]],
  5:[[-4.5,4,3.4,5,.85],[4.5,-5,3.4,5,.95]],
- 6:[[-4,-7,4,4,1],[4,7,4,5,.8]],
  7:[[-4,5,3.3,6,.9],[4,-6,3.3,5,.8]],
  8:[[-3,-6,3.7,6,.95],[4,6,3.5,5,.7]],
  9:[[-5,-7,3,5,.65],[5,7,3,5,.65]],
@@ -23,7 +22,52 @@ export const greenContours={
  12:[[-7.8,3.6,3.2,6.3,.54],[2,10.5,8,3.1,.39],[5.4,-5.8,4.8,4.2,.47],[-3.5,-9.5,6.2,2.8,-.14]],
  11:[[-4.7,5,4,7,-.28],[3.4,6,3.4,7,-.21],[2,-6,4.2,6,-.15]]
 };
-function contours(hole,x,z){const cup=miniCup({hole}),r=Math.hypot(x-cup.x,z-cup.z),edge=boundaryClearance(hole,x,z);let h=0;for(const [cx,cz,rx,rz,amplitude] of greenContours[hole]??[]){
+function splitTerrace(x,z){
+ const seam=x-.12*z;
+ const high=.98*smooth((-seam-5.0)/(3.5+1.8*smooth((z-1)/6)));
+ const low=-.78*smooth((seam-3.3)/(3.2+2.5*smooth((z-1)/6)));
+ return high+low;
+}
+function grassyPass(x,z){
+ const edge=smooth(boundaryClearance(14,x,z)/3.6);
+ // The front shelf echoes the false front above Alderwater's lake.
+ const sideRoute=smooth((x-1.8)/4.5);
+ const crest=2.6+.45*Math.sin(x*.31);
+ const rampLength=3.25+3.4*sideRoute;
+ const terrace=.72-1.36*smooth((z-crest)/rampLength);
+ const frontShoulders=.56*Math.exp(-(((z-5.3)/2.2)**2))*
+   (Math.exp(-(((x+6.7)/2.6)**2))+.8*Math.exp(-(((x-8.4)/1.7)**2)));
+ const breakToCup=.12*Math.sin(x*.25)*Math.exp(-(((z-2)/2.6)**2))*smooth((Math.abs(x)-2)/2);
+ const back=Math.exp(-(((z+6)/2.8)**2));
+ const backShoulders=.88*(1-Math.exp(-(((x-.6)/4.1)**2)));
+ return terrace+edge*(frontShoulders+back*backShoulders+breakToCup);
+}
+function halfPipeHollow(x,z){
+ const edge=smooth(boundaryClearance(16,x,z)/3.1);
+ const cupShelf=smooth((Math.hypot(x,z)-2.7)/2.4);
+ const axis=x-.55*z+1.4;
+ const channel=Math.exp(-((axis/2.9)**2))*Math.exp(-(((z-3)/8.3)**2));
+ const banks=.65*(1-Math.exp(-((axis/3.6)**2)))*Math.exp(-(((z-3)/7.3)**2));
+ return edge*cupShelf*(banks-.76*channel);
+}
+function sanctuarySaddle(x,z){
+ const edge=smooth(boundaryClearance(6,x,z)/3);
+ const cupShelf=smooth((Math.hypot(x,z)-3.1)/2.6);
+ const ridgeZ=5.8+.24*x;
+ const saddle=Math.exp(-(((z-ridgeZ)/3.65)**2));
+ const shoulders=1.05*(1-Math.exp(-(((x+1.8)/3.5)**2)));
+ const back=.72*Math.exp(-(((x+3.7)/5.2)**2+((z+8.8)/3.7)**2));
+ return edge*cupShelf*(saddle*(.38+shoulders)+back);
+}
+function fallenCedar(x,z){
+ const edge=smooth(boundaryClearance(15,x,z)/2.9);
+ const cupFade=smooth((Math.hypot(x-1.1,z+1.6)-2.6)/2.7);
+ const east=.88*Math.exp(-(((x-7.6)/4.4)**2+((z-4.6)/6.4)**2));
+ const west=.32*Math.exp(-(((x+6.8)/5.2)**2+((z-4)/5.2)**2));
+ const rear=.48*Math.exp(-(((x-.7)/7.2)**2+((z+8.8)/3.8)**2));
+ return edge*cupFade*(east+west+rear);
+}
+function contours(hole,x,z){if(hole===16)return halfPipeHollow(x,z);if(hole===6)return sanctuarySaddle(x,z);if(hole===15)return fallenCedar(x,z);if(hole===14)return grassyPass(x,z);if(hole===13)return splitTerrace(x,z);const cup=miniCup({hole}),r=Math.hypot(x-cup.x,z-cup.z),edge=boundaryClearance(hole,x,z);let h=0;for(const [cx,cz,rx,rz,amplitude] of greenContours[hole]??[]){
  const d2=((x-cx)/rx)**2+((z-cz)/rz)**2;
  h+=amplitude*(hole===12?1-smooth((Math.sqrt(d2)-.15)/1.08):Math.exp(-d2));
 }const approach=hole===12?1:smooth((r-3.1)/2);let envelope=approach*smooth(edge/(hole>=10?3.6:2));if(hole===1)envelope*=smooth((x+7)/1.5)*smooth((Math.hypot(x,z-7)-3)/2);if(hole===3)envelope*=smooth((Math.abs(z-crossing.z)-crossing.halfLength)/1.2);return h*envelope}

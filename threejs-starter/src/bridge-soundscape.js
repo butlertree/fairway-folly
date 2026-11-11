@@ -7,7 +7,7 @@ export function bridgeMix(game){
   const {x,z,vx,vz}=game.ball;
   const speed=Math.hypot(vx,vz);
   return {
-    air:.045+wind*.006,
+    air:wind*.0038,
     deck:isBridgeGreen&&game.mode==='rolling'&&onCrossing(x,z)?Math.min(.18,speed*.016):0
   };
 }

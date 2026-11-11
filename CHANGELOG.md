@@ -340,3 +340,8 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Added Creekbank Hollow, Sandstone Crown, and Timberroot Vale with new putting challenges.
 - Extended course rounds and scorecards to twelve holes.
 - Clarified where approaches finish on the green and made firm, centered cup hops more forgiving.
+
+### Sixteen-hole playtest
+
+- Added Dunewatch Rise, Alderwater Pass, Cedarfall Hollow, and Hemlock Elbow.
+- Updated course turf, tee woodland, water relief, cup sounds, and the Starlight Saddle.

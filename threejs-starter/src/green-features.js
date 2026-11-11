@@ -5,6 +5,7 @@ import {expansionBanks,expansionObstacles,movingGreenGates} from './expansion-gr
 // Every low obstacle drawn in the signature gardens uses these same collision shapes.
 export const gardenObstacles={
   10:culvertFeet,
+  13:[{x:-6.7,z:4.6,r:1.3},{x:6.2,z:-4.6,r:1.4},{x:5.3,z:5.1,r:1.25}],
   1:[{x:-4,z:-5,r:1},{x:4,z:5,r:1},{x:-1.6,z:6.5,r:.55},{x:1.6,z:6.5,r:.55}],
   2:[{x:-4.8,z:8.2,r:1.15},{x:5.4,z:-6.5,r:1.05}],
   ...expansionObstacles,3:[{x:-5,z:-4,r:1.05},{x:5,z:-4,r:.85},{x:-5,z:-9,r:.8}]
@@ -29,7 +30,12 @@ export const timberStoneBanks=[
   {ax:3.4,az:-5.4,bx:6.6,bz:-7.4,r:.54},
   {ax:6.6,az:-7.4,bx:7.2,bz:-8.2,r:.60}
 ];
+export const cedarBanks=[
+ {ax:-4.8,az:1.4,bx:-2.6,bz:7.6,r:.55},
+ {ax:5.7,az:-5.2,bx:2.9,bz:-8.6,r:.58}
+];
 export const gardenBanks={
+  15:cedarBanks,
   12:[...timberRoots,...timberStoneBanks],
   11:sandstoneElbows.flat(),
   1:[{ax:-4.8,az:7,bx:-6, bz:4,r:.38},{ax:-6,az:4,bx:-6.2,bz:1,r:.38},{ax:-6.2,az:1,bx:-5.5,bz:-2,r:.38}],

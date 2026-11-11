@@ -15,3 +15,9 @@ test('bridge ambience follows bridge movement and the current gust',()=>{
   assert.equal(bridgeMix({...game,hole:4}).deck,0);
   assert.ok(bridgeMix({...game,time:Math.PI/1.4}).air>crossing.air);
 });
+
+test('calm course ambience has no continuous air hiss',()=>{
+  const game={hole:14,mini:false,mode:'ready',ball:{x:0,z:0,vx:0,vz:0},wind:courseWind(14,'calm'),time:0};
+  assert.deepEqual(bridgeMix(game),{air:0,deck:0});
+  assert.ok(bridgeMix({...game,wind:courseWind(14,'windy')}).air>0);
+});

@@ -19,7 +19,9 @@ test('Creekbank Hollow has a raised tee, a genuine carry over water, and left wa
  swing(game,.06,0);
  for(let i=0;i<3000&&game.mode!=='ready';i++)step(game);
  assert.equal(game.strokes,2);
- assert.deepEqual(game.ball,tee);
+ assert.ok(game.ball.z<tee.z);
+ assert.equal(game.lie,lie(game.ball.x,game.ball.z,10));
+ assert.ok(!['Water','OB'].includes(game.lie));
  assert.match(game.message,/^Water/);
 });
 
@@ -59,7 +61,7 @@ test('a putt rebounds off the creekside stone wall and comes to a playable rest'
 
 
 test('a well aimed drive finds the landing strip while a miss right finds the creek',()=>{
- for(const [targetX,strokes,expectedLie] of [[22,1,'Fairway'],[38,2,'Tee box']]){
+ for(const [targetX,strokes,expectedLie] of [[22,1,'Fairway'],[38,2,'Rough']]){
    const game=createGame(10);
    game.angle=Math.atan2(targetX,game.ball.z+55);
    swing(game,1,0);

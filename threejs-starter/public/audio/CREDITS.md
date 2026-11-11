@@ -33,3 +33,5 @@ Scottrex05 — **Golf ball in hole.wav**, Freesound 593482.
 Source: https://freesound.org/people/Scottrex05/sounds/593482/
 License: CC0 1.0, as declared on the source page. Original public preview retained as `golf/cup-scottrex05.mp3`.
 `golf/cup-drop.wav` crops the first real cup contact (1.01–2.06 seconds), converts to mono 24kHz, filters below 60Hz/above 10kHz and applies short boundary fades. No synthetic metallic ringing is layered over the recording. Playback is synchronized to the ball falling through the rim.
+
+- `nature/blackbird.mp3` uses [Common blackbird singing denoised](https://commons.wikimedia.org/wiki/File:Common_blackbird_singing_denoised.flac) by tinga, CC0 1.0. Mixed to mono, filtered, and faded.

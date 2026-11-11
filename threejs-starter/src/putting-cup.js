@@ -20,11 +20,13 @@ export function puttingCupContact(previous,ball,cup,speed){
   if(entry<0)return null; // The lip is evaluated once, as the ball crosses inward.
 
   const edgeFraction=(offset-centerLane)/(puttingCupRadius-centerLane);
-  if(speed<3-.55*edgeFraction)return {type:'lip-in',ux,uz};
-
   const contactX=previous.x+entry*ux,contactZ=previous.z+entry*uz;
   const nx=(contactX-cup.x)/puttingCupRadius,nz=(contactZ-cup.z)/puttingCupRadius;
   const tangent=ux*(-nz)+uz*nx;
+  if(speed<3-.55*edgeFraction){
+    const turn=Math.sign(tangent);
+    return {type:'lip-in',ux:-nz*turn,uz:nx*turn};
+  }
   const slide=speed*.7*tangent,escape=Math.max(.14,speed*.10);
   return {
     type:'lip-out',

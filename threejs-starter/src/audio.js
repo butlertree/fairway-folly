@@ -8,7 +8,7 @@ class GameAudio {
     try{if(!this.context){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;this.context=new Audio();this.master=this.context.createGain();this.master.gain.value=.32;this.limiter=this.context.createDynamicsCompressor();this.limiter.threshold.value=-8;this.limiter.knee.value=8;this.limiter.ratio.value=5;this.limiter.attack.value=.002;this.limiter.release.value=.12;this.master.connect(this.limiter);this.limiter.connect(this.context.destination);this.loadSamples();this.startAmbience();document.addEventListener('visibilitychange',()=>{if(this.context&&this.master)this.master.gain.setTargetAtTime(this.enabled&&!document.hidden?.32:0,this.context.currentTime,.04)})}if(this.context.state!=='running'&&this.context.state!=='closed')this.context.resume().catch(()=>{})}catch{}
   }
   setEnabled(enabled){this.enabled=enabled;if(this.master){const t=this.context.currentTime;this.master.gain.cancelScheduledValues(t);this.master.gain.setTargetAtTime(enabled?.32:0,t,.025)}if(enabled&&this.context)this.unlock()}
-  loadSamples(){if(this.loading)return this.loading;const golf=new Set([...Object.values(recordedClubs).flat(),'cup-drop']),names=['impactSoft_heavy_000','impactSoft_heavy_001','impactSoft_heavy_002','footstep_grass_000','footstep_grass_001','impactGeneric_light_000','impactWood_light_000','impactMetal_light_000','impactTin_medium_000','footstep_snow_000',...golf];this.sampleCount=names.length;this.loading=Promise.allSettled(names.map(async n=>{const r=await fetch(`${import.meta.env.BASE_URL}audio/${golf.has(n)?'golf':'foley'}/${n}.wav`);if(!r.ok)throw new Error('Audio '+r.status);this.buffers.set(n,await this.context.decodeAudioData(await r.arrayBuffer()))}));return this.loading}
+  loadSamples(){if(this.loading)return this.loading;const golf=new Set([...Object.values(recordedClubs).flat(),'cup-drop']),names=['impactSoft_heavy_000','impactSoft_heavy_001','impactSoft_heavy_002','footstep_grass_000','footstep_grass_001','impactGeneric_light_000','impactWood_light_000','impactMetal_light_000','impactTin_medium_000','footstep_snow_000','blackbird',...golf];this.sampleCount=names.length;this.loading=Promise.allSettled(names.map(async n=>{const r=await fetch(`${import.meta.env.BASE_URL}audio/${n==='blackbird'?'nature':golf.has(n)?'golf':'foley'}/${n}.${n==='blackbird'?'mp3':'wav'}`);if(!r.ok)throw new Error('Audio '+r.status);this.buffers.set(n,await this.context.decodeAudioData(await r.arrayBuffer()))}));return this.loading}
   sample(name,{gain=.8,rate=1,lowpass=8000,delay=0}={}){const buffer=this.buffers.get(name);if(!buffer)return false;const c=this.context,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=buffer;s.playbackRate.value=rate;f.type='lowpass';f.frequency.value=lowpass;g.gain.value=gain;s.connect(f);f.connect(g);g.connect(this.master);s.start(c.currentTime+delay);return true}
   startAmbience(){
     const c=this.context,buffer=c.createBuffer(1,c.sampleRate*4,c.sampleRate),data=buffer.getChannelData(0);
@@ -20,16 +20,25 @@ class GameAudio {
       data[i]=(brown+noise*.16)*envelope;
     }
     this.ambience={
-      air:ambienceLayer(c,this.master,buffer,{frequency:520,gain:.045}),
+      air:ambienceLayer(c,this.master,buffer,{frequency:380}),
       deck:ambienceLayer(c,this.master,buffer,{frequency:480,type:'bandpass',pulse:24})
     };
   }
   updateAmbience(game){
     if(!this.enabled||this.context?.state!=='running'||document.hidden)return;
     const now=this.context.currentTime;
+    this.nextBirdAt??=now+6;
     if(now<(this.nextMixAt??0))return;
     this.nextMixAt=now+.05;
     const mix=bridgeMix(game);
+    if(now>=this.nextBirdAt&&game.mode==='ready'&&!game.paused){
+      const played=this.sample('blackbird',{
+        gain:game.wind?.condition==='stormy'?.12:.28,
+        rate:.94+Math.random()*.12,
+        lowpass:4200
+      });
+      this.nextBirdAt=now+(played?16+Math.random()*17:3);
+    }
     for(const layer of Object.keys(mix)){
       const gain=this.ambience[layer];
       gain.setTargetAtTime(mix[layer],now,layer==='deck'?.06:.28);
@@ -49,6 +58,10 @@ class GameAudio {
     case 'strike-wedge':this.strike('wedge',v);break;
     case 'putt':this.strike('putter',v);break;
     case 'flagstick':if(this.sample('impactWood_light_000',{gain:.35*v,rate:1.6,lowpass:3500}))break;this.noise(.035,.08*v,900);break;
+    case 'retaining-wall':
+      if(!this.sample('impactWood_light_000',{gain:.83*v,rate:.89,lowpass:3000}))this.noise(.055,.14*v,1250);
+      else this.sample('impactWood_light_000',{gain:.29*v,rate:1.18,lowpass:2100,delay:.046});
+      break;
     case 'bridge-rail':
       if(!this.sample('impactWood_light_000',{gain:.85*v,rate:.83+Math.random()*.1,lowpass:3100}))this.noise(.055,.12*v,1600);
       this.tone(240,0,.08,.075*v,'sine',96);
@@ -62,7 +75,7 @@ class GameAudio {
     case 'splash':this.noise(.35,.15,700);this.tone(180,.02,.24,.07,'sine',55);break;
     case 'penalty':this.tone(250,0,.15,.045);this.tone(190,.16,.18,.035);break;
     case 'cup-lip':
-      this.sample('impactGeneric_light_000',{gain:.32*v,rate:1.35,lowpass:2300});
+      this.noise(.064,.085*v,930,0,'bandpass');
       break;
     case 'cup':if(!this.sample('cup-drop',{gain:1.25,rate:1,lowpass:10000}))this.sample('impactWood_light_000',{gain:.5,rate:1.2});break;
     case 'eagle':this.birdCall(1.15,.85,1250,.36,true);this.birdCall(2.25,.6,1450,.28,true);break;

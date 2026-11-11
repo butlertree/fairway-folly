@@ -1,5 +1,6 @@
+import {turfPalette} from './turf-palette.js';
 import {SwingSwoosh,swingImpactDelay} from './SwingSwoosh';
-import {CourseGrass,CourseLanding} from './CourseLife';
+import {CourseGrass,CourseLanding,WaterEntryEffect} from './CourseLife';
 import {ValleyForest} from './ValleyForest';
 import {PuttingVisibility} from './PuttingVisibility';
 import {projectInside} from './mini-boundary';
@@ -62,7 +63,7 @@ const elevation=terrainY;
 function islandGeometry() {
   const {rings,segments}=verdantMesh;
   const positions = [], colors = [], indices = [];
-  const c = new THREE.Color(),fairwayColour=new THREE.Color('#a0d576'),greenColour=new THREE.Color('#c6e78c'),bankColour=new THREE.Color('#7a8463');
+  const c = new THREE.Color(),fairwayColour=new THREE.Color(turfPalette.fairway),greenColour=new THREE.Color(turfPalette.green),bankColour=new THREE.Color('#7a8463');
   for (let r = 0; r <= rings; r++) {
     const portion = r / rings;
     for (let s = 0; s <= segments; s++) {
@@ -74,8 +75,8 @@ function islandGeometry() {
       const y = terrainHeight(x, z);
       positions.push(x, y, z);
       if (cliff > 0.45) c.set('#376f4c');
-      else if (y > 30) c.set('#85bb6c');
-      else c.set('#65a65d');
+      else if (y > 30) c.set(turfPalette.rough);
+      else c.set(turfPalette.rough);
       const nx=x/course.sx,nz=z/course.sz,w=9.3+2.1*Math.sin(nz/10);const f=(1-THREE.MathUtils.smoothstep(Math.abs(nx-3*Math.sin(nz/12)),w-.9,w+.9))*(1-THREE.MathUtils.smoothstep(nz,31,33));if(cliff<.2)c.lerp(fairwayColour,f);const gr=Math.hypot(x/course.green.rx,(z-course.pin.z)/course.green.rz),sr=Math.hypot((x-12*course.sx)/5.2,(z+25*course.sz)/9.5);c.lerp(greenColour,1-THREE.MathUtils.smoothstep(gr,.92,1.08));
       const width=riverWidth(nz),edgeDistance=Math.abs(nx-riverCenter(nz))-width;
       if(width>0)c.lerp(bankColour,.75*(1-THREE.MathUtils.smoothstep(edgeDistance,-.25,1.45)));
@@ -181,12 +182,14 @@ return <>{edge&&<Line points={edge} color="#789648" lineWidth={1.25}/>}<group po
  <group ref={flag} position={[0,2.65,0]}><group position={[.52,0,0]}><mesh><planeGeometry args={[1.04,.68]}/><meshBasicMaterial color="#fff7e8" side={THREE.DoubleSide}/></mesh>{[-1,1].map(sign=><group key={sign}><mesh position={[0,0,sign*.008]}><planeGeometry args={[.92,.56]}/><meshBasicMaterial color="#d34f43" side={THREE.DoubleSide}/></mesh><mesh position={[0,-.12,sign*.014]}><planeGeometry args={[.92,.055]}/><meshBasicMaterial color="#fff7e8" side={THREE.DoubleSide}/></mesh></group>)}</group></group>
  </group><mesh rotation={[-Math.PI/2,0,0]} position={[0,.01,0]}><circleGeometry args={[.12,32]}/><meshStandardMaterial color="#25433c"/></mesh></group></>
 }
-function TeeBox({hole=1}){const course=getCourse(hole),y=height(0,course.tee.z,hole);const shape=useMemo(()=>{const s=new THREE.Shape();s.moveTo(-3.5,-5);s.lineTo(3.5,-5);s.quadraticCurveTo(4,-5,4,-4.5);s.lineTo(4,4.5);s.quadraticCurveTo(4,5,3.5,5);s.lineTo(-3.5,5);s.quadraticCurveTo(-4,5,-4,4.5);s.lineTo(-4,-4.5);s.quadraticCurveTo(-4,-5,-3.5,-5);return s},[]);return <group position={[0,y,course.tee.z]}>
- <mesh rotation={[Math.PI/2,0,0]} position={[0,.025,0]} receiveShadow castShadow><extrudeGeometry args={[shape,{depth:.85,bevelEnabled:true,bevelSize:.1,bevelThickness:.08,bevelSegments:3}]}/><meshStandardMaterial attach="material-0" color="#bdd586"/><meshStandardMaterial attach="material-1" color="#648746"/></mesh>
- {[-2.5,2.5].map(x=><mesh key={x} position={[x,.2,-2]} castShadow><sphereGeometry args={[.22,20,20]}/><meshStandardMaterial color="#f1e5c9"/></mesh>)}
- <mesh position={[0,.09,0]}><cylinderGeometry args={[.055,.025,.18,12]}/><meshStandardMaterial color="#e7d5b4"/></mesh>
- <TeeSign hole={hole}/>
- </group>}
+function TeeBox({hole=1}){
+ const {tee}=getCourse(hole),y=height(tee.x,tee.z,hole);
+ return <group position={[tee.x,y,tee.z]}>
+   {[-2.5,2.5].map(x=><mesh key={x} position={[x,height(tee.x+x,tee.z-2,hole)-y+.17,-2]} castShadow><sphereGeometry args={[.22,20,20]}/><meshStandardMaterial color="#f1e5c9"/></mesh>)}
+   <mesh position={[0,.09,0]}><cylinderGeometry args={[.055,.025,.18,12]}/><meshStandardMaterial color="#e7d5b4"/></mesh>
+   <TeeSign hole={hole}/>
+ </group>;
+}
 function Windmill({game}){
  const blades=useRef();
  useFrame(()=>{if(blades.current)blades.current.rotation.z=bladeTransforms(game.time)[0].angle});
@@ -219,13 +222,13 @@ const MiniCourse=React.memo(function MiniCourse({game}) {
 function Dynamics({game,view,refresh}){
  const ball=useRef(),acc=useRef(0),ticker=useRef(0),previousBall=useRef({...game.ball}),priorGame=useRef(game),wasMoving=useRef(false);const {camera,controls,size}=useThree();if(priorGame.current!==game){priorGame.current=game;previousBall.current={...game.ball};acc.current=0;wasMoving.current=false;}
  useFrame((_,delta)=>{acc.current+=Math.min(delta,.1)*playbackRate(game);while(acc.current>=DT){previousBall.current={...game.ball};step(game);acc.current-=DT}gameAudio.consume(game);gameAudio.updateAmbience(game);
- const movingMini=game.mini&&game.mode==='rolling',movingFull=!game.mini&&['flight','rolling','green-arrival'].includes(game.mode);if(controls){controls.enabled=game.mode==='ready'&&!game.pull&&!game.paused;if((movingFull||movingMini)&&!wasMoving.current){const position=camera.position.clone(),target=controls.target.clone();controls.enableDamping=false;controls.update();camera.position.copy(position);controls.target.copy(target);controls.update();controls.enableDamping=true;}}wasMoving.current=movingFull||movingMini;const course=getCourse(game.hole),b=['flight','rolling','sinking'].includes(game.mode)?renderBallBetween(previousBall.current,game.ball,acc.current/DT):game.ball;ball.current.position.set(b.x,b.y,b.z);const physical=game.mini?.3:course.ballRadius,perPixel=2*camera.position.distanceTo(new THREE.Vector3(b.x,b.y,b.z))*Math.tan(camera.fov*Math.PI/360)/size.height;ball.current.scale.setScalar(Math.max(physical,(view==='aerial'||!game.mini||movingMini)?perPixel*(game.mini&&view!=='aerial'?4:5):physical)/.3);
+ const movingMini=game.mini&&['rolling','water-entry'].includes(game.mode),movingFull=!game.mini&&['flight','rolling','green-arrival','water-entry'].includes(game.mode);if(controls){controls.enabled=game.mode==='ready'&&!game.pull&&!game.paused;if((movingFull||movingMini)&&!wasMoving.current){const position=camera.position.clone(),target=controls.target.clone();controls.enableDamping=false;controls.update();camera.position.copy(position);controls.target.copy(target);controls.update();controls.enableDamping=true;}}wasMoving.current=movingFull||movingMini;const course=getCourse(game.hole),b=['flight','rolling','sinking'].includes(game.mode)?renderBallBetween(previousBall.current,game.ball,acc.current/DT):game.ball;ball.current.position.set(b.x,b.y,b.z);ball.current.visible=!game.waterEntry||game.time-game.waterEntry.started<.2;const physical=game.mini?.3:course.ballRadius,perPixel=2*camera.position.distanceTo(new THREE.Vector3(b.x,b.y,b.z))*Math.tan(camera.fov*Math.PI/360)/size.height;ball.current.scale.setScalar(Math.max(physical,(view==='aerial'||!game.mini||movingMini)?perPixel*(game.mini&&view!=='aerial'?4:5):physical)/.3);
 
- if(['sinking','holed'].includes(game.mode)){camera.clearViewOffset();const holeCup=miniCup(game),surface=miniHeight(game.hole,holeCup.x,holeCup.z),cup=new THREE.Vector3(holeCup.x,surface-.1,holeCup.z);camera.position.lerp(new THREE.Vector3(holeCup.x+3.6,surface+4.5,holeCup.z+5.5),1-Math.exp(-delta*4));if(controls){controls.target.lerp(cup,1-Math.exp(-delta*5));controls.update()}}else if(view!=='aerial'&&(!game.freeCamera||(game.mini&&game.pull)||(['flight','rolling','green-arrival'].includes(game.mode)))){
- const moving=['flight','rolling','green-arrival'].includes(game.mode);const dir=new THREE.Vector3(Math.sin(game.angle),0,-Math.cos(game.angle));
- const pose=game.mini?puttingCameraPose(game,size.width/size.height):golfCameraPose(game,moving,size.width<size.height,b);const dest=new THREE.Vector3(...pose.position),look=new THREE.Vector3(...pose.target);
+ if(['sinking','holed'].includes(game.mode)){camera.clearViewOffset();const holeCup=miniCup(game),surface=miniHeight(game.hole,holeCup.x,holeCup.z),cup=new THREE.Vector3(holeCup.x,surface-.1,holeCup.z);camera.position.lerp(new THREE.Vector3(holeCup.x+3.6,surface+4.5,holeCup.z+5.5),1-Math.exp(-delta*4));if(controls){controls.target.lerp(cup,1-Math.exp(-delta*5));controls.update()}}else if(view!=='aerial'&&(!game.freeCamera||(game.mini&&game.pull)||(['flight','rolling','green-arrival','water-entry'].includes(game.mode)))){
+ const moving=['flight','rolling','green-arrival','water-entry'].includes(game.mode);const dir=new THREE.Vector3(Math.sin(game.angle),0,-Math.cos(game.angle));
+ const pose=game.mini?puttingCameraPose(game,size.width/size.height):golfCameraPose(game,moving,size.width<size.height,game.waterEntry??b);const dest=new THREE.Vector3(...pose.position),look=new THREE.Vector3(...pose.target);
  {const blend=cameraBlend(delta,game.pull?9:movingMini?6.5:moving&&!game.mini?4.5:3);camera.position.lerp(dest,blend);if(controls){controls.target.lerp(look,blend);if(moving||game.pull)camera.lookAt(controls.target);else controls.update();if(game.mini){camera.position.set(...keepPuttingBallVisible(camera.position.toArray(),controls.target.toArray(),b,size.width/size.height,camera.fov));camera.lookAt(controls.target)}}}}
- if(game.mini&&game.pull&&controls)camera.lookAt(controls.target);if(game.wind){const target=controls?.target??new THREE.Vector3(game.ball.x,game.ball.y,game.ball.z);game.windViewAngle=game.wind.angle-Math.atan2(target.x-camera.position.x,camera.position.z-target.z)}camera.updateMatrixWorld();const project=(p)=>{const v=new THREE.Vector3(p.x,p.y,p.z).project(camera);return {x:Math.max(35,Math.min(size.width-35,(v.x*.5+.5)*size.width)),y:Math.max(18,Math.min(size.height-18,(-v.y*.5+.5)*size.height)),visible:v.z>-1&&v.z<1}};const aim=game.mini?puttingAim(game):(selectedTarget(game)??aimPoint(game));game.screenAim={...project(aim),out:aim.out,selected:!!game.target,distance:game.mini?aim.distance:aim.yards};game.screenSize={width:size.width,height:size.height};game.screenBall=project(game.ball);game.screenPin=project(game.mini?{...miniCup(game),y:miniHeight(game.hole,miniCup(game).x,miniCup(game).z)+1}:{...pinFor(game,course),y:height(pinFor(game,course).x,pinFor(game,course).z,game.hole)+5});ticker.current+=delta;if(ticker.current>.05){refresh(x=>x+1);ticker.current=0}
+ if(game.mini&&game.pull&&controls)camera.lookAt(controls.target);if(game.wind){const target=controls?.target??new THREE.Vector3(game.ball.x,game.ball.y,game.ball.z);game.windViewAngle=game.wind.angle-Math.atan2(target.x-camera.position.x,camera.position.z-target.z)}camera.updateMatrixWorld();const project=(p)=>{const v=new THREE.Vector3(p.x,p.y,p.z).project(camera);return {x:Math.max(35,Math.min(size.width-35,(v.x*.5+.5)*size.width)),y:Math.max(18,Math.min(size.height-18,(-v.y*.5+.5)*size.height)),visible:v.z>-1&&v.z<1}};const aim=game.mini?puttingAim(game):(selectedTarget(game)??aimPoint(game));game.screenAim={...project(aim),out:aim.out,selected:!!game.target,distance:game.mini?aim.distance:aim.yards};game.screenSize={width:size.width,height:size.height};game.screenBall=project(game.waterEntry??game.ball);game.screenPin=project(game.mini?{...miniCup(game),y:miniHeight(game.hole,miniCup(game).x,miniCup(game).z)+1}:{...pinFor(game,course),y:height(pinFor(game,course).x,pinFor(game,course).z,game.hole)+5});ticker.current+=delta;if(ticker.current>.05){refresh(x=>x+1);ticker.current=0}
  },-1);
  return <><mesh ref={ball} castShadow renderOrder={104}><sphereGeometry args={[.3,24,24]}/><meshStandardMaterial color={game.turnGlow?"#d9ff91":"white"} emissive={game.turnGlow?"#88a83f":"#000000"} emissiveIntensity={.65} roughness={.3} depthTest={game.mini}/></mesh></>
 }
@@ -284,13 +287,62 @@ export function World({game,view,refresh,showControls,opponentBalls=[],atmospher
    <mesh><sphereGeometry args={[game.mini?.3:.24,16,12]}/><meshStandardMaterial color={p.color} roughness={.35}/></mesh>
    <Html center position={[0,game.mini?.65:1.4,0]} style={{pointerEvents:'none'}}><span className="opponent-ball-name">{p.name}</span></Html>
  </group>)}
- <Dynamics game={game} view={view} refresh={refresh}/>
+ <Dynamics game={game} view={view} refresh={refresh}/><WaterEntryEffect game={game}/>
  <OrbitControls makeDefault target={initialPose.target} enabled={!game.pull&&game.mode==='ready'} onStart={()=>{game.cameraGesture=true}} onChange={()=>{if(game.cameraGesture&&!game.pull)game.freeCamera=true}} onEnd={()=>{game.cameraGesture=false}} enablePan enableDamping minDistance={2} maxDistance={1800} maxPolarAngle={Math.PI*.47}/><Overview view={view} game={game} showControls={showControls}/>
  </Canvas>
 }
 export default function App(){
  if(import.meta.env.DEV&&new URLSearchParams(location.search).has('soundcheck'))return <AudioCheck/>;
  const [game,setGame]=useState(()=>{const g=createGame(Math.max(1,Math.min(HOLE_COUNT,Number(new URLSearchParams(location.search).get('hole'))||1))),course=getCourse(g.hole);if(import.meta.env.DEV){const preview=new URLSearchParams(location.search).get('preview');
+ if(g.hole===16&&preview==='half-pipe'){
+   g.weather='calm';
+   g.wind=courseWind(16,'calm');
+   g.layout=0;
+   g.cup=cupFor(16,0);
+   for(const [club,x,z,power] of [['Hybrid',12,-83,.94],['7 iron',course.pin.x,course.pin.z,.98]]){
+     g.club=club;
+     g.angle=Math.atan2(x-g.ball.x,g.ball.z-z);
+     swing(g,power,0);
+     for(let i=0;i<4800&&!['ready','holed'].includes(g.mode);i++)step(g);
+   }
+   g.soundEvents=[];
+ }
+ if(g.hole===15&&['cedar-bank','cedar-slope','cedar-rear'].includes(preview)){
+   const [x,power]=preview==='cedar-bank'?[11,.81]:preview==='cedar-slope'?[14,.72]:[7,.72];
+   g.angle=Math.atan2(x-g.ball.x,g.ball.z-course.pin.z);
+   swing(g,power,0);
+   for(let i=0;i<4800&&!['ready','holed'].includes(g.mode);i++)step(g);
+   g.soundEvents=[];
+ }
+ if((['grassy-pass','grassy-wide','alder-layup'].includes(preview))&&g.hole===14){
+   g.weather='calm';
+   g.wind=courseWind(14,'calm');
+   g.layout=0;
+   g.cup=cupFor(14,0);
+   const shots=[['Hybrid',-3,-68,.84]];
+   if(preview!=='alder-layup')shots.push(['Hybrid',preview==='grassy-wide'?8:course.pin.x,course.pin.z,preview==='grassy-wide'?.645:.649]);
+   for(const [club,x,z,power] of shots){
+     g.club=club;
+     g.angle=Math.atan2(x-g.ball.x,g.ball.z-z);
+     swing(g,power,0);
+     for(let i=0;i<4800&&!['ready','holed'].includes(g.mode);i++)step(g);
+   }
+   g.soundEvents=[];
+ }
+ if((preview==='dune-bank'||preview==='dune-low')&&g.hole===13){
+   g.weather='calm';
+   g.wind=courseWind(13,'calm');
+   g.layout=0;
+   g.cup=cupFor(13,0);
+   const low=preview==='dune-low';
+   for(const [club,x,z,power] of [['Driver',-9,-45,.91],['7 iron',low?19:-12,course.pin.z,low?.98:1]]){
+     g.club=club;
+     g.angle=Math.atan2(x-g.ball.x,g.ball.z-z);
+     swing(g,power,0);
+     for(let i=0;i<4800&&!['ready','holed'].includes(g.mode);i++)step(g);
+   }
+   g.soundEvents=[];
+ }
  if(preview==='root-bank'&&g.hole===12){
    g.weather='calm';
    g.wind=courseWind(12,'calm');
@@ -464,7 +516,7 @@ function PutterCue({game}){
  return <group ref={ref}><PutterModel/></group>
 }
 function PuttAim({game}){const aim=game.pull?puttingAim(game):null;return <><PutterCue game={game}/>{aim&&aim.distance>.35&&<TargetDisc point={aim} miniature/>}</>}
-function ScreenMarkers({game,view}){if(['sinking','holed'].includes(game.mode))return null;const aim=game.screenAim,pin=game.screenPin,ball=game.screenBall;return <div className="screen-markers">{game.hole>=11&&game.mode==='green-arrival'&&ball?.visible&&<div className="aim-tag" role="status" style={{left:ball.x,top:ball.y-26}}>On the green</div>}{pin?.visible&&<div className="pin-tag" style={{left:pin.x,top:Math.max(105,pin.y-12)}} aria-label="Pin">⚑<small>{game.mini?'CUP':'PIN'}</small></div>}{game.mode==='ready'&&aim?.visible&&(!game.mini||game.pull)&&aim.selected&&<div className={'aim-tag '+(aim.out?'warning':'')} style={{left:aim.x,top:aim.y}}>{game.mini?`${aim.distance.toFixed(1)} ft`:`${Math.round(aim.distance??selectedTarget(game)?.yards??0)} yd${aim.out?' · outside boundary':''}`}</div>}</div>}
+function ScreenMarkers({game,view}){if(['sinking','holed'].includes(game.mode))return null;const aim=game.screenAim,pin=game.screenPin,ball=game.screenBall;return <div className="screen-markers">{game.waterEntry&&ball?.visible&&<div className="aim-tag warning" role="status" style={{left:ball.x,top:ball.y-26}}>Water · +1</div>}{game.hole>=11&&game.mode==='green-arrival'&&ball?.visible&&<div className="aim-tag" role="status" style={{left:ball.x,top:ball.y-26}}>On the green</div>}{game.mode==='ready'&&game.waterRelief?.until>game.time&&ball?.visible&&<div className="aim-tag" role="status" style={{left:ball.x,top:ball.y-26}}>{game.waterRelief.drop?'Back-on-the-line drop':'Replay from previous lie'}</div>}{pin?.visible&&<div className="pin-tag" style={{left:pin.x,top:Math.max(105,pin.y-12)}} aria-label="Pin">⚑<small>{game.mini?'CUP':'PIN'}</small></div>}{game.mode==='ready'&&aim?.visible&&(!game.mini||game.pull)&&aim.selected&&<div className={'aim-tag '+(aim.out?'warning':'')} style={{left:aim.x,top:aim.y}}>{game.mini?`${aim.distance.toFixed(1)} ft`:`${Math.round(aim.distance??selectedTarget(game)?.yards??0)} yd${aim.out?' · outside boundary':''}`}</div>}</div>}
 
 function strokeBreakdown(game){
  const swings=game.history.filter(event=>event.type==='shot').length;
