@@ -25,6 +25,20 @@ export function BunkerGroundMaterial({hole,...props}){const list=bunkersByHole[h
      diffuseColor.rgb=mix(diffuseColor.rgb,uTeeTurf+teeMow,teeTurf*.93);
      diffuseColor.rgb*=1.0-.035*collar;
    `);
+    shader.vertexShader=shader.vertexShader
+     .replace('#include <common>','#include <common>\nattribute float mowing;varying float vMowing;')
+     .replace('#include <begin_vertex>','#include <begin_vertex>\nvMowing=mowing;');
+   shader.fragmentShader=shader.fragmentShader
+     .replace('#include <common>','#include <common>\nvarying float vMowing;')
+     .replace('#include <roughnessmap_fragment>',`
+       #include <roughnessmap_fragment>
+       vec2 turf=vBunkerWorld;
+       float bands=(turf.x*.57+turf.y*.19+sin(turf.y*.035)*.7);
+       float mow=tanh(2.0*sin(bands))*(1.0-smoothstep(.45,1.5,fwidth(bands)));
+       float grain=sin(turf.x*65.0+turf.y*34.0)*sin(turf.y*79.0);
+       grain*=1.0-smoothstep(.4,1.5,length(fwidth(turf))*65.0);
+       diffuseColor.rgb*=1.0+.075*mow*vMowing+.045*grain;
+     `);
  if(list.length){
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>\nuniform vec4 uBunkerShape[${list.length}];uniform vec2 uBunkerStyle[${list.length}];`).replace('#include <clipping_planes_fragment>',`#include <clipping_planes_fragment>\nfor(int i=0;i<${list.length};i++){vec4 p=uBunkerShape[i];vec2 d=vBunkerWorld-p.xy;if(max(abs(d.x),abs(d.y))>max(p.z,p.w)*1.3)continue;float c=cos(uBunkerStyle[i].x),s=sin(uBunkerStyle[i].x);vec2 q=vec2(d.x*c+d.y*s,-d.x*s+d.y*c)/p.zw;float a=atan(q.y,q.x),seed=uBunkerStyle[i].y;float profile=1.0+.055*sin(a*3.0+seed)+.035*cos(a*2.0-seed);if(length(q)/profile<1.12)discard;}`);
  }

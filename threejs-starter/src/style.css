@@ -102,3 +102,6 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .hole-reactions .score-comments{list-style:none;text-align:left;padding:0;display:grid;gap:6px}
 .score-comments li{padding:6px;background:#fff9e9;border-radius:6px}
 .score-comments li span{display:block;white-space:pre-wrap;overflow-wrap:anywhere}
+
+.board-table .scorecard-par { background: #e7ecda; color: #345644; font-variant-numeric: tabular-nums; }
+.board-table .scorecard-par th, .board-table .scorecard-par td { padding-block: 6px; font-weight: 650; }

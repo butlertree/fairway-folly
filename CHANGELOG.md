@@ -417,3 +417,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 
 - Added breaking turf shoulders, a shallow swale, and fallen cedar banks to the Cedar Glade putting green.
 - Refined Crownridge Pass, tuned shot shape and carry checks, and made lip-outs follow the cup rim.
+
+- Added per-hole par and total par to solo and multiplayer scorecards. Extended mowing, foliage, putting turf, cup, and edge details across all 18 holes.

@@ -39,7 +39,7 @@ import {riverCenter,riverLevel,riverOutlet,sceneryRocks,rockBaseY,verdantMesh} f
 import {PutterModel} from './PutterModel';
 import {AudioCheck} from './AudioCheck';
 import {TeeSign} from './TeeSign';
-import {GolfCup} from './GolfCup';
+import {GolfCup,golfDimpleTexture} from './GolfCup';
 import {gameAudio} from './audio';
 import {aimPoint,isAimClick,puttingAim,selectTarget,selectedTarget,courseHit,golfCameraPose} from './aim';
 import {WaterPond,RiverMaterial} from './Water';
@@ -62,7 +62,7 @@ const elevation=terrainY;
 
 function islandGeometry() {
   const {rings,segments}=verdantMesh;
-  const positions = [], colors = [], indices = [];
+  const positions = [], colors = [], indices = [], mowing = [];
   const c = new THREE.Color(),fairwayColour=new THREE.Color(turfPalette.fairway),bankColour=new THREE.Color('#7a8463');
   for (let r = 0; r <= rings; r++) {
     const portion = r / rings;
@@ -80,6 +80,7 @@ function islandGeometry() {
       const nx=x/course.sx,nz=z/course.sz,w=9.3+2.1*Math.sin(nz/10);const f=(1-THREE.MathUtils.smoothstep(Math.abs(nx-3*Math.sin(nz/12)),w-.9,w+.9))*(1-THREE.MathUtils.smoothstep(nz,31,33));if(cliff<.2)c.lerp(fairwayColour,f);const gr=Math.hypot(x/course.green.rx,(z-course.pin.z)/course.green.rz),sr=Math.hypot((x-12*course.sx)/5.2,(z+25*course.sz)/9.5);blendGreenTurf(c,gr);
       const width=riverWidth(nz),edgeDistance=Math.abs(nx-riverCenter(nz))-width;
       if(width>0)c.lerp(bankColour,.75*(1-THREE.MathUtils.smoothstep(edgeDistance,-.25,1.45)));
+      mowing.push(cliff<.2?f*THREE.MathUtils.smoothstep(gr,1.06,1.34)*(width>0?THREE.MathUtils.smoothstep(edgeDistance,0,2):1):0);
       colors.push(c.r,c.g,c.b);
     }
   }
@@ -93,6 +94,7 @@ function islandGeometry() {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute('mowing',new THREE.Float32BufferAttribute(mowing,1));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   return geometry;
@@ -170,16 +172,29 @@ function Decorations({game}) {
   </>;
 }
 
-function Green({hole=1,wind,game}){const course=getCourse(hole),pin=pinFor(game??{hole},course),flag=useRef(),stick=useRef();useFrame(({clock})=>{if(stick.current){const t=(game?.time??0)-(game?.pinHitAt??-10);stick.current.rotation.z=t>=0&&t<.45?Math.sin(t*55)*.014*(1-t/.45):0}if(flag.current){
+function Green({hole=1,wind,game}){const course=getCourse(hole),pin=pinFor(game??{hole},course),flag=useRef(),stick=useRef(),cloth=useRef();useFrame(({clock})=>{if(stick.current){const t=(game?.time??0)-(game?.pinHitAt??-10);stick.current.rotation.z=t>=0&&t<.45?Math.sin(t*55)*.014*(1-t/.45):0}if(flag.current){
  const breeze=scenicWindAt(game?.wind??wind,game?.time??0);
  const angle=Math.atan2(breeze.x,-breeze.z);
  flag.current.rotation.y=Math.PI/2-angle+Math.sin(clock.elapsedTime*5)*(.045+breeze.mph*.008);
- flag.current.scale.x=.86+Math.min(.2,breeze.mph*.013)+Math.sin(clock.elapsedTime*7)*.025;
+ const fabric=cloth.current.geometry;
+ const position=fabric.attributes.position,uv=fabric.attributes.uv;
+ for(let i=0;i<position.count;i++){
+   const u=uv.getX(i),v=uv.getY(i),t=clock.elapsedTime;
+   position.setXYZ(i,u*1.08,(v-.5)*.68-.23*u*u/(1+breeze.mph*.1),
+     u*(.13*Math.sin(u*7-t*3.4+v*1.4)+.06*Math.sin(u*13-t*4.5)));
+ }
+ position.needsUpdate=true;
+ fabric.computeVertexNormals();
  }});
 
 return <group position={[pin.x,height(pin.x,pin.z,hole)+flagstick.baseOffset,pin.z]} scale={1.8}><group ref={stick}>
  {Array.from({length:6},(_,i)=><mesh key={i} position={[0,.25+i*.5,0]} castShadow><cylinderGeometry args={[flagstick.radius/1.8,flagstick.radius/1.8,flagstick.height/10.8,12]}/><meshStandardMaterial color={i%2?'#244c40':'#fff9ec'}/></mesh>)}
- <group ref={flag} position={[0,2.65,0]}><group position={[.52,0,0]}><mesh><planeGeometry args={[1.04,.68]}/><meshBasicMaterial color="#fff7e8" side={THREE.DoubleSide}/></mesh>{[-1,1].map(sign=><group key={sign}><mesh position={[0,0,sign*.008]}><planeGeometry args={[.92,.56]}/><meshBasicMaterial color="#d34f43" side={THREE.DoubleSide}/></mesh><mesh position={[0,-.12,sign*.014]}><planeGeometry args={[.92,.055]}/><meshBasicMaterial color="#fff7e8" side={THREE.DoubleSide}/></mesh></group>)}</group></group>
+ <group ref={flag} position={[0,2.65,0]}>
+   <mesh ref={cloth} castShadow frustumCulled={false}>
+     <planeGeometry args={[1.08,.68,14,6]}/>
+     <meshStandardMaterial color="#dc493c" roughness={.91} side={THREE.DoubleSide}/>
+   </mesh>
+ </group>
  </group><mesh rotation={[-Math.PI/2,0,0]} position={[0,.01,0]}><circleGeometry args={[.12,32]}/><meshStandardMaterial color="#25433c"/></mesh></group>
 }
 function TeeBox({hole=1}){
@@ -215,12 +230,14 @@ const MiniCourse=React.memo(function MiniCourse({game}) {
  <CurvedBanks hole={game.hole} game={game}/><PuttingVisibility game={game}/>
  {game.hole===3&&<CascadeCrossing/>}
 
- <group position={[0,miniHeight(game.hole,cup.x,cup.z),0]}><GolfCup cup={cup}/></group>
+ <group position={[0,miniHeight(game.hole,cup.x,cup.z),0]}><GolfCup cup={cup} detailed/></group>
  {game.hole===1&&<Windmill game={game}/>}
  </group>
 });
 function Dynamics({game,view,refresh}){
  const ball=useRef(),acc=useRef(0),ticker=useRef(0),previousBall=useRef({...game.ball}),priorGame=useRef(game),wasMoving=useRef(false);const {camera,controls,size}=useThree();if(priorGame.current!==game){priorGame.current=game;previousBall.current={...game.ball};acc.current=0;wasMoving.current=false;}
+ const dimples=useMemo(()=>game.mini?{bump:golfDimpleTexture(),color:golfDimpleTexture(true)}:null,[game.mini]);
+ useEffect(()=>()=>{dimples?.bump.dispose();dimples?.color.dispose()},[dimples]);
  useFrame((_,delta)=>{acc.current+=Math.min(delta,.1)*playbackRate(game);while(acc.current>=DT){previousBall.current={...game.ball};step(game);acc.current-=DT}gameAudio.consume(game);gameAudio.updateAmbience(game);
  const movingMini=game.mini&&['rolling','water-entry'].includes(game.mode),movingFull=!game.mini&&['flight','rolling','green-arrival','water-entry'].includes(game.mode);if(controls){controls.enabled=game.mode==='ready'&&!game.pull&&!game.paused;if((movingFull||movingMini)&&!wasMoving.current){const position=camera.position.clone(),target=controls.target.clone();controls.enableDamping=false;controls.update();camera.position.copy(position);controls.target.copy(target);controls.update();controls.enableDamping=true;}}wasMoving.current=movingFull||movingMini;const course=getCourse(game.hole),b=['flight','rolling','sinking'].includes(game.mode)?renderBallBetween(previousBall.current,game.ball,acc.current/DT):game.ball;ball.current.position.set(b.x,b.y,b.z);ball.current.visible=!game.waterEntry||game.time-game.waterEntry.started<.2;const physical=game.mini?.3:course.ballRadius,perPixel=2*camera.position.distanceTo(new THREE.Vector3(b.x,b.y,b.z))*Math.tan(camera.fov*Math.PI/360)/size.height;ball.current.scale.setScalar(Math.max(physical,(view==='aerial'||!game.mini||movingMini)?perPixel*(game.mini&&view!=='aerial'?4:5):physical)/.3);
 
@@ -230,7 +247,7 @@ function Dynamics({game,view,refresh}){
  {const blend=cameraBlend(delta,game.pull?9:movingMini?6.5:moving&&!game.mini?4.5:3);camera.position.lerp(dest,blend);if(controls){controls.target.lerp(look,blend);if(moving||game.pull)camera.lookAt(controls.target);else controls.update();if(game.mini){camera.position.set(...keepPuttingBallVisible(camera.position.toArray(),controls.target.toArray(),b,size.width/size.height,camera.fov));camera.lookAt(controls.target)}}}}
  if(game.mini&&game.pull&&controls)camera.lookAt(controls.target);if(game.wind){const target=controls?.target??new THREE.Vector3(game.ball.x,game.ball.y,game.ball.z);game.windViewAngle=game.wind.angle-Math.atan2(target.x-camera.position.x,camera.position.z-target.z)}camera.updateMatrixWorld();const project=(p)=>{const v=new THREE.Vector3(p.x,p.y,p.z).project(camera);return {x:Math.max(35,Math.min(size.width-35,(v.x*.5+.5)*size.width)),y:Math.max(18,Math.min(size.height-18,(-v.y*.5+.5)*size.height)),visible:v.z>-1&&v.z<1}};const aim=game.mini?puttingAim(game):(selectedTarget(game)??aimPoint(game));game.screenAim={...project(aim),out:aim.out,selected:!!game.target,distance:game.mini?aim.distance:aim.yards};game.screenSize={width:size.width,height:size.height};game.screenBall=project(game.waterEntry??game.ball);game.screenPin=project(game.mini?{...miniCup(game),y:miniHeight(game.hole,miniCup(game).x,miniCup(game).z)+1}:{...pinFor(game,course),y:height(pinFor(game,course).x,pinFor(game,course).z,game.hole)+5});ticker.current+=delta;if(ticker.current>.05){refresh(x=>x+1);ticker.current=0}
  },-1);
- return <><mesh ref={ball} castShadow renderOrder={104}><sphereGeometry args={[.3,24,24]}/><meshStandardMaterial color={game.turnGlow?"#d9ff91":"white"} emissive={game.turnGlow?"#88a83f":"#000000"} emissiveIntensity={.65} roughness={.3} depthTest={game.mini}/></mesh></>
+ return <><mesh ref={ball} castShadow renderOrder={104}><sphereGeometry args={[.3,24,24]}/><meshStandardMaterial map={dimples?.color??null} bumpMap={dimples?.bump??null} bumpScale={.017} color={game.turnGlow?"#d9ff91":"white"} emissive={game.turnGlow?"#88a83f":"#000000"} emissiveIntensity={.65} roughness={.3} depthTest={game.mini}/></mesh></>
 }
 function Overview({view,game,showControls}){const {camera,controls,size}=useThree();useEffect(()=>{const damping=controls?.enableDamping;if(controls){controls.enableDamping=false;controls.update()}camera.near=game.mini?.1:2;camera.clearViewOffset();if(view==='aerial'){const pose=overviewCamera(game,size.width,size.height,showControls);camera.position.set(...pose.position);camera.setViewOffset(size.width,size.height,pose.viewOffsetX,pose.viewOffsetY,size.width,size.height);if(controls){controls.target.set(...pose.target);controls.update()}}if(controls)controls.enableDamping=damping;camera.updateProjectionMatrix()},[view,game.mini,game.hole,showControls,camera,controls,size.width,size.height]);return null}
 function InputSurface({game,view}){
@@ -532,7 +549,7 @@ function PutterCue({game}){
  return <group ref={ref}><PutterModel/></group>
 }
 function PuttAim({game}){const aim=game.pull?puttingAim(game):null;return <><PutterCue game={game}/>{aim&&aim.distance>.35&&<TargetDisc point={aim} miniature/>}</>}
-function ScreenMarkers({game,view}){if(['sinking','holed'].includes(game.mode))return null;const aim=game.screenAim,pin=game.screenPin,ball=game.screenBall;return <div className="screen-markers">{game.waterEntry&&ball?.visible&&<div className="aim-tag warning" role="status" style={{left:ball.x,top:ball.y-26}}>Water · +1</div>}{game.hole>=11&&game.mode==='green-arrival'&&ball?.visible&&<div className="aim-tag" role="status" style={{left:ball.x,top:ball.y-26}}>On the green</div>}{game.mode==='ready'&&game.waterRelief?.until>game.time&&ball?.visible&&<div className="aim-tag" role="status" style={{left:ball.x,top:ball.y-26}}>{game.waterRelief.drop?'Back-on-the-line drop':'Replay from previous lie'}</div>}{pin?.visible&&<div className="pin-tag" style={{left:pin.x,top:Math.max(105,pin.y-12)}} aria-label="Pin">⚑<small>{game.mini?'CUP':'PIN'}</small></div>}{game.mode==='ready'&&aim?.visible&&(!game.mini||game.pull)&&aim.selected&&<div className={'aim-tag '+(aim.out?'warning':'')} style={{left:aim.x,top:aim.y}}>{game.mini?`${aim.distance.toFixed(1)} ft`:`${Math.round(aim.distance??selectedTarget(game)?.yards??0)} yd${aim.out?' · outside boundary':''}`}</div>}</div>}
+function ScreenMarkers({game,view}){if(['sinking','holed'].includes(game.mode))return null;const aim=game.screenAim,pin=game.screenPin,ball=game.screenBall;return <div className="screen-markers">{game.waterEntry&&ball?.visible&&<div className="aim-tag warning" role="status" style={{left:ball.x,top:ball.y-26}}>Water · +1</div>}{game.hole>=11&&game.mode==='green-arrival'&&ball?.visible&&<div className="aim-tag" role="status" style={{left:ball.x,top:ball.y-26}}>On the green</div>}{game.mode==='ready'&&game.waterRelief?.until>game.time&&ball?.visible&&<div className="aim-tag" role="status" style={{left:ball.x,top:ball.y-26}}>{game.waterRelief.drop?'Back-on-the-line drop':'Replay from previous lie'}</div>}{!game.mini&&pin?.visible&&<div className="pin-tag" style={{left:pin.x,top:Math.max(105,pin.y-12)}} aria-label="Pin">⚑<small>PIN</small></div>}{game.mode==='ready'&&aim?.visible&&(!game.mini||game.pull)&&aim.selected&&<div className={'aim-tag '+(aim.out?'warning':'')} style={{left:aim.x,top:aim.y}}>{game.mini?`${aim.distance.toFixed(1)} ft`:`${Math.round(aim.distance??selectedTarget(game)?.yards??0)} yd${aim.out?' · outside boundary':''}`}</div>}</div>}
 
 function strokeBreakdown(game){
  const swings=game.history.filter(event=>event.type==='shot').length;
