@@ -105,3 +105,5 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 
 .board-table .scorecard-par { background: #e7ecda; color: #345644; font-variant-numeric: tabular-nums; }
 .board-table .scorecard-par th, .board-table .scorecard-par td { padding-block: 6px; font-weight: 650; }
+
+.graphics-recovery{position:absolute;inset:0;z-index:90;display:grid;place-content:center;justify-items:center;background:#dbe8d2;color:#214b3d;text-align:center;padding:24px}

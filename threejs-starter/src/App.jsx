@@ -287,12 +287,44 @@ function GolfAim({game}){return <><TargetDisc point={selectedTarget(game)??aimPo
 function ShotTrail({game}){if(!['flight','rolling','green-arrival'].includes(game.mode))return null;return game.trail?.length>1?<Line points={[...game.trail]} color="#fff2ba" renderOrder={102} lineWidth={game.mini?2:4} transparent opacity={game.mode==='ready'?.45:.95} depthTest={false}/>:null}
 function bridgeHeightFor(game,x,z){return miniHeight(game.hole,x,z)}
 const FullCourseScenery=React.memo(function FullCourseScenery({game}){const course=getCourse(game.hole);return <>{game.hole>=4?<NewTerrain hole={game.hole} game={game}/>:game.hole===3?<KingfisherTerrain/>:game.hole===2?<CascadeTerrain/>:<Terrain/>}<CourseBunkers hole={game.hole}/><IslandCliffs hole={game.hole}/>{game.hole!==9&&<ValleyForest hole={game.hole} game={game}/>}<Line points={Array.from({length:129},(_,i)=>{const a=i/128*Math.PI*2,x=(course.bounds.cx??0)+course.bounds.rx*Math.cos(a),z=course.bounds.rz*Math.sin(a);return [x,height(x,z,game.hole)+.03,z]})} color="#efdfb0" lineWidth={1}/>{game.hole===1&&<><WaterPond pond={ponds.course} terrain flow={.25}/><Decorations game={game}/></>}<CourseGrass game={game}/><CourseLanding game={game}/><Green hole={game.hole} wind={game.wind} game={game}/><TeeBox hole={game.hole}/></>});
+function GraphicsRecovery({onChange}){
+ const {gl}=useThree();
+ useEffect(()=>{
+   const canvas=gl.domElement;
+   const lost=event=>{event.preventDefault();onChange(true)};
+   const restored=()=>onChange(false);
+   canvas.addEventListener('webglcontextlost',lost);
+   canvas.addEventListener('webglcontextrestored',restored);
+   return ()=>{
+     canvas.removeEventListener('webglcontextlost',lost);
+     canvas.removeEventListener('webglcontextrestored',restored);
+   };
+ },[gl,onChange]);
+ return null;
+}
+
+function HoleCameraReset({game,pose}){
+ const {camera,controls}=useThree();
+ useEffect(()=>{
+   camera.position.set(...pose.position);
+   camera.lookAt(...pose.target);
+   controls?.target.set(...pose.target);
+ },[camera,game.hole]);
+ return null;
+}
+
 export function World({game,view,refresh,showControls,opponentBalls=[],atmosphere=null,children}){const course=getCourse(game.hole),initialPose=useMemo(()=>game.mini?puttingCameraPose(game):golfCameraPose(game),[game]);
- return <Canvas shadows dpr={[1,1.7]} camera={{position:initialPose.position,fov:45,near:.5,far:3500}}>
+ const [graphicsLost,setGraphicsLost]=useState(false),[renderer,setRenderer]=useState(0);
+ const mobile=useMemo(()=>window.matchMedia('(pointer: coarse)').matches,[]);
+ const shadowSize=mobile?1024:2048;
+ const recovery=<div className="graphics-recovery"><p>The course view was interrupted.</p><button type="button" onClick={()=>{setGraphicsLost(false);setRenderer(value=>value+1)}}>Restore course view</button></div>;
+ return <><Canvas key={renderer} fallback={recovery} frameloop={graphicsLost?'never':'always'} shadows dpr={[1,mobile?1.25:1.7]} camera={{position:initialPose.position,fov:45,near:.5,far:3500}}>
+ <GraphicsRecovery onChange={setGraphicsLost}/>
+ <HoleCameraReset game={game} pose={initialPose}/>
  <color attach="background" args={[atmosphere?.sky??(game.weather==='stormy'?'#8caaa7':'#c3d9b4')]}/><fog attach="fog" args={[atmosphere?.sky??(game.weather==='stormy'?'#8caaa7':'#c3d9b4'),1800,3500]}/>
- <hemisphereLight args={[atmosphere?.skyLight??'#fff3d6',atmosphere?.groundLight??'#3c6146',atmosphere?.hemisphere??1.6]}/><directionalLight position={game.mini?[-25,65,35]:[-100,250,140]} color={atmosphere?.sun??'#ffffff'} intensity={atmosphere?.intensity??(game.weather==='stormy'?1.9:3.1)} castShadow shadow-bias={-.0005} shadow-normalBias={.12} shadow-mapSize={[2048,2048]} shadow-camera-left={game.mini?-24:-260} shadow-camera-right={game.mini?24:260} shadow-camera-top={game.mini?28:270} shadow-camera-bottom={game.mini?-28:-270} shadow-camera-far={game.mini?200:1000}/>
+ <hemisphereLight args={[atmosphere?.skyLight??'#fff3d6',atmosphere?.groundLight??'#3c6146',atmosphere?.hemisphere??1.6]}/><directionalLight position={game.mini?[-25,65,35]:[-100,250,140]} color={atmosphere?.sun??'#ffffff'} intensity={atmosphere?.intensity??(game.weather==='stormy'?1.9:3.1)} castShadow shadow-bias={-.0005} shadow-normalBias={.12} shadow-mapSize={[shadowSize,shadowSize]} shadow-camera-left={game.mini?-24:-260} shadow-camera-right={game.mini?24:260} shadow-camera-top={game.mini?28:270} shadow-camera-bottom={game.mini?-28:-270} shadow-camera-far={game.mini?200:1000}/>
  <mesh position={[0,game.mini?-5.5:-12,0]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[2500,2500]}/><meshStandardMaterial color={atmosphere?.water??'#9fd4cc'} roughness={.36}/></mesh>
- {game.mini?<MiniCourse game={game} cupKey={`${miniCup(game).x}:${miniCup(game).z}`}/>:<FullCourseScenery game={game} hole={game.hole} weather={game.weather} layout={game.layout}/>}
+ {game.mini?<MiniCourse key={game.hole} game={game} cupKey={`${miniCup(game).x}:${miniCup(game).z}`}/>:<FullCourseScenery key={game.hole} game={game} hole={game.hole} weather={game.weather} layout={game.layout}/>}
  {children}<WeatherEffects game={game} miniature={game.mini} condition={game.weather}/>
  <InputSurface game={game} view={view}/>
  {!game.mini&&game.mode==='ready'&&<GolfAim game={game}/>}
@@ -306,7 +338,7 @@ export function World({game,view,refresh,showControls,opponentBalls=[],atmospher
  </group>)}
  <Dynamics game={game} view={view} refresh={refresh}/><WaterEntryEffect game={game}/>
  <OrbitControls makeDefault target={initialPose.target} enabled={!game.pull&&game.mode==='ready'} onStart={()=>{game.cameraGesture=true}} onChange={()=>{if(game.cameraGesture&&!game.pull)game.freeCamera=true}} onEnd={()=>{game.cameraGesture=false}} enablePan enableDamping minDistance={2} maxDistance={1800} maxPolarAngle={Math.PI*.47}/><Overview view={view} game={game} showControls={showControls}/>
- </Canvas>
+ </Canvas>{graphicsLost&&recovery}</>
 }
 export default function App(){
  if(import.meta.env.DEV&&new URLSearchParams(location.search).has('soundcheck'))return <AudioCheck/>;
@@ -420,7 +452,16 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
  game.turnGlow=group&&canPlayMatch&&game.mode==='ready'&&!panel;
  const activeName=group?matchPlayers(multiplayer.match).find(p=>p.id===(game.watchingShot||multiplayer.match.player))?.name:null;
  game.paused=!!panel||(!canPlayMatch&&!replayMoving)||!!multiplayer.error;
- function playMatch(){const m=multiplayer.load();if(m.shot_play){if(!atTable.current||m.last_shot?.hole!==m.hole)seenReplay.current=m.last_shot?.revision??0;atTable.current=true;}setRound(null);setCompleted(null);const g=matchGame(m,multiplayer.user);if(import.meta.env.DEV&&new URLSearchParams(location.search).get('preview')==='match-putt'&&!m.snapshot){g.strokes=m.leaderboard?0:g.par-1;g.ball.x=pinFor(g,getCourse(g.hole)).x;g.ball.z=pinFor(g,getCourse(g.hole)).z;enterGreen(g);g.ball.x=miniCup(g).x;g.ball.z=miniCup(g).z+1;g.ball.y=.3;}if(m.leaderboard)g.leaderboardId=m.id;else if(m.shot_play)g.groupTurn=m.revision;setGame(g);setPhase('ready');setView('ball');setPanel(null)}
+ const awaitingHoleScore=leaderboard&&game.mode==='holed'&&!multiplayer.match.scores.some(
+   score=>score.player===multiplayer.user&&score.hole===game.hole
+ );
+ function playMatch(){
+ const existing=multiplayer.match;
+ if(existing?.leaderboard&&existing.id===game.leaderboardId&&existing.hole===game.hole&&game.groupReplay){
+   setPanel(null);
+   return;
+ }
+ const m=multiplayer.load();if(m.shot_play){if(!atTable.current||m.last_shot?.hole!==m.hole)seenReplay.current=m.last_shot?.revision??0;atTable.current=true;}setRound(null);setCompleted(null);const g=matchGame(m,multiplayer.user);if(import.meta.env.DEV&&new URLSearchParams(location.search).get('preview')==='match-putt'&&!m.snapshot){g.strokes=m.leaderboard?0:g.par-1;g.ball.x=pinFor(g,getCourse(g.hole)).x;g.ball.z=pinFor(g,getCourse(g.hole)).z;enterGreen(g);g.ball.x=miniCup(g).x;g.ball.z=miniCup(g).z+1;g.ball.y=.3;}if(m.leaderboard)g.leaderboardId=m.id;else if(m.shot_play)g.groupTurn=m.revision;setGame(g);setPhase('ready');setView('ball');setPanel(null)}
  useEffect(()=>{
    if(!group||!atTable.current||panel||replayMoving)return;
    const match=multiplayer.match;
@@ -485,7 +526,7 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
    game.previewPower=null;
    setPhase('ready');
  }
- function advance(){if(inMatch){if(leaderboard&&!multiplayer.match.round_finished)playMatch();else if(group||leaderboard)setPanel('match');else multiplayer.finish();return}if(round&&game.hole===(round.holes??HOLE_COUNT)&&game.mode==='holed'){setPanel('board');return}const next=nextHole(game)??createGame();next.weather=round?.weather??game.weather;next.wind=courseWind(next.hole,next.weather);next.layout=round?.layout??game.layout;next.cup=cupFor(next.hole,next.layout);alignForPlay(next);savedHoles.current.set(game.hole,game);savedHoles.current.set(next.hole,next);holeUrl(next.hole);setGame(next);setPhase('ready');setView('ball')}
+ function advance(){if(awaitingHoleScore)return;if(inMatch){if(leaderboard&&!multiplayer.match.round_finished)playMatch();else if(group||leaderboard)setPanel('match');else multiplayer.finish();return}if(round&&game.hole===(round.holes??HOLE_COUNT)&&game.mode==='holed'){setPanel('board');return}const next=nextHole(game)??createGame();next.weather=round?.weather??game.weather;next.wind=courseWind(next.hole,next.weather);next.layout=round?.layout??game.layout;next.cup=cupFor(next.hole,next.layout);alignForPlay(next);savedHoles.current.set(game.hole,game);savedHoles.current.set(next.hole,next);holeUrl(next.hole);setGame(next);setPhase('ready');setView('ball')}
  const earlyTap=group&&!panel&&!multiplayer.busy&&!multiplayer.error&&!myTurn(multiplayer.match,multiplayer.user)
    &&multiplayer.match.snapshot?.mode==='ready'&&game.groupTurn===multiplayer.match.revision&&canTapIn(game);
  const opponentBalls=group&&game.hole===multiplayer.match.hole
@@ -493,7 +534,7 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
      .map(p=>{const seat=matchPlayers(multiplayer.match).findIndex(player=>player.id===p.player);return {...p,name:matchPlayers(multiplayer.match)[seat]?.name,color:['#eeba59','#78c5e4','#e995b1','#b69dea'][seat]??'#eeba59'};})
    :[];
  const distance=game.mini?Math.hypot(game.ball.x-miniCup(game).x,game.ball.z-miniCup(game).z).toFixed(1)+' ft':Math.round(yardsToPin(game.ball,game.hole,pinFor(game,getCourse(game.hole))))+' yd';
- return <div onPointerDownCapture={()=>gameAudio.unlock()} onClickCapture={()=>gameAudio.unlock()} onPointerUpCapture={()=>gameAudio.unlock()} onKeyDownCapture={()=>gameAudio.unlock()} className={'app '+(view==='aerial'?'inspect':'')+(game.mode==='holed'?'':' controls-hidden')+(game.mode==='holed'?' completed':'')+(game.mini?' mini-scene':'')+(game.pull?' is-pulling':'')}>{panel==='match'&&<MatchPanel {...multiplayer} onStart={multiplayer.start} onCreate={multiplayer.create} onJoin={multiplayer.join} onPlay={playMatch} onLeave={leaveMatch} onRefresh={multiplayer.refresh} onNew={multiplayer.newMatch}/>} {panel==='setup'&&<CourseSetup onMultiplayer={()=>multiplayer.open()} weather={weather} layout={layout} onWeather={setConditions} onStart={startCourse} onClose={()=>setPanel(null)} onBoard={(w,l)=>{setWeather(w);setLayout(l);setPanel('board')}}/>}{panel==='board'&&<Leaderboard entries={entries} onRemove={id=>setEntries(previous=>previous.filter(e=>e.id!==id))} weather={completed?.weather??weather} layout={completed?.layout??layout} current={completed} onImport={card=>setEntries(previous=>addScorecard(previous,card))} onClose={()=>setPanel(null)} onNew={()=>{setLayout(Number(stored('fairway-next-layout','0')));setPanel('setup')}}/>}<World key={game.hole} game={game} view={view} refresh={refresh} showControls={false} opponentBalls={opponentBalls}/>
+ return <div onPointerDownCapture={()=>gameAudio.unlock()} onClickCapture={()=>gameAudio.unlock()} onPointerUpCapture={()=>gameAudio.unlock()} onKeyDownCapture={()=>gameAudio.unlock()} className={'app '+(view==='aerial'?'inspect':'')+(game.mode==='holed'?'':' controls-hidden')+(game.mode==='holed'?' completed':'')+(game.mini?' mini-scene':'')+(game.pull?' is-pulling':'')}>{panel==='match'&&<MatchPanel {...multiplayer} onStart={multiplayer.start} onCreate={multiplayer.create} onJoin={multiplayer.join} onPlay={playMatch} onLeave={leaveMatch} onRefresh={multiplayer.refresh} onNew={multiplayer.newMatch}/>} {panel==='setup'&&<CourseSetup onMultiplayer={()=>multiplayer.open()} weather={weather} layout={layout} onWeather={setConditions} onStart={startCourse} onClose={()=>setPanel(null)} onBoard={(w,l)=>{setWeather(w);setLayout(l);setPanel('board')}}/>}{panel==='board'&&<Leaderboard entries={entries} onRemove={id=>setEntries(previous=>previous.filter(e=>e.id!==id))} weather={completed?.weather??weather} layout={completed?.layout??layout} current={completed} onImport={card=>setEntries(previous=>addScorecard(previous,card))} onClose={()=>setPanel(null)} onNew={()=>{setLayout(Number(stored('fairway-next-layout','0')));setPanel('setup')}}/>}<World game={game} view={view} refresh={refresh} showControls={false} opponentBalls={opponentBalls}/>
  <header><div className="eyebrow">THE VERDANT ISLES · HOLE {String(game.hole).padStart(2,'0')} · {getCourse(game.hole).title}</div><h1>Fairway <em>&</em> Folly</h1><p>A little golf. A little mischief.</p></header>
  {leaderboard&&!panel&&game.leaderboardId===multiplayer.match.id&&<aside className="live-standings" aria-label="Live leaderboard">
    <button disabled={multiplayer.busy||phase!=='ready'||!['ready','holed'].includes(game.mode)} onClick={()=>setPanel('match')}>
@@ -537,7 +578,7 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
      <small>{Math.round(carryYards({...game,club:name}))} yd</small>
    </button>)}
  </div>}</>}
- {game.mode==='holed'&&<section className="controls putting-controls"><div className="status">{greenNames[game.hole].toUpperCase()} <span>HOLED</span></div><div className="win"><h2>{game.strokes-game.par>=2?'Get your head in the game.':game.strokes>game.par?'Shake it off.':'Beautifully done.'}</h2><p>{game.strokes} strokes · {game.strokes===game.par?'Par':game.strokes<game.par?`${game.par-game.strokes} under par`:`${game.strokes-game.par} over par`}</p><button className="primary" disabled={inMatch&&multiplayer.busy} onClick={advance}>{inMatch?(multiplayer.busy?'Saving…':leaderboard?(multiplayer.match.round_finished?'View leaderboard':'Next hole'):group?'View match':'Submit hole · View match'):game.hole<(round?.holes??HOLE_COUNT)?`Next hole · ${getCourse(game.hole+1).title} · Par ${getCourse(game.hole+1).par}`:round?'View round results':'Start a new round'}</button>{!inMatch&&<button onClick={restart}>Play hole again</button>}{game.hole===HOLE_COUNT&&<p>{game.scorecard.length?'Round total':`Hole ${game.hole} practice`}: {game.scorecard.reduce((s,h)=>s+h.strokes,game.strokes)} strokes</p>}</div></section>}
+ {game.mode==='holed'&&<section className="controls putting-controls"><div className="status">{greenNames[game.hole].toUpperCase()} <span>HOLED</span></div><div className="win"><h2>{game.strokes-game.par>=2?'Get your head in the game.':game.strokes>game.par?'Shake it off.':'Beautifully done.'}</h2><p>{game.strokes} strokes · {game.strokes===game.par?'Par':game.strokes<game.par?`${game.par-game.strokes} under par`:`${game.strokes-game.par} over par`}</p><button className="primary" disabled={inMatch&&(multiplayer.busy||awaitingHoleScore)} onClick={advance}>{inMatch?(multiplayer.busy||awaitingHoleScore?'Saving…':leaderboard?(multiplayer.match.round_finished?'View leaderboard':'Next hole'):group?'View match':'Submit hole · View match'):game.hole<(round?.holes??HOLE_COUNT)?`Next hole · ${getCourse(game.hole+1).title} · Par ${getCourse(game.hole+1).par}`:round?'View round results':'Start a new round'}</button>{!inMatch&&<button onClick={restart}>Play hole again</button>}{game.hole===HOLE_COUNT&&<p>{game.scorecard.length?'Round total':`Hole ${game.hole} practice`}: {game.scorecard.reduce((s,h)=>s+h.strokes,game.strokes)} strokes</p>}</div></section>}
  </div>
 }
 

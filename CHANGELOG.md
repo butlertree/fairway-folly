@@ -419,3 +419,5 @@ Development-only profile portrait/outfit/badge/scorecard-theme prototypes and Mo
 - Refined Crownridge Pass, tuned shot shape and carry checks, and made lip-outs follow the cup rim.
 
 - Added per-hole par and total par to solo and multiplayer scorecards. Extended mowing, foliage, putting turf, cup, and edge details across all 18 holes.
+
+- Kept the course renderer alive across hole transitions, reduced touch-device rendering load, and added a restore option for interrupted graphics. Private leaderboard rounds wait for the finished score before advancing.
