@@ -15,3 +15,13 @@ test('tap-in stays available on the flat reward area and is withheld on breaking
 test('all requested greens have mixed rear groves, with hole six unchanged',()=>{let specimens=0;for(let h=1;h<=9;h++){const c=getCourse(h),trees=courseWoodland(h),grove=trees.filter(t=>t.greenGrove);if(h===6){assert.equal(grove.length,0);continue}assert.ok(grove.length>=8,`grove on ${h}`);assert.ok(new Set(grove.map(t=>t.kind)).size>=3);const previous=c.route?.at(-2)??c.tee,dx=c.pin.x-previous.x,dz=c.pin.z-previous.z;assert.ok(grove.some(t=>(t.x-c.pin.x)*dx+(t.z-c.pin.z)*dz>0),`behind ${h}`);specimens+=grove.filter(t=>t.signature).length}assert.ok(specimens>=4)});
 
 test('first green keeps the mill passage and forgiving west bank route level',()=>{for(const x of [-1.5,0,1.5])for(const z of [5,7,9])assert.equal(miniHeight(1,x,z),0);for(let z=-10;z<=10;z++)assert.equal(miniHeight(1,-7.5,z),0);assert.ok(miniHeight(9,-5,-7)>.4)});
+
+// Check the complete blade box, including its corners, throughout a revolution.
+test('windmill blades clear the turf while remaining low enough to challenge a putt',()=>{
+ const r=mini.rotor;let lowest=Infinity;
+ for(let i=0;i<720;i++){const a=i*Math.PI/360;for(const x of [-r.radius,r.radius])for(const y of [-r.width,r.width])for(const z of [r.z-r.depth,r.z+r.depth]){
+ const px=r.x+x*Math.cos(a)-y*Math.sin(a),py=r.y+x*Math.sin(a)+y*Math.cos(a);
+ const clearance=py-miniHeight(1,px,z);assert.ok(clearance>=.1,`blade clips turf at ${a}`);lowest=Math.min(lowest,clearance);
+ }}
+ assert.ok(lowest<mini.radius*2,'blade still intercepts a rolling ball');
+});

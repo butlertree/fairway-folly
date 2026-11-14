@@ -1,3 +1,5 @@
+import {validRoundCheckpoint} from './round-checkpoint';
+import {roundHoles} from './daily-challenge';
 import {turfPalette,blendGreenTurf} from './turf-palette.js';
 import {SwingSwoosh,swingImpactDelay} from './SwingSwoosh';
 import {CourseGrass,CourseLanding,WaterEntryEffect} from './CourseLife';
@@ -6,7 +8,7 @@ import {PuttingVisibility} from './PuttingVisibility';
 import {projectInside} from './mini-boundary';
 import {usePrivateMatch} from './usePrivateMatch';
 import {MatchPanel} from './MatchPanel';
-import {matchGame,myTurn,matchLink,groupReplay,matchPlayers,matchTotals,liveStandings} from './multiplayer-state';
+import {turnSnapshot,validSnapshot,matchGame,myTurn,matchLink,groupReplay,matchPlayers,matchTotals,liveStandings} from './multiplayer-state';
 import {overviewCamera} from './overview-camera';
 import {puttReadoutPlacement} from './hud-layout';
 import {flagstick} from './flagstick';
@@ -236,7 +238,7 @@ const MiniCourse=React.memo(function MiniCourse({game}) {
 });
 function Dynamics({game,view,refresh}){
  const ball=useRef(),acc=useRef(0),ticker=useRef(0),previousBall=useRef({...game.ball}),priorGame=useRef(game),wasMoving=useRef(false);const {camera,controls,size}=useThree();if(priorGame.current!==game){priorGame.current=game;previousBall.current={...game.ball};acc.current=0;wasMoving.current=false;}
- const dimples=useMemo(()=>game.mini?{bump:golfDimpleTexture(),color:golfDimpleTexture(true)}:null,[game.mini]);
+ const dimples=useMemo(()=>({bump:golfDimpleTexture(),color:golfDimpleTexture(true)}),[]);
  useEffect(()=>()=>{dimples?.bump.dispose();dimples?.color.dispose()},[dimples]);
  useFrame((_,delta)=>{acc.current+=Math.min(delta,.1)*playbackRate(game);while(acc.current>=DT){previousBall.current={...game.ball};step(game);acc.current-=DT}gameAudio.consume(game);gameAudio.updateAmbience(game);
  const movingMini=game.mini&&['rolling','water-entry'].includes(game.mode),movingFull=!game.mini&&['flight','rolling','green-arrival','water-entry'].includes(game.mode);if(controls){controls.enabled=game.mode==='ready'&&!game.pull&&!game.paused;if((movingFull||movingMini)&&!wasMoving.current){const position=camera.position.clone(),target=controls.target.clone();controls.enableDamping=false;controls.update();camera.position.copy(position);controls.target.copy(target);controls.update();controls.enableDamping=true;}}wasMoving.current=movingFull||movingMini;const course=getCourse(game.hole),b=['flight','rolling','sinking'].includes(game.mode)?renderBallBetween(previousBall.current,game.ball,acc.current/DT):game.ball;ball.current.position.set(b.x,b.y,b.z);ball.current.visible=!game.waterEntry||game.time-game.waterEntry.started<.2;const physical=game.mini?.3:course.ballRadius,perPixel=2*camera.position.distanceTo(new THREE.Vector3(b.x,b.y,b.z))*Math.tan(camera.fov*Math.PI/360)/size.height;ball.current.scale.setScalar(Math.max(physical,(view==='aerial'||!game.mini||movingMini)?perPixel*(game.mini&&view!=='aerial'?4:5):physical)/.3);
@@ -316,9 +318,9 @@ function HoleCameraReset({game,pose}){
 export function World({game,view,refresh,showControls,opponentBalls=[],atmosphere=null,children}){const course=getCourse(game.hole),initialPose=useMemo(()=>game.mini?puttingCameraPose(game):golfCameraPose(game),[game]);
  const [graphicsLost,setGraphicsLost]=useState(false),[renderer,setRenderer]=useState(0);
  const mobile=useMemo(()=>window.matchMedia('(pointer: coarse)').matches,[]);
- const shadowSize=mobile?1024:2048;
+ const shadowSize=mobile?768:2048;
  const recovery=<div className="graphics-recovery"><p>The course view was interrupted.</p><button type="button" onClick={()=>{setGraphicsLost(false);setRenderer(value=>value+1)}}>Restore course view</button></div>;
- return <><Canvas key={renderer} fallback={recovery} frameloop={graphicsLost?'never':'always'} shadows dpr={[1,mobile?1.25:1.7]} camera={{position:initialPose.position,fov:45,near:.5,far:3500}}>
+ return <><Canvas key={renderer} fallback={recovery} frameloop={graphicsLost?'never':'always'} shadows dpr={[1,mobile?1:1.7]} camera={{position:initialPose.position,fov:45,near:.5,far:3500}}>
  <GraphicsRecovery onChange={setGraphicsLost}/>
  <HoleCameraReset game={game} pose={initialPose}/>
  <color attach="background" args={[atmosphere?.sky??(game.weather==='stormy'?'#8caaa7':'#c3d9b4')]}/><fog attach="fog" args={[atmosphere?.sky??(game.weather==='stormy'?'#8caaa7':'#c3d9b4'),1800,3500]}/>
@@ -340,9 +342,40 @@ export function World({game,view,refresh,showControls,opponentBalls=[],atmospher
  <OrbitControls makeDefault target={initialPose.target} enabled={!game.pull&&game.mode==='ready'} onStart={()=>{game.cameraGesture=true}} onChange={()=>{if(game.cameraGesture&&!game.pull)game.freeCamera=true}} onEnd={()=>{game.cameraGesture=false}} enablePan enableDamping minDistance={2} maxDistance={1800} maxPolarAngle={Math.PI*.47}/><Overview view={view} game={game} showControls={showControls}/>
  </Canvas>{graphicsLost&&recovery}</>
 }
+const roundCheckpointKey='fairway-solo-checkpoint';
+function readRoundCheckpoint(){
+ const query=new URLSearchParams(location.search);
+ if(matchLink().id||query.has('preview')||query.has('result'))return null;
+ try{
+   const saved=JSON.parse(stored(roundCheckpointKey,'null'));
+   const {round,shot,scorecard}=saved??{};
+   if(!validRoundCheckpoint(saved)||(query.has('hole')&&Number(query.get('hole'))!==shot.hole))return null;
+   return saved;
+ }catch{return null}
+}
+
+class CourseViewBoundary extends React.Component{
+ state={failed:false};
+ static getDerivedStateFromError(){return {failed:true}}
+ render(){
+   if(!this.state.failed)return this.props.children;
+   return <div className="graphics-recovery"><p>The course view was interrupted.</p>
+     <button onClick={()=>this.setState({failed:false})}>Restore course view</button></div>;
+ }
+}
+
 export default function App(){
  if(import.meta.env.DEV&&new URLSearchParams(location.search).has('soundcheck'))return <AudioCheck/>;
- const [game,setGame]=useState(()=>{const g=createGame(Math.max(1,Math.min(HOLE_COUNT,Number(new URLSearchParams(location.search).get('hole'))||1))),course=getCourse(g.hole);if(import.meta.env.DEV){const preview=new URLSearchParams(location.search).get('preview');
+ const [checkpoint]=useState(readRoundCheckpoint);
+ const [game,setGame]=useState(()=>{
+ if(checkpoint){
+   const {shot,round,scorecard}=checkpoint;
+   const restored=createGame(shot.hole,scorecard);
+   Object.assign(restored,shot,{weather:round.weather,layout:round.layout,
+     wind:courseWind(shot.hole,round.weather),cup:cupFor(shot.hole,round.layout)});
+   return restored;
+ }
+ const g=createGame(Math.max(1,Math.min(HOLE_COUNT,Number(new URLSearchParams(location.search).get('hole'))||1))),course=getCourse(g.hole);if(import.meta.env.DEV){const preview=new URLSearchParams(location.search).get('preview');
  if(g.hole===17&&['crownridge-saddle','crownridge-approach'].includes(preview)){
    g.weather='calm';
    g.wind=courseWind(17,'calm');
@@ -436,10 +469,18 @@ export default function App(){
 if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin.x;g.ball.z=course.pin.z;enterGreen(g);g.ball={x:0,z:10,y:miniHeight(g.hole,0,10)+.3,vx:0,vy:0,vz:0};g.angle=Math.PI/2;g.puttPower=70;if(preview==='bank-hold')g.previewHold=true;}if(preview==='central-close'||preview==='central-far'){const p=pinFor(g,course),d=preview==='central-close'?1:12,a=Number(new URLSearchParams(location.search).get('side')??0);g.strokes=2;g.ball.x=p.x+Math.sin(a)*d;g.ball.z=p.z+Math.cos(a)*d;enterGreen(g)}if((preview==='grotto-side'||preview==='putt-hold')&&g.hole===3){g.strokes=1;g.ball.z=course.pin.z;enterGreen(g);g.ball.x=1.65;g.ball.z=-4.5;g.angle=Math.atan2(miniCup(g).x-g.ball.x,g.ball.z-miniCup(g).z);if(preview==='putt-hold'){g.previewHold=true;g.puttCameraAnchor={x:g.ball.x,z:g.ball.z,angle:g.angle};g.pull={x:Math.sin(g.angle),z:-Math.cos(g.angle),percent:28.3};}}if(preview==='double-bogey'&&g.hole===2){g.scorecard=[{hole:1,par:4,strokes:3}];g.strokes=6;g.ball.z=course.pin.z;enterGreen(g);g.ball.x=miniCup(g).x;g.ball.z=miniCup(g).z+1;}if(preview==='round-finish'){g.scorecard=Array.from({length:g.hole-1},(_,i)=>({hole:i+1,par:getCourse(i+1).par,strokes:getCourse(i+1).par}));g.strokes=1;g.ball.z=course.pin.z;enterGreen(g);g.ball.x=miniCup(g).x;g.ball.z=miniCup(g).z+1;}if(preview==='grotto-exit'&&g.hole===3){g.strokes=1;g.ball.z=course.pin.z;enterGreen(g);g.ball.x=0;g.ball.z=-5.2;g.angle=0;}if(preview==='grotto'&&g.hole===3){g.strokes=1;g.ball.z=course.pin.z;enterGreen(g);g.ball.x=0;g.ball.z=10;g.angle=0;}if(preview==='challenge'&&g.hole>=4){g.strokes=getCourse(g.hole).par-2;g.ball.x=course.pin.x;g.ball.z=course.pin.z;enterGreen(g);g.ball.x=0;g.ball.z=11;g.angle=0;}if(preview==='wall-rest'){g.strokes=2;g.ball.x=course.pin.x;g.ball.z=course.pin.z;enterGreen(g);const p=projectInside(g.hole,-20,0,.32);Object.assign(g.ball,p);g.ball.y=bridgeHeightFor(g,p.x,p.z)+.3;g.angle=Math.atan2(miniCup(g).x-p.x,p.z-miniCup(g).z)}if(preview==='green'){g.strokes=2;g.ball.x=course.pin.x;g.ball.z=course.pin.z;enterGreen(g)}if(preview==='approach'){g.strokes=1;g.ball={x:0,y:height(0,course.pin.z+83*METRES_PER_YARD)+course.ballRadius,z:course.pin.z+83*METRES_PER_YARD,vx:0,vy:0,vz:0};g.club='Wedge';g.lie=lie(g.ball.x,g.ball.z);g.message='83-yard approach. Choose your power, then strike near center.'}if(preview==='shortputt'){g.strokes=3;g.ball.z=course.pin.z;enterGreen(g);g.ball.x=-5;g.ball.z=7;g.angle=Math.atan2(-g.ball.x,g.ball.z+12);g.message='A 19.6-foot putt. Half power is about 20 feet.'}if(preview==='pitch'){g.strokes=1;g.club='Sand wedge';g.ball={x:0,z:course.pin.z+38*METRES_PER_YARD,y:height(0,course.pin.z+38*METRES_PER_YARD)+course.ballRadius,vx:0,vy:0,vz:0};g.lie='Fairway';g.message='38-yard approach · watch the flight, landing and green reveal.'}if(preview==='slope'){g.strokes=2;g.club='Sand wedge';g.ball={x:20,z:course.pin.z+38*METRES_PER_YARD,y:height(20,course.pin.z+38*METRES_PER_YARD,g.hole)+course.ballRadius,vx:0,vy:0,vz:0};g.lie=lie(g.ball.x,g.ball.z,g.hole);alignToPin(g)}if(preview==='fairway-address'){g.strokes=3;g.ball={x:0,z:0,y:height(0,0,g.hole)+course.ballRadius,vx:0,vy:0,vz:0};alignToPin(g)}if(preview==='flagstick'){const pin=pinFor(g,course);g.strokes=1;g.mode='flight';g.angle=Math.PI/2;g.spin=0;g.ball={x:pin.x-2,y:height(pin.x,pin.z,g.hole)+flagstick.baseOffset+2,z:pin.z,vx:12,vy:0,vz:0};g.origin={...g.ball};g.history.push({type:'shot',club:'Sand wedge',origin:{...g.ball},power:.5,accuracy:0});g.trail=[];}if(preview==='bunker'){const p=(bunkersByHole[g.hole]??[]).find(p=>p.id===new URLSearchParams(location.search).get('bunker'))??bunkersByHole[g.hole][0];g.strokes=2;g.club='Sand wedge';g.ball={x:p.x,y:height(p.x,p.z,g.hole)+course.ballRadius,z:p.z,vx:0,vy:0,vz:0};g.lie='Sand';alignToPin(g);g.message='Sand wedge selected · loft the ball over the bunker lip.';}if(preview==='tapin'){g.strokes=3;g.ball.z=course.pin.z;enterGreen(g);g.ball.x=0;g.ball.z=-4.1;g.message='A short putt for par. Tap it in or play your own line.'}}return g}),[view,setView]=useState('ball'),[,refresh]=useState(0),[soundOn,setSoundOn]=useState(()=>{try{return localStorage.getItem('fairway-sound')!=='off'}catch{return true}}),[phase,setPhase]=useState('ready');const clock=useRef(0);
  useEffect(()=>{gameAudio.setEnabled(soundOn);try{localStorage.setItem('fairway-sound',soundOn?'on':'off')}catch{}},[soundOn]);
 
- const [panel,setPanel]=useState(()=>matchLink().id?'match':new URLSearchParams(location.search).has('result')?'board':new URLSearchParams(location.search).has('hole')?null:'setup');
+ const [panel,setPanel]=useState(()=>checkpoint?'setup':matchLink().id?'match':new URLSearchParams(location.search).has('result')?'board':new URLSearchParams(location.search).has('hole')?null:'setup');
  const [weather,setWeather]=useState(()=>new URLSearchParams(location.search).get('weather')??stored('fairway-weather','calm'));
  const [layout,setLayout]=useState(()=>Math.max(0,Math.min(3,Number(new URLSearchParams(location.search).get('layout')??stored('fairway-next-layout','0'))||0)));
- const [round,setRound]=useState(()=>import.meta.env.DEV&&new URLSearchParams(location.search).get('preview')==='round-finish'?{id:'qa-round-flow',name:'QA round test',weather:game.weather,layout:game.layout,holes:game.hole}:null),[completed,setCompleted]=useState(null);
+ const [round,setRound]=useState(()=>checkpoint?.round??(import.meta.env.DEV&&new URLSearchParams(location.search).get('preview')==='round-finish'?{id:'qa-round-flow',name:'QA round test',weather:game.weather,layout:game.layout,holes:game.hole}:null)),[completed,setCompleted]=useState(()=>decodeScorecard(new URLSearchParams(location.search).get('result')??''));
+ useEffect(()=>{
+   if(new URLSearchParams(location.search).has('preview')||matchLink().id)return;
+   try{
+     if(!round){localStorage.removeItem(roundCheckpointKey);return}
+     const shot=turnSnapshot(game);
+     if(shot)localStorage.setItem(roundCheckpointKey,JSON.stringify({round,shot,scorecard:game.scorecard}));
+   }catch{}
+ },[round,game,game.mode,game.strokes]);
  const [entries,setEntries]=useState(()=>{let list=[];try{list=JSON.parse(stored('fairway-leaderboard','[]'));if(!Array.isArray(list))list=[]}catch{}const code=new URLSearchParams(location.search).get('result'),card=code?decodeScorecard(code):null;return card?addScorecard(list,card):list.filter(e=>validScorecard(e))});
  useEffect(()=>{try{localStorage.setItem('fairway-leaderboard',JSON.stringify(entries))}catch{}},[entries]);
  const atTable=useRef(false),seenReplay=useRef(0);
@@ -463,6 +504,11 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
  }
  const m=multiplayer.load();if(m.shot_play){if(!atTable.current||m.last_shot?.hole!==m.hole)seenReplay.current=m.last_shot?.revision??0;atTable.current=true;}setRound(null);setCompleted(null);const g=matchGame(m,multiplayer.user);if(import.meta.env.DEV&&new URLSearchParams(location.search).get('preview')==='match-putt'&&!m.snapshot){g.strokes=m.leaderboard?0:g.par-1;g.ball.x=pinFor(g,getCourse(g.hole)).x;g.ball.z=pinFor(g,getCourse(g.hole)).z;enterGreen(g);g.ball.x=miniCup(g).x;g.ball.z=miniCup(g).z+1;g.ball.y=.3;}if(m.leaderboard)g.leaderboardId=m.id;else if(m.shot_play)g.groupTurn=m.revision;setGame(g);setPhase('ready');setView('ball');setPanel(null)}
  useEffect(()=>{
+   if(!leaderboard||panel||multiplayer.busy||multiplayer.error||!myTurn(multiplayer.match,multiplayer.user))return;
+   if(game.leaderboardId===multiplayer.match.id&&(game.hole===multiplayer.match.hole||game.mode==='holed'))return;
+   playMatch();
+ },[leaderboard,panel,multiplayer.match,multiplayer.user,multiplayer.busy,multiplayer.error,game]);
+ useEffect(()=>{
    if(!group||!atTable.current||panel||replayMoving)return;
    const match=multiplayer.match;
    const replay=(match.shot_queue??[match.last_shot]).find(shot=>shot?.revision>seenReplay.current&&shot.player!==multiplayer.user);
@@ -482,8 +528,8 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
  function leaveMatch(){atTable.current=false;multiplayer.leave();setRound(null);setGame(createGame());setPanel('setup');setPhase('ready');setView('ball')}
  const savedHoles=useRef(new Map());
  function setConditions(value){setWeather(value);if(!round){game.weather=value;game.wind=courseWind(game.hole,value)}try{localStorage.setItem('fairway-weather',value)}catch{}}
- function startCourse(name,condition,pins,count=HOLE_COUNT){const id=crypto.randomUUID?.()??String(Date.now())+Math.random().toString(36).slice(2);const g=createGame(1);g.weather=condition;g.wind=courseWind(1,condition);g.layout=pins;g.cup=cupFor(1,pins);alignToPin(g);setRound({id,name,weather:condition,layout:pins,holes:count});setCompleted(null);setWeather(condition);setLayout(pins);savedHoles.current.clear();setGame(g);setPhase('ready');setView('ball');setPanel(null);holeUrl(1);try{localStorage.setItem('fairway-player',name);localStorage.setItem('fairway-weather',condition);localStorage.setItem('fairway-layout',pins);localStorage.setItem('fairway-next-layout',(pins+1)%4)}catch{}}
- useEffect(()=>{if(!round||game.mode!=='holed'||game.hole!==(round.holes??HOLE_COUNT)||game.scorecard.length!==(round.holes??HOLE_COUNT)-1)return;const card=validScorecard({v:2,id:round.id,name:round.name,weather:round.weather,layout:round.layout,holes:[...game.scorecard.map(h=>h.strokes),game.strokes],date:new Date().toISOString()});if(card){setCompleted(card);setEntries(previous=>addScorecard(previous,card));const timer=setTimeout(()=>setPanel('board'),4200);return()=>clearTimeout(timer)}},[game.mode,game.hole,game.strokes,round]);
+ function startCourse(name,condition,pins,count=HOLE_COUNT,challenge=null){const sequence=challenge?.courseHoles??Array.from({length:count},(_,i)=>i+1);const first=sequence[0];const id=crypto.randomUUID?.()??String(Date.now())+Math.random().toString(36).slice(2);const g=createGame(first);g.weather=condition;g.wind=courseWind(first,condition);g.layout=pins;g.cup=cupFor(first,pins);alignToPin(g);setRound({id,name,weather:condition,layout:pins,holes:count,courseHoles:sequence,...(challenge?.id?{challenge:challenge.id}:{})});setCompleted(null);setWeather(condition);setLayout(pins);savedHoles.current.clear();setGame(g);setPhase('ready');setView('ball');setPanel(null);holeUrl(first);try{localStorage.setItem('fairway-player',name);localStorage.setItem('fairway-weather',condition);localStorage.setItem('fairway-layout',pins);localStorage.setItem('fairway-next-layout',(pins+1)%4)}catch{}}
+ useEffect(()=>{if(!round||game.mode!=='holed'||game.hole!==roundHoles(round).at(-1)||game.scorecard.length!==(round.holes??HOLE_COUNT)-1)return;const card=validScorecard({v:2,id:round.id,name:round.name,weather:round.weather,layout:round.layout,courseHoles:roundHoles(round),...(round.challenge?{challenge:round.challenge}:{}),holes:[...game.scorecard.map(h=>h.strokes),game.strokes],date:new Date().toISOString()});if(card){setCompleted(card);setEntries(previous=>addScorecard(previous,card));const timer=setTimeout(()=>setPanel('board'),4200);return()=>clearTimeout(timer)}},[game.mode,game.hole,game.strokes,round]);
 
  function holeUrl(id){const u=new URL(location.href);u.searchParams.set('hole',id);history.replaceState(null,'',u)}
  function chooseHole(id){setRound(null);setCompleted(null);holeUrl(id);savedHoles.current.set(game.hole,game);setGame(savedHoles.current.get(id)??createGame(id));setPhase('ready');setView('aerial')}
@@ -501,7 +547,7 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
      game.previewPower=game.power;
      clock.current=now;
      setPhase('accuracy');
-   }else{
+   }else if(phase==='accuracy'){
      const accuracy=swingMeter(phase,elapsed);
      const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
      game.swingCue={started:performance.now(),ball:{...game.ball},angle:game.angle,power:game.power,accuracy,reduced};
@@ -522,11 +568,12 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
 
  function changeClub(){
    if(phase!=='power'&&phase!=='accuracy')return;
+   if(phase==='accuracy'){setPhase('club-after-power');return}
    game.inputLocked=false;
    game.previewPower=null;
    setPhase('ready');
  }
- function advance(){if(awaitingHoleScore)return;if(inMatch){if(leaderboard&&!multiplayer.match.round_finished)playMatch();else if(group||leaderboard)setPanel('match');else multiplayer.finish();return}if(round&&game.hole===(round.holes??HOLE_COUNT)&&game.mode==='holed'){setPanel('board');return}const next=nextHole(game)??createGame();next.weather=round?.weather??game.weather;next.wind=courseWind(next.hole,next.weather);next.layout=round?.layout??game.layout;next.cup=cupFor(next.hole,next.layout);alignForPlay(next);savedHoles.current.set(game.hole,game);savedHoles.current.set(next.hole,next);holeUrl(next.hole);setGame(next);setPhase('ready');setView('ball')}
+ function advance(){if(awaitingHoleScore)return;if(inMatch){if(leaderboard&&!multiplayer.match.round_finished)playMatch();else if(group||leaderboard)setPanel('match');else multiplayer.finish();return}if(round&&game.hole===roundHoles(round).at(-1)&&game.mode==='holed'){setPanel('board');return}const nextId=round?roundHoles(round)[roundHoles(round).indexOf(game.hole)+1]:null;const next=nextId?createGame(nextId,[...game.scorecard,{hole:game.hole,par:game.par,strokes:game.strokes}]):nextHole(game)??createGame();next.weather=round?.weather??game.weather;next.wind=courseWind(next.hole,next.weather);next.layout=round?.layout??game.layout;next.cup=cupFor(next.hole,next.layout);alignForPlay(next);savedHoles.current.set(game.hole,game);savedHoles.current.set(next.hole,next);holeUrl(next.hole);setGame(next);setPhase('ready');setView('ball')}
  const earlyTap=group&&!panel&&!multiplayer.busy&&!multiplayer.error&&!myTurn(multiplayer.match,multiplayer.user)
    &&multiplayer.match.snapshot?.mode==='ready'&&game.groupTurn===multiplayer.match.revision&&canTapIn(game);
  const opponentBalls=group&&game.hole===multiplayer.match.hole
@@ -534,7 +581,7 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
      .map(p=>{const seat=matchPlayers(multiplayer.match).findIndex(player=>player.id===p.player);return {...p,name:matchPlayers(multiplayer.match)[seat]?.name,color:['#eeba59','#78c5e4','#e995b1','#b69dea'][seat]??'#eeba59'};})
    :[];
  const distance=game.mini?Math.hypot(game.ball.x-miniCup(game).x,game.ball.z-miniCup(game).z).toFixed(1)+' ft':Math.round(yardsToPin(game.ball,game.hole,pinFor(game,getCourse(game.hole))))+' yd';
- return <div onPointerDownCapture={()=>gameAudio.unlock()} onClickCapture={()=>gameAudio.unlock()} onPointerUpCapture={()=>gameAudio.unlock()} onKeyDownCapture={()=>gameAudio.unlock()} className={'app '+(view==='aerial'?'inspect':'')+(game.mode==='holed'?'':' controls-hidden')+(game.mode==='holed'?' completed':'')+(game.mini?' mini-scene':'')+(game.pull?' is-pulling':'')}>{panel==='match'&&<MatchPanel {...multiplayer} onStart={multiplayer.start} onCreate={multiplayer.create} onJoin={multiplayer.join} onPlay={playMatch} onLeave={leaveMatch} onRefresh={multiplayer.refresh} onNew={multiplayer.newMatch}/>} {panel==='setup'&&<CourseSetup onMultiplayer={()=>multiplayer.open()} weather={weather} layout={layout} onWeather={setConditions} onStart={startCourse} onClose={()=>setPanel(null)} onBoard={(w,l)=>{setWeather(w);setLayout(l);setPanel('board')}}/>}{panel==='board'&&<Leaderboard entries={entries} onRemove={id=>setEntries(previous=>previous.filter(e=>e.id!==id))} weather={completed?.weather??weather} layout={completed?.layout??layout} current={completed} onImport={card=>setEntries(previous=>addScorecard(previous,card))} onClose={()=>setPanel(null)} onNew={()=>{setLayout(Number(stored('fairway-next-layout','0')));setPanel('setup')}}/>}<World game={game} view={view} refresh={refresh} showControls={false} opponentBalls={opponentBalls}/>
+ return <div onPointerDownCapture={()=>gameAudio.unlock()} onClickCapture={()=>gameAudio.unlock()} onPointerUpCapture={()=>gameAudio.unlock()} onKeyDownCapture={()=>gameAudio.unlock()} className={'app '+(view==='aerial'?'inspect':'')+(game.mode==='holed'?'':' controls-hidden')+(game.mode==='holed'?' completed':'')+(game.mini?' mini-scene':'')+(game.pull?' is-pulling':'')}>{panel==='match'&&<MatchPanel {...multiplayer} onStart={multiplayer.start} onCreate={multiplayer.create} onJoin={multiplayer.join} onPlay={playMatch} onLeave={leaveMatch} onRefresh={multiplayer.refresh} onNew={multiplayer.newMatch}/>} {panel==='setup'&&<CourseSetup entries={entries} onResume={round?()=>setPanel(null):undefined} resumeLabel={round?`${roundHoles(round).indexOf(game.hole)+1}/${round.holes} · ${game.strokes} shots`:null} onMultiplayer={()=>multiplayer.open()} weather={weather} layout={layout} onWeather={setConditions} onStart={startCourse} onClose={()=>setPanel(null)} onBoard={(w,l)=>{setWeather(w);setLayout(l);setPanel('board')}}/>}{panel==='board'&&<Leaderboard entries={entries} onRemove={id=>setEntries(previous=>previous.filter(e=>e.id!==id))} weather={completed?.weather??weather} layout={completed?.layout??layout} current={completed} onImport={card=>setEntries(previous=>addScorecard(previous,card))} onClose={()=>setPanel(null)} onNew={()=>{setLayout(Number(stored('fairway-next-layout','0')));setPanel('setup')}}/>}<CourseViewBoundary><World game={game} view={view} refresh={refresh} showControls={false} opponentBalls={opponentBalls}/></CourseViewBoundary>
  <header><div className="eyebrow">THE VERDANT ISLES · HOLE {String(game.hole).padStart(2,'0')} · {getCourse(game.hole).title}</div><h1>Fairway <em>&</em> Folly</h1><p>A little golf. A little mischief.</p></header>
  {leaderboard&&!panel&&game.leaderboardId===multiplayer.match.id&&<aside className="live-standings" aria-label="Live leaderboard">
    <button disabled={multiplayer.busy||phase!=='ready'||!['ready','holed'].includes(game.mode)} onClick={()=>setPanel('match')}>
@@ -561,24 +608,24 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
      return <span key={p.id}>{p.id===multiplayer.user?'You':p.name} <b>{t.holes?t.over===0?'Even':scoreText(t.over):'—'}</b></span>;
    })}</div>}
  </div>}
- {round&&<button className="round-progress" onClick={()=>setPanel('board')}>{round.name} · Round {roundProgress(game).over===0?'Even par':scoreText(roundProgress(game).over)}<small>{roundProgress(game).total} total strokes · Hole {game.hole}/{round.holes??HOLE_COUNT}</small></button>}
+ {round&&<button className="round-progress" onClick={()=>setPanel('board')}>{round.name} · Round {roundProgress(game).over===0?'Even par':scoreText(roundProgress(game).over)}<small>{roundProgress(game).total} total strokes · Hole {roundHoles(round).indexOf(game.hole)+1}/{round.holes??HOLE_COUNT}</small></button>}
  <aside className="score"><span>PAR <b>{game.par}</b></span><span>STROKES <b>{game.strokes}</b></span><span>TO PIN <b>{distance}</b></span></aside><aside className="phone-score" aria-label={`Hole ${game.hole}, par ${game.par}, ${game.strokes} strokes, ${distance} to pin`}><span>H{game.hole} · P{game.par}{round&&<small>{roundProgress(game).over===0?'Even par':scoreText(roundProgress(game).over)} overall</small>}</span><b>{game.strokes} {game.strokes===1?'shot':'shots'}</b><strong>{distance}</strong></aside>
  {!game.mini&&<div className={'wind-readout '+(game.wind?.mph?'':'is-calm')} title="Arrow shows where the wind blows relative to your view" aria-label={`Wind blowing ${windLabel(game.wind)}`}><span style={{transform:`rotate(${(game.windViewAngle??game.wind?.angle??0)*180/Math.PI}deg)`}}>{game.wind?.mph?'↑':'·'}</span><b className="wind-full">{windLabel(game.wind)}</b><b className="wind-short">{game.wind?.mph??0} mph</b></div>}
  <nav><details className="game-menu"><summary>☰ Menu</summary><div><button disabled={phase!=='ready'||!['ready','holed'].includes(game.mode)} onClick={()=>multiplayer.open()}>Private multiplayer</button>{round&&<button className="menu-round-score" onClick={()=>setPanel('board')}>{round.name} · Round {roundProgress(game).over===0?'Even par':scoreText(roundProgress(game).over)} · {roundProgress(game).total} strokes</button>}<label className="hole-choice"><span>Choose hole</span><select aria-label="Choose hole" value={game.hole} disabled={inMatch||!!round||phase!=='ready'} onChange={e=>{chooseHole(Number(e.target.value));e.currentTarget.closest('details').open=false}}><option value="1">1 · Verdant Isles · Par 4</option><option value="2">2 · Cascade Reach · Par 5</option><option value="3">3 · Kingfisher Cove · Par 3</option>{Object.values(newHoles).map(c=><option key={c.id} value={c.id}>{c.id} · {c.title} · Par {c.par}</option>)}</select></label><label className="hole-choice"><span>Conditions</span><select aria-label="Conditions" value={game.weather} disabled={inMatch||!!round||game.mode!=='ready'} onChange={e=>setConditions(e.target.value)}>{['calm','windy','stormy'].map(c=><option key={c} value={c}>{c[0].toUpperCase()+c.slice(1)}</option>)}</select></label><button disabled={inMatch} onClick={()=>{setLayout(Number(stored('fairway-next-layout','0')));setPanel('setup')}}>Play Course</button><button onClick={()=>setPanel(inMatch?'match':'board')}>{inMatch?'Match scorecard':'Leaderboard'}</button><button disabled={inMatch} onClick={restart}>Restart this hole</button><button onClick={()=>{gameAudio.setEnabled(!soundOn);if(!soundOn)gameAudio.unlock();setSoundOn(!soundOn)}}>{soundOn?'Sound on':'Sound off'}</button><a href={`${import.meta.env.BASE_URL}audio/credits.html`} target="_blank" rel="noreferrer">Audio credits</a></div></details><button onClick={()=>{game.freeCamera=false;setView(view==='aerial'?'ball':'aerial');}}>{view==='aerial'?'Behind ball':'View hole'}</button>{view==='ball'&&<button className="camera-reset" aria-label="Reset camera" onClick={()=>{game.freeCamera=false;game.cameraGesture=false;refresh(x=>x+1)}}>Reset camera</button>}</nav>
  {earlyTap&&<div className="putt-hint"><button onClick={multiplayer.tapInEarly}>Tap in</button></div>}
  {!game.paused&&!game.watchingShot&&game.mini&&game.mode==='ready'&&<><div className="putt-hint">{!game.pull&&game.time-(game.shortPullAt??-10)<2?'Pull a little farther to putt':'Pull back · release to putt'}{canTapIn(game)&&!game.pull&&<button onClick={()=>tapIn(game)}>Tap in</button>}</div>{game.pull&&<PuttLiveReadout game={game}/>}</>}{import.meta.env.DEV&&new URLSearchParams(location.search).get('preview')==='flagstick'&&<output className="flagstick-check">{game.pinHitAt?'Flagstick contacted':game.mode==='flight'?'Approach in flight':'Shot stopped'}</output>}<ScreenMarkers game={game} view={view}/>{game.mode==='holed'&&<FinishBanner game={game}/>}
  {!game.paused&&!game.mini&&game.mode==='ready'&&<><aside className={'center-swing '+phase} aria-label="Swing controls">
-   {phase==='ready'?<button className="primary" onClick={()=>hit()}>Start swing</button>:phase==='swinging'?<div role="status">Swinging…</div>:
+   {game.strokes===0&&game.hole===(round?roundHoles(round)[0]:1)&&<p className="swing-tip">{phase==='ready'?'Tap the course to aim. Choose your club, then swing.':phase==='power'?'Tap to lock your power.':phase==='accuracy'?'Tap near the center for a straight strike.':''}</p>}{phase==='ready'?<button className="primary" onClick={()=>hit()}>Start swing</button>:phase==='swinging'?<div role="status">Swinging…</div>:phase==='club-after-power'?<><p>Power locked · {Math.round(game.power*100)}%</p><button className="primary" onClick={()=>{clock.current=performance.now();setPhase('accuracy')}}>Continue to strike</button></>:
      <><button className="swing-back" onClick={changeClub}>‹ Change club</button>
        <ShotMeter game={game} phase={phase} clock={clock} onHit={hit} mode={game.mode} club={game.club} lie={game.lie}/></>}
  </aside>
- {phase==='ready'&&<div className="shot-dock" role="group" aria-label="Choose club">
+ {(phase==='ready'||phase==='club-after-power')&&<div className="shot-dock" role="group" aria-label="Choose club">
    {Object.keys(clubs).map(name=><button key={name} aria-label={name} aria-pressed={game.club===name} onClick={()=>{game.club=name;refresh(x=>x+1)}}>
      <span>{name==='Sand wedge'?'SW':name}</span>
-     <small>{Math.round(carryYards({...game,club:name}))} yd</small>
+     <small>{Math.round(carryYards({...game,club:name},phase==='club-after-power'?game.power:1))} yd</small>
    </button>)}
  </div>}</>}
- {game.mode==='holed'&&<section className="controls putting-controls"><div className="status">{greenNames[game.hole].toUpperCase()} <span>HOLED</span></div><div className="win"><h2>{game.strokes-game.par>=2?'Get your head in the game.':game.strokes>game.par?'Shake it off.':'Beautifully done.'}</h2><p>{game.strokes} strokes · {game.strokes===game.par?'Par':game.strokes<game.par?`${game.par-game.strokes} under par`:`${game.strokes-game.par} over par`}</p><button className="primary" disabled={inMatch&&(multiplayer.busy||awaitingHoleScore)} onClick={advance}>{inMatch?(multiplayer.busy||awaitingHoleScore?'Saving…':leaderboard?(multiplayer.match.round_finished?'View leaderboard':'Next hole'):group?'View match':'Submit hole · View match'):game.hole<(round?.holes??HOLE_COUNT)?`Next hole · ${getCourse(game.hole+1).title} · Par ${getCourse(game.hole+1).par}`:round?'View round results':'Start a new round'}</button>{!inMatch&&<button onClick={restart}>Play hole again</button>}{game.hole===HOLE_COUNT&&<p>{game.scorecard.length?'Round total':`Hole ${game.hole} practice`}: {game.scorecard.reduce((s,h)=>s+h.strokes,game.strokes)} strokes</p>}</div></section>}
+ {game.mode==='holed'&&<section className="controls putting-controls"><div className="status">{greenNames[game.hole].toUpperCase()} <span>HOLED</span></div><div className="win"><h2>{game.strokes-game.par>=2?'Get your head in the game.':game.strokes>game.par?'Shake it off.':'Beautifully done.'}</h2><p>{game.strokes} strokes · {game.strokes===game.par?'Par':game.strokes<game.par?`${game.par-game.strokes} under par`:`${game.strokes-game.par} over par`}</p><button className="primary" disabled={inMatch&&(multiplayer.busy||awaitingHoleScore)} onClick={advance}>{inMatch?(multiplayer.busy||awaitingHoleScore?'Saving…':leaderboard?(multiplayer.match.round_finished?'View leaderboard':'Next hole'):group?'View match':'Submit hole · View match'):(round?roundHoles(round).indexOf(game.hole)<round.holes-1:game.hole<HOLE_COUNT)?`Next hole · ${getCourse(round?roundHoles(round)[roundHoles(round).indexOf(game.hole)+1]:game.hole+1).title} · Par ${getCourse(round?roundHoles(round)[roundHoles(round).indexOf(game.hole)+1]:game.hole+1).par}`:round?'View round results':'Start a new round'}</button>{!inMatch&&<button onClick={restart}>Play hole again</button>}{game.hole===HOLE_COUNT&&<p>{game.scorecard.length?'Round total':`Hole ${game.hole} practice`}: {game.scorecard.reduce((s,h)=>s+h.strokes,game.strokes)} strokes</p>}</div></section>}
  </div>
 }
 

@@ -44,3 +44,12 @@ test('leaderboard invitations, standings, and shot checkpoints work independentl
  assert.equal(g.groupReplay.start.strokes,0);
  assert.equal(g.strokes,1);
 });
+
+test('a leaderboard guest can start while the host is on a different hole',()=>{
+ const match={leaderboard:true,status:'playing',player:'host',hole:1,
+   players:[{id:'host'},{id:'guest'}],scores:[{player:'host',hole:1,strokes:4}]};
+ assert.equal(myTurn(match,'guest'),true);
+ assert.equal(myTurn(match,'stranger'),false);
+ assert.equal(myTurn({...match,round_finished:true},'guest'),false);
+ assert.equal(myTurn({...match,leaderboard:false},'guest'),false);
+});

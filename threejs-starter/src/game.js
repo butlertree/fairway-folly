@@ -35,7 +35,7 @@ export function tapIn(g){if(g.paused||!canTapIn(g))return false;const dx=miniCup
 export const clubs=Object.fromEntries(Object.entries({Driver:{yards:245,loft:.55,zone:.018,sand:.55},Hybrid:{yards:200,loft:.67,zone:.023,sand:.62},'7 iron':{yards:155,loft:.8,zone:.029,sand:.7},Wedge:{yards:95,loft:1.02,zone:.035,sand:.8},'Sand wedge':{yards:55,loft:1.15,bunker:true,zone:.042,sand:.88}}).map(([name,c])=>[name,{...c,carry:c.yards*METRES_PER_YARD}]));
 export const accuracyZone=club=>clubs[club].zone;
 export function strikeAccuracy(club,value){const zone=accuracyZone(club),m=Math.abs(value);return m<=zone?0:Math.sign(value)*(m-zone)/(1-zone)}
-export const mini={feetPerUnit:1,friction:2.2,maxRollFeet:60,halfX:9,halfZ:15,radius:.3,cup:{x:0,z:0},rotor:{x:0,y:3.3,z:7.9,radius:3.75,width:.34,depth:.23,speed:.65}};
+export const mini={feetPerUnit:1,friction:2.2,maxRollFeet:60,halfX:9,halfZ:15,radius:.3,cup:{x:0,z:0},rotor:{x:0,y:3.9,z:7.9,radius:3.75,width:.34,depth:.23,speed:.65}};
 export function puttInfo(percent){const distance=mini.maxRollFeet*(Math.max(0,Math.min(100,percent))/100)**1.6;return {distance,speed:Math.sqrt(2*mini.friction*distance)}}
 export function puttPowerForDistance(feet){return 100*(Math.max(0,Math.min(mini.maxRollFeet,feet))/mini.maxRollFeet)**(1/1.6)}
 export function lieFactor(g){return g.lie==='Waste sand'?([12,15].includes(g.hole)?(clubs[g.club].bunker?.75:g.club==='Wedge'?.67:.57):.82):g.lie==='Sand'?clubs[g.club].sand:g.lie==='Rough'?(clubs[g.club].bunker?.94:.88):1}

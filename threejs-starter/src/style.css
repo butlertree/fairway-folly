@@ -107,3 +107,14 @@ nav{align-items:center}.hole-choice{margin:0}.hole-choice select{font-family:inh
 .board-table .scorecard-par th, .board-table .scorecard-par td { padding-block: 6px; font-weight: 650; }
 
 .graphics-recovery{position:absolute;inset:0;z-index:90;display:grid;place-content:center;justify-items:center;background:#dbe8d2;color:#214b3d;text-align:center;padding:24px}
+/* Small, deliberate choices before the course; keep play itself uncluttered. */
+.course-setup > .primary,.course-setup > .multiplayer-entry,.resume-round{width:100%;margin:8px 0;min-height:48px}
+.daily-challenge{border-top:1px solid #d5d8bd;margin-top:20px;padding-top:12px}
+.daily-challenge h2{margin:8px 0}.daily-challenge p{margin:8px 0}.daily-challenge button{width:100%;min-height:44px}
+.custom-round{margin:20px 0}.custom-round summary{padding:12px 0;cursor:pointer}.board-filters[hidden]{display:none}
+.swing-tip{font-size:12px;line-height:1.4;margin:0 0 8px;text-align:center}
+
+.round-length-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0 8px}
+.round-length-options button{min-height:48px;padding:10px 4px;font-weight:650}
+.round-length-options button[aria-pressed="true"]{background:#265a47;color:#fffdf0;border-color:#265a47}
+@media(max-width:380px){.round-length-options{gap:5px}.round-length-options button{font-size:12px}}

@@ -1,10 +1,7 @@
 import {canTapIn,step,tapIn} from './game';
 import {useState,useRef,useEffect} from 'react';
-import {matchRpc,playerSession,inviteSecret,multiplayerReady} from './multiplayer-api';
+import {matchRpc,playerSession,inviteSecret,multiplayerReady,isConnectionError} from './multiplayer-api';
 import {matchLink,matchUrl,myTurn,turnSnapshot,groupAway,matchGame} from './multiplayer-state';
-function isConnectionError(error){
- return /load failed|failed to fetch|networkerror|network request failed/i.test(error?.message??'');
-}
 export function usePrivateMatch(game,onPanel){const link=useRef(matchLink()),[match,setMatch]=useState(null),[user,setUser]=useState(null),[invite,setInvite]=useState(link.current.invite??''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[engaged,setEngaged]=useState(!!link.current.id),[saved,setSaved]=useState(false);const current=useRef(null),working=useRef(false),signature=useRef(''),epoch=useRef(0),panel=useRef(onPanel);panel.current=onPanel;
  function accept(m){const prior=current.current;if(prior?.id===m.id&&(prior.revision>m.revision||prior.revision===m.revision&&prior.scores.length>m.scores.length))return prior;current.current=m;setMatch(m);return m}
  async function action(fn){if(working.current)return;working.current=true;setBusy(true);setError('');try{return await fn()}catch(e){setError(isConnectionError(e)?'Could not connect to the match. Check your connection and tap Refresh match.':e.message??'Could not reach the match. Please try again.');panel.current()}finally{working.current=false;setBusy(false)}}

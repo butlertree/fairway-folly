@@ -17,7 +17,7 @@ function restoreChannelLie(game){
   Object.assign(game.ball,{x:dry.x,z:dry.z,y:miniHeight(3,dry.x,dry.z)+.3,vx:0,vy:0,vz:0});
   alignForPlay(game);
 }
-export function myTurn(match,user){return match?.status==='playing'&&!match.round_finished&&match.player===user}
+export function myTurn(match,user){return !!user&&match?.status==='playing'&&!match.round_finished&&(match.leaderboard?matchPlayers(match).some(player=>player.id===user):match.player===user)}
 export function matchTotals(match,user){const scores=match.scores.filter(s=>s.player===user);return {strokes:scores.reduce((n,s)=>n+s.strokes,0),over:scores.reduce((n,s)=>n+s.strokes-holePars[s.hole-1],0),holes:scores.length}}
 export function invitationUrl(match,invite,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:match.id,invite,...(match.shot_play?{group:'1'}:{}),...(match.leaderboard?{leaderboard:'1'}:{})}).toString();return url.href}
 export function matchUrl(id,base=location.href){const url=new URL(base);url.search='';url.hash=new URLSearchParams({match:id}).toString();return url.href}
