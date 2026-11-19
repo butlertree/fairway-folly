@@ -1,3 +1,4 @@
+import {terrainRaycast} from './terrain-pick';
 import {validRoundCheckpoint} from './round-checkpoint';
 import {roundHoles} from './daily-challenge';
 import {turfPalette,blendGreenTurf} from './turf-palette.js';
@@ -264,8 +265,8 @@ function InputSurface({game,view}){
  }
  const restore=()=>{if(controls)controls.enabled=!game.pull&&game.mode==='ready'};
  useEffect(()=>{press.current=null;if(import.meta.env.DEV&&game.previewHold){game.puttCameraAnchor={x:game.ball.x,z:game.ball.z,angle:game.angle};game.pull={x:Math.sin(game.angle),z:-Math.cos(game.angle),percent:28.3};}else game.pull=null;restore()},[game,view,controls]);
- return <mesh rotation={[-Math.PI/2,0,0]} position={[0,game.mini?bridgeHeightFor(game,game.ball.x,game.ball.z)+.05:height(game.ball.x,game.ball.z,game.hole),0]}
- onPointerDown={e=>{if(game.paused||game.watchingShot||game.mode!=='ready'||game.inputLocked)return;e.stopPropagation();if(press.current){press.current.cameraGesture=true;if(press.current.ballDrag){e.target.releasePointerCapture(press.current.id);press.current.ballDrag=false;game.pull=null;game.freeCamera=true;restore()}return}const hit=game.mini?e.point:courseHit(e.ray.origin,e.ray.direction,game.hole);if(!hit)return;const ballDrag=game.mini&&Math.hypot(e.point.x-game.ball.x,e.point.z-game.ball.z)<1.5;press.current={id:e.pointerId,x:hit.x,z:hit.z,sx:e.clientX,sy:e.clientY,ballDrag};if(ballDrag){
+ return <mesh raycast={game.mini?undefined:terrainRaycast(game.hole)} rotation={[-Math.PI/2,0,0]} position={[0,game.mini?bridgeHeightFor(game,game.ball.x,game.ball.z)+.05:height(game.ball.x,game.ball.z,game.hole),0]}
+ onPointerDown={e=>{if(game.paused||game.watchingShot||game.mode!=='ready'||game.inputLocked)return;e.stopPropagation();if(press.current){press.current.cameraGesture=true;if(press.current.ballDrag){e.target.releasePointerCapture(press.current.id);press.current.ballDrag=false;game.pull=null;game.freeCamera=true;restore()}return}const hit=e.point;if(!hit)return;const ballDrag=game.mini&&Math.hypot(e.point.x-game.ball.x,e.point.z-game.ball.z)<1.5;press.current={id:e.pointerId,x:hit.x,z:hit.z,sx:e.clientX,sy:e.clientY,ballDrag};if(ballDrag){
  camera.updateMatrixWorld();
  // Read the whole gesture against the original camera so zoom cannot steer the putt.
  Object.assign(press.current,{camera:camera.clone(),raycaster:new THREE.Raycaster(),plane:new THREE.Plane(new THREE.Vector3(0,1,0),-hit.y)});
@@ -624,6 +625,7 @@ if(preview==='bank-putt'||preview==='bank-hold'){g.strokes=2;g.ball.x=course.pin
      <span>{name==='Sand wedge'?'SW':name}</span>
      <small>{Math.round(carryYards({...game,club:name},phase==='club-after-power'?game.power:1))} yd</small>
    </button>)}
+   <button className="shot-style-toggle" aria-label="Low shot" aria-pressed={game.shotStyle==='low'} title="Low flight: less carry, more roll. Normal loft is best for steep bunker lips." onClick={()=>{game.shotStyle=game.shotStyle==='low'?'normal':'low';refresh(x=>x+1)}}><span>{game.shotStyle==='low'?'Low':'Normal'}</span><small>Flight</small></button>
  </div>}</>}
  {game.mode==='holed'&&<section className="controls putting-controls"><div className="status">{greenNames[game.hole].toUpperCase()} <span>HOLED</span></div><div className="win"><h2>{game.strokes-game.par>=2?'Get your head in the game.':game.strokes>game.par?'Shake it off.':'Beautifully done.'}</h2><p>{game.strokes} strokes · {game.strokes===game.par?'Par':game.strokes<game.par?`${game.par-game.strokes} under par`:`${game.strokes-game.par} over par`}</p><button className="primary" disabled={inMatch&&(multiplayer.busy||awaitingHoleScore)} onClick={advance}>{inMatch?(multiplayer.busy||awaitingHoleScore?'Saving…':leaderboard?(multiplayer.match.round_finished?'View leaderboard':'Next hole'):group?'View match':'Submit hole · View match'):(round?roundHoles(round).indexOf(game.hole)<round.holes-1:game.hole<HOLE_COUNT)?`Next hole · ${getCourse(round?roundHoles(round)[roundHoles(round).indexOf(game.hole)+1]:game.hole+1).title} · Par ${getCourse(round?roundHoles(round)[roundHoles(round).indexOf(game.hole)+1]:game.hole+1).par}`:round?'View round results':'Start a new round'}</button>{!inMatch&&<button onClick={restart}>Play hole again</button>}{game.hole===HOLE_COUNT&&<p>{game.scorecard.length?'Round total':`Hole ${game.hole} practice`}: {game.scorecard.reduce((s,h)=>s+h.strokes,game.strokes)} strokes</p>}</div></section>}
  </div>
